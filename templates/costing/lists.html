@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Categories & suppliers{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'core:settings' %}">Settings</a> › Lists</div><h1>Categories &amp; suppliers</h1></div></div>
+<div class="cols">
+  {% for title, which, items in lists %}{% endfor %}
+  <section class="card main stack"><h2>Product categories</h2>
+    {% for c in cats %}<form method="post" class="row">{% csrf_token %}<input type="hidden" name="which" value="cat"><input type="hidden" name="pk" value="{{ c.pk }}">
+      <label class="visually-hidden" for="c{{ c.pk }}">Category name</label><input id="c{{ c.pk }}" class="text" name="name" value="{{ c.name }}" style="max-width:320px"><span class="small muted">{{ c.n }} recipe{{ c.n|pluralize }}</span><button class="btn small quiet">Rename</button></form>{% endfor %}
+    <form method="post" class="row">{% csrf_token %}<input type="hidden" name="which" value="cat"><label class="visually-hidden" for="newc">New category</label><input id="newc" class="text" name="name" placeholder="New category" style="max-width:320px"><button class="btn small primary">Add</button></form>
+  </section>
+  <section class="card aside stack"><h2>Suppliers / groups</h2>
+    {% for s in sups %}<form method="post" class="row">{% csrf_token %}<input type="hidden" name="which" value="sup"><input type="hidden" name="pk" value="{{ s.pk }}">
+      <label class="visually-hidden" for="s{{ s.pk }}">Supplier name</label><input id="s{{ s.pk }}" class="text" name="name" value="{{ s.name }}" style="max-width:220px"><span class="small muted">{{ s.n }}</span><button class="btn small quiet">Rename</button></form>{% endfor %}
+    <form method="post" class="row">{% csrf_token %}<input type="hidden" name="which" value="sup"><label class="visually-hidden" for="news">New supplier</label><input id="news" class="text" name="name" placeholder="New supplier" style="max-width:220px"><button class="btn small primary">Add</button></form>
+  </section>
+</div>
+{% endblock %}

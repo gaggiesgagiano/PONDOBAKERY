@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}{{ sup }} – statement{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'money:creditors' %}">Suppliers we owe</a></div><h1>{{ sup }} – our statement</h1>
+  <div class="small muted">{{ sup.company_name }}{% if sup.account_no %} · our account no. {{ sup.account_no }}{% endif %} · payment terms: {% if sup.terms_days %}{{ sup.terms_days }} days{% else %}cash on delivery{% endif %}. Compare it with the supplier's own statement every month.</div></div>
+  <div class="actions no-print"><form method="get" class="row"><label class="small">From <input type="date" name="from" value="{{ start|date:'Y-m-d' }}"></label><label class="small">to <input type="date" name="to" value="{{ end|date:'Y-m-d' }}"></label><button class="btn small quiet">Show</button></form>
+    <button class="btn quiet" onclick="window.print()">Print</button>{% if can.money_edit and open %}<a class="btn primary" href="{% url 'money:pay' %}?supplier={{ sup.pk }}">Pay {{ sup }}</a>{% endif %}</div></div>
+{% include "money/_tabs.html" %}
+<section class="card"><div class="tablebox"><table class="t"><thead><tr><th>Date</th><th>What</th><th class="r">Invoice</th><th class="r">Paid</th><th class="r">We owe</th></tr></thead><tbody>
+<tr><td>{{ start|date:"d M Y" }}</td><td><b>Owed at the start</b></td><td></td><td></td><td class="r"><b>{{ st.opening|money }}</b></td></tr>
+{% for r in st.rows %}<tr class="link" data-href="{% if r.kind == 'grv' %}{% url 'stock:grv' r.obj.pk %}{% else %}{% url 'money:payment' r.obj.pk %}{% endif %}"><td>{{ r.date|date:"d M Y" }}</td><td>{{ r.what }}</td><td class="r">{% if r.debit %}{{ r.debit|money }}{% endif %}</td><td class="r">{% if r.credit %}{{ r.credit|money }}{% endif %}</td><td class="r">{{ r.balance|money }}</td></tr>
+{% empty %}<tr><td colspan="5" class="muted">No invoices or payments in this time.</td></tr>{% endfor %}
+<tr class="total"><td colspan="4">Owed on {{ end|date:"d M Y" }}</td><td class="r">{{ st.closing|money }}</td></tr></tbody></table></div></section>
+{% endblock %}

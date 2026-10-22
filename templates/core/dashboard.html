@@ -1,0 +1,144 @@
+{% extends "base.html" %}{% load static pondo %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+{% if simple %}
+<div class="head"><div class="title"><div class="crumbs">Pondo Bakery</div><h1>{% if look.hello == "on" %}Dashboard{% else %}Good day, {{ user.first_name|default:user.username }}{% endif %}</h1></div></div>
+{% if look.hello == "on" %}{% hello as h %}<div class="hello"><img src="{% static 'brand/logo/mark_cream.svg' %}" alt="">
+  <div><div class="hi">{{ h.part }}, {{ user.first_name|default:user.username }}!</div><div class="sub">{{ h.line }}</div></div>
+  <img class="badge" src="{% static 'brand/logo/secondary_cream.svg' %}" alt="" style="width:118px"></div>{% endif %}
+{% include "core/_jobs.html" %}
+<h2>Open</h2>
+<div class="stats">
+  {% if can.recipes_view %}<a class="card stat" href="{% url 'costing:recipes' %}" style="text-decoration:none;color:inherit"><div class="lbl">Open</div><div class="val">Recipes</div><div class="sub">methods, quantities, recipe cards</div></a>{% endif %}
+  {% if can.ingredients_view %}<a class="card stat" href="{% url 'costing:ingredients' %}" style="text-decoration:none;color:inherit"><div class="lbl">Open</div><div class="val">Ingredients</div><div class="sub">what we use</div></a>{% endif %}
+  {% if can.prices_view %}<a class="card stat" href="{% url 'costing:prices' %}" style="text-decoration:none;color:inherit"><div class="lbl">Open</div><div class="val">Price list</div><div class="sub">selling prices</div></a>{% endif %}
+  {% if can.production_view %}<a class="card stat" href="{% url 'production:plans' %}" style="text-decoration:none;color:inherit"><div class="lbl">Open</div><div class="val">Production</div><div class="sub">day &amp; night shift plans</div></a>{% endif %}
+  {% if can.waste_view %}<a class="card stat" href="{% url 'production:waste_list' %}" style="text-decoration:none;color:inherit"><div class="lbl">Open</div><div class="val">Waste</div><div class="sub">log what was thrown away</div></a>{% endif %}
+  {% if can.stock_view %}<a class="card stat" href="{% url 'stock:home' %}" style="text-decoration:none;color:inherit"><div class="lbl">Open</div><div class="val">Stock</div><div class="sub">levels, orders, deliveries</div></a>{% endif %}
+  {% if can.sales_edit %}<a class="card stat" href="{% url 'sales:daily_today' %}" style="text-decoration:none;color:inherit"><div class="lbl">Type</div><div class="val">Today's sales</div><div class="sub">per category, from the till report</div></a>{% endif %}
+  {% if can.sales_view %}<a class="card stat" href="{% url 'sales:cashups' %}" style="text-decoration:none;color:inherit"><div class="lbl">Open</div><div class="val">Cash-up</div><div class="sub">{% if sales_today %}today {{ sales_today|money }}{% else %}cash up the till{% endif %}</div></a>{% endif %}
+  {% if can.staff_view %}<a class="card stat" href="{% url 'staff:people' %}" style="text-decoration:none;color:inherit"><div class="lbl">Open</div><div class="val">Staff</div><div class="sub">records &amp; payroll</div></a>{% endif %}
+</div>
+{% if not can.recipes_view and not can.ingredients_view and not can.prices_view and not can.production_view and not can.stock_view and not can.sales_view and not can.staff_view and not can.waste_view and not can.invoices_view and not can.deliveries_view and not can.equipment_view %}<p class="muted">Your login is ready, but the Manager has not given you any areas yet.</p>{% endif %}
+{% else %}
+<div class="head"><div class="title"><div class="crumbs">Daily dashboard</div><h1>{% if is_today and look.hello == "on" %}Daily dashboard{% elif is_today %}Good day, {{ user.first_name|default:user.username }}{% else %}{{ d|date:"l d F Y" }}{% endif %}</h1>
+  <div class="small muted">{% if is_today %}{{ d|date:"l d F Y" }} · {% endif %}Week {{ d|date:"W" }} · all sales excl. VAT</div></div>
+  <form class="datebar" method="get">
+    <a class="btn quiet small" href="?date={{ prev_day|date:'Y-m-d' }}" title="Day before">←</a>
+    <label class="visually-hidden" for="date">Report date</label><input id="date" type="date" name="date" value="{{ d|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}" onchange="this.form.submit()">
+    {% if next_day %}<a class="btn quiet small" href="?date={{ next_day|date:'Y-m-d' }}" title="Next day">→</a><a class="btn small" href="?">Today</a>{% endif %}
+    <a class="btn small" href="{% url 'core:dashboard_print' %}?date={{ d|date:'Y-m-d' }}" target="_blank">Print (1 page)</a>
+  </form></div>
+
+{% if is_today and look.hello == "on" %}{% hello as h %}<div class="hello"><img src="{% static 'brand/logo/mark_cream.svg' %}" alt="">
+  <div><div class="hi">{{ h.part }}, {{ user.first_name|default:user.username }}!</div><div class="sub">{{ h.line }}</div></div>
+  {% if status.0 == 'ok' %}<div class="burst badge" style="--bs:96px">On<b>track!</b></div>{% elif status.0 == 'mid' %}<div class="burst warm badge" style="--bs:96px">Nearly<b>there</b></div>{% elif status.0 == 'low' %}<div class="burst burgundy badge" style="--bs:96px">Let's<b>push!</b></div>{% else %}<img class="badge" src="{% static 'brand/logo/secondary_cream.svg' %}" alt="" style="width:118px">{% endif %}</div>{% endif %}
+
+{% include "core/_jobs.html" %}
+
+<section class="status {{ status.0 }}">
+  <div class="say">{{ d|date:"F" }}: {{ status.1 }}</div>
+  {% if t.bep_month %}
+  <div class="track" role="img" aria-label="Month to date {{ s.month.sales|money:0 }} of {{ t.bep_month|money:0 }}">
+    <div class="fill" style="width:{{ month_pct_bep|floatformat:1 }}%"></div>
+    {% if be_marker %}<div class="mark" style="left:{{ be_marker|floatformat:1 }}%" title="Break-even"></div>{% endif %}
+  </div>
+  <div class="track-legend"><span>Sold so far {{ s.month.sales|money:0 }}</span><span>Break-even {{ t.be_month|money:0 }} (the black line)</span><span>Break-even + profit {{ t.bep_month|money:0 }}</span></div>
+  {% endif %}
+</section>
+
+<div class="stats">
+  <div class="card stat dark"><div class="lbl">Sales {% if is_today %}today{% else %}this day{% endif %}</div><div class="val">{{ s.today.sales|money:0 }}</div>
+    <div class="sub">{% if s.today.sales %}{% if s.today.over_be >= 0 %}{{ s.today.over_be|money:0 }} above{% else %}{{ s.today.over_be|money:0 }} below{% endif %} break-even ({{ t.be_day|money:0 }}){% else %}break-even is {{ t.be_day|money:0 }} a day{% endif %}</div></div>
+  <div class="card stat"><div class="lbl">Week to date</div><div class="val">{{ s.week.sales|money:0 }}</div><div class="sub">{{ s.week.days }} day{{ s.week.days|pluralize }} · GP {{ s.week.gp|pct }}</div></div>
+  <div class="card stat"><div class="lbl">Month to date</div><div class="val">{{ s.month.sales|money:0 }}</div><div class="sub">{{ s.month.days }} day{{ s.month.days|pluralize }} · GP {{ s.month.gp|pct }}</div></div>
+  <div class="card stat"><div class="lbl">Profit this month so far</div><div class="val {{ s.month.net|sign }}">{{ s.month.net|money:0 }}</div><div class="sub">gross profit − costs of the days typed</div></div>
+</div>
+
+<div class="cols">
+  <div class="main">
+    <section class="card stack"><h2>Our sales</h2>
+      <div class="tablebox"><table class="t dash"><thead><tr><th></th><th class="r">{% if is_today %}Today{% else %}The day{% endif %}</th><th class="r">Week to date</th><th class="r">Month to date</th></tr></thead><tbody>
+        <tr><td><b>Sales</b></td><td class="r"><b>{{ s.today.sales|money }}</b></td><td class="r"><b>{{ s.week.sales|money }}</b></td><td class="r"><b>{{ s.month.sales|money }}</b></td></tr>
+        <tr><td>GP %</td><td class="r">{{ s.today.gp|pct }}</td><td class="r">{{ s.week.gp|pct }}</td><td class="r">{{ s.month.gp|pct }}</td></tr>
+        <tr><td>Break-even sales (so far)</td><td class="r">{{ s.today.be|money }}</td><td class="r">{{ s.week.be|money }}</td><td class="r">{{ s.month.be|money }}</td></tr>
+        <tr><td><b>Over / (short) of break-even</b></td><td class="r {{ s.today.over_be|sign }}"><b>{{ s.today.over_be|money }}</b></td><td class="r {{ s.week.over_be|sign }}"><b>{{ s.week.over_be|money }}</b></td><td class="r {{ s.month.over_be|sign }}"><b>{{ s.month.over_be|money }}</b></td></tr>
+        <tr><td>Break-even + profit (so far)</td><td class="r">{{ s.today.bep|money }}</td><td class="r">{{ s.week.bep|money }}</td><td class="r">{{ s.month.bep|money }}</td></tr>
+        <tr><td><b>Over / (short) of profit target</b></td><td class="r {{ s.today.over_bep|sign }}"><b>{{ s.today.over_bep|money }}</b></td><td class="r {{ s.week.over_bep|sign }}"><b>{{ s.week.over_bep|money }}</b></td><td class="r {{ s.month.over_bep|sign }}"><b>{{ s.month.over_bep|money }}</b></td></tr>
+        <tr class="total"><td>Net profit / (loss)</td><td class="r {{ s.today.net|sign }}">{{ s.today.net|money }}</td><td class="r {{ s.week.net|sign }}">{{ s.week.net|money }}</td><td class="r {{ s.month.net|sign }}">{{ s.month.net|money }}</td></tr>
+      </tbody></table></div>
+      <p class="small muted" style="margin:0">"So far" = the daily figure × the days you typed sales for. Red = short.</p>
+    </section>
+
+    <section class="card stack"><h2>Rest of the month</h2>
+      {% for r in rest.rows %}<div class="stack" style="gap:6px">
+        <div class="row" style="justify-content:space-between"><b>{{ r.label }}</b><span class="small">goal {{ r.goal|money:0 }} · sold {{ r.sold|money:0 }}</span></div>
+        <div class="track" style="background:var(--peach);color:{% if r.still %}var(--orange){% else %}var(--ok){% endif %}"><div class="fill" style="width:{{ r.pct|floatformat:1 }}%"></div></div>
+        <div class="small">{% if r.still %}Still to sell <b>{{ r.still|money:0 }}</b>{% if r.per_day %} – that is <b>{{ r.per_day|money:0 }} a day</b> for the {{ rest.days_left }} trading day{{ rest.days_left|pluralize }} left{% endif %}.{% else %}<b class="pos">Reached!</b>{% endif %}</div>
+      </div>{% endfor %}
+      <p class="small muted" style="margin:0">Trading days left this month: {{ rest.days_left }} of {{ rest.days_month }}.</p>
+    </section>
+
+    <section class="card stack"><h2>Sales per category</h2>
+      {% if cats.rows %}
+      <div class="tablebox"><table class="t dash"><thead><tr><th>Category</th><th class="r">{% if is_today %}Today{% else %}The day{% endif %}</th><th class="r">Week</th><th class="r">Month</th><th>Share of the month</th></tr></thead><tbody>
+      {% for c, v in cats.rows %}<tr><td>{{ c.name }}</td><td class="r">{% if v.today %}{{ v.today|money }}{% endif %}</td><td class="r">{% if v.week %}{{ v.week|money }}{% endif %}</td><td class="r"><b>{{ v.month|money }}</b></td>
+        <td style="min-width:150px"><span class="minibar" style="width:{% widthratio v.month cats.top 110 %}px"></span> <span class="small">{{ v.share|pct:0 }}</span></td></tr>{% endfor %}
+      <tr class="total"><td>Total</td><td class="r">{{ cats.total.today|money }}</td><td class="r">{{ cats.total.week|money }}</td><td class="r">{{ cats.total.month|money }}</td><td></td></tr>
+      </tbody></table></div>
+      {% else %}<p class="muted small" style="margin:0">No sales typed this month yet. {% if can.sales_edit %}<a href="{% url 'sales:daily_edit' d|date:'Y-m-d' %}">Type the day's sales per category</a>.{% endif %}</p>{% endif %}
+    </section>
+
+    <section class="card stack"><div class="row" style="justify-content:space-between"><h2>Waste</h2><span class="pill {% if waste.status.0 == 'ok' %}gp-ok{% elif waste.status.0 == 'low' %}gp-low{% else %}gp-none{% endif %}">{{ waste.status.1 }}</span></div>
+      <div class="tablebox"><table class="t dash"><thead><tr><th></th><th class="r">{{ waste.prev|date:"D d M" }}</th><th class="r">Week to date</th><th class="r">Month to date</th></tr></thead><tbody>
+        <tr><td><b>Waste (at cost)</b></td><td class="r"><b>{{ waste.cols.today.cost|money }}</b></td><td class="r"><b>{{ waste.cols.week.cost|money }}</b></td><td class="r"><b>{{ waste.cols.month.cost|money }}</b></td></tr>
+        <tr><td>Sales</td><td class="r">{{ waste.cols.today.sales|money }}</td><td class="r">{{ waste.cols.week.sales|money }}</td><td class="r">{{ waste.cols.month.sales|money }}</td></tr>
+        <tr><td>Waste % of sales</td><td class="r">{{ waste.cols.today.pct|pct }}</td><td class="r">{{ waste.cols.week.pct|pct }}</td><td class="r">{{ waste.cols.month.pct|pct }}</td></tr>
+        <tr><td>Target (maximum)</td><td class="r" colspan="3">{{ company.waste_target|pct:0 }}</td></tr>
+        <tr><td>Above / (below) target</td><td class="r {% if waste.cols.today.over > 0 %}neg{% endif %}">{{ waste.cols.today.over|money }}</td><td class="r {% if waste.cols.week.over > 0 %}neg{% endif %}">{{ waste.cols.week.over|money }}</td><td class="r {% if waste.cols.month.over > 0 %}neg{% endif %}">{{ waste.cols.month.over|money }}</td></tr>
+      </tbody></table></div>
+      {% if waste.reasons %}<h3>By reason</h3>
+      <div class="tablebox"><table class="t dash"><thead><tr><th>Reason</th><th class="r">{{ waste.prev|date:"D d" }}</th><th class="r">Week</th><th class="r">Month</th><th class="r">% of month</th></tr></thead><tbody>
+      {% for r, v in waste.reasons %}<tr><td>{{ r }}</td><td class="r">{{ v.today|money }}</td><td class="r">{{ v.week|money }}</td><td class="r">{{ v.month|money }}</td><td class="r">{{ v.share|pct:0 }}</td></tr>{% endfor %}
+      </tbody></table></div>{% endif %}
+      <p class="small muted" style="margin:0">Waste is shown for the day before, because a day's waste is only complete after closing.</p>
+    </section>
+  </div>
+
+  <aside class="aside">
+    <section class="card peach stack"><h2>What we need to sell</h2>
+      <div class="tablebox"><table class="t dash"><thead><tr><th></th><th class="r">Day</th><th class="r">Week</th><th class="r">Month</th></tr></thead><tbody>
+      {% for label, a, b, c in t.rows %}<tr><td class="small"><b>{{ label }}</b></td><td class="r small">{{ a|money:0 }}</td><td class="r small">{{ b|money:0 }}</td><td class="r small">{{ c|money:0 }}</td></tr>{% endfor %}
+      </tbody></table></div>
+      <div class="small muted">Costs = wages + overheads. Break-even = the sales that just pay the costs.</div>
+      <div class="small">Each $1 of sales leaves {{ t.gp|pct:0 }} gross profit{% if t.gp_from == 'products' %} (average of your products){% endif %}. {{ t.staff_count }} staff, {{ t.trading_days|num:0 }} trading days a week.</div>
+      {% if can.owner %}<a class="btn small" href="{% url 'core:targets' %}">Change costs &amp; targets</a>{% endif %}
+    </section>
+
+    {% if staff %}<section class="card stack"><h2>Per staff member</h2>
+      <div class="tablebox"><table class="t dash"><thead><tr><th></th><th class="r">Day</th><th class="r">Week</th><th class="r">Month</th></tr></thead><tbody>
+      {% for label, a, b, c in staff.targets %}<tr><td class="small">{{ label }}</td><td class="r small">{{ a|money:0 }}</td><td class="r small">{{ b|money:0 }}</td><td class="r small">{{ c|money:0 }}</td></tr>{% endfor %}
+      <tr class="sec"><td colspan="4">Actual ({% if is_today %}today{% else %}the day{% endif %} · week · month)</td></tr>
+      {% for label, a, b, c in staff.actual %}<tr><td class="small">{{ label }}</td><td class="r small {{ a|sign }}">{{ a|money:0 }}</td><td class="r small {{ b|sign }}">{{ b|money:0 }}</td><td class="r small {{ c|sign }}">{{ c|money:0 }}</td></tr>{% endfor %}
+      </tbody></table></div>
+      <div class="small muted">{{ staff.n }} staff members.</div>
+    </section>{% endif %}
+
+    <section class="card stack"><h2>Till</h2>
+      {% if till_total is not None %}<div class="row" style="justify-content:space-between"><span>Cash-up {% if is_today %}today{% else %}this day{% endif %} (incl. VAT)</span><b>{{ till_total|money }}</b></div>
+      <div class="row" style="justify-content:space-between"><span>Over / short</span><b class="{{ till_variance|sign }}">{% if till_variance == 0 %}balances{% else %}{{ till_variance|money }}{% endif %}</b></div>
+      {% else %}<p class="small muted" style="margin:0">No cash-up for this day yet.</p>{% endif %}
+      {% if cu_waiting %}<a class="small" href="{% url 'sales:cashups' %}">{{ cu_waiting }} cash-up{{ cu_waiting|pluralize }} to sign off →</a>{% endif %}
+    </section>
+
+    <section class="card stack"><h2>Products to check</h2>
+      {% for r, gp in low_gp %}<div class="row" style="justify-content:space-between"><a href="{% url 'costing:recipe' r.pk %}">{{ r.name }}</a><span class="pill {{ gp|gpclass:company }}">{{ gp|pct }}</span></div>
+      {% empty %}<p class="muted small" style="margin:0">All products are above {{ company.gp_low|pct:0 }} gross profit. 👍</p>{% endfor %}
+      {% if n_low > 8 %}<a class="small" href="{% url 'costing:prices' %}?f=low">All {{ n_low }} below {{ company.gp_low|pct:0 }} →</a>{% endif %}
+      {% if unpriced or no_price_products %}<p class="small" style="margin:0">{% if unpriced %}<a href="{% url 'costing:ingredients' %}">{{ unpriced }} ingredient{{ unpriced|pluralize }} without a price</a>. {% endif %}{% if no_price_products %}<a href="{% url 'costing:prices' %}?f=noprice">{{ no_price_products }} product{{ no_price_products|pluralize }} without a selling price</a>.{% endif %}</p>{% endif %}
+    </section>
+
+  </aside>
+</div>
+{% endif %}
+{% endblock %}

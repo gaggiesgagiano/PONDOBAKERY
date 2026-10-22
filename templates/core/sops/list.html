@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}SOP file{% endblock %}
+{% block head %}{% include "core/sops/_doc_css.html" %}<style>
+  .sec h2{display:flex;align-items:center;gap:10px}
+  .sec h2 .n{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:#218d80;color:#fff3d7;font-size:15px}
+  .bar{display:inline-block;width:70px;height:7px;border-radius:9px;background:#f4e4c9;vertical-align:middle;overflow:hidden;margin-right:6px}
+  .bar i{display:block;height:100%;background:#218d80}
+</style>{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Office</div><h1>SOP file</h1>
+  <div class="small muted">Standard operating procedures – how we do things, the same way every time. Written by the Manager, approved by the Owner / Director, read and signed by the staff.</div>
+  <div class="chips" style="margin-top:6px"><span class="chip">{{ counts.all }} SOPs</span>{% if counts.draft %}<span class="chip draft">{{ counts.draft }} draft{{ counts.draft|pluralize }} to approve</span>{% endif %}{% if counts.review %}<span class="chip due">{{ counts.review }} due for review</span>{% endif %}</div></div>
+  <div class="actions">
+    {% if can.sops_edit %}<button class="btn" type="button" data-pick title="Choose an SOP to change">Edit</button>{% endif %}
+    <a class="btn" href="{% url 'core:sop_staff' %}">Who still has to read</a>
+    <a class="btn" href="{% url 'core:sop_print' %}" target="_blank">Print the whole file</a>
+    {% if can.sops_edit %}<a class="btn primary" href="{% url 'core:sop_new' %}">+ New SOP</a>{% endif %}</div></div>
+<form class="filters no-print" method="get">
+  <label class="visually-hidden" for="q">Search</label>
+  <input id="q" type="search" name="q" value="{{ q }}" placeholder="Search the SOPs – e.g. safe, cleaning, refund">
+  <button class="btn quiet" type="submit">Search</button>{% if q %}<a class="small" href="?">Clear</a>{% endif %}
+  {% if can.sops_edit %}<label class="row small" style="font-weight:700;gap:6px"><input type="checkbox" name="old" value="1" {% if show_old %}checked{% endif %} onchange="this.form.submit()" style="width:18px;height:18px"> Also show SOPs taken out</label>{% endif %}
+</form>
+{% for g in groups %}<section class="card stack sec"><h2><span class="n">{{ g.num }}</span>{{ g.name }}</h2>
+  <div class="tablebox"><table class="t">
+    <thead><tr><th style="width:90px">No.</th><th>SOP</th><th>Responsible</th><th>Status</th><th>Signed</th></tr></thead>
+    <tbody>{% for s in g.rows %}<tr class="link" data-href="{% url 'core:sop' s.pk %}" data-edit="{% url 'core:sop_edit' s.pk %}">
+      <td class="small muted">{{ s.code }}</td>
+      <td><a class="rowlink" href="{% url 'core:sop' s.pk %}"><b>{{ s.title }}</b></a>{% if not s.active %} <span class="chip">taken out</span>{% endif %}</td>
+      <td class="small">{{ s.responsible }}</td>
+      <td>{% if s.status == 'approved' %}{% if s.review_due and s.review_due <= today %}<span class="chip due">Review due</span>{% else %}<span class="chip ok">Approved · v{{ s.version }}</span>{% endif %}{% else %}<span class="chip draft">Draft · v{{ s.version }}</span>{% endif %}</td>
+      <td class="small" style="white-space:nowrap">{% if s.status == 'approved' %}<span class="bar"><i style="width:{% widthratio s.n_done s.n_must|default:1 100 %}%"></i></span>{{ s.n_done }} / {{ s.n_must }}{% else %}<span class="muted">after approval</span>{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div></section>
+{% empty %}<section class="card muted">{% if q %}No SOP matches “{{ q }}”.{% else %}No SOPs yet.{% endif %}</section>{% endfor %}
+<p class="small muted">Click an SOP to read it, print it, print its sign-off sheet and record who signed. A changed SOP gets a new version; the old one is kept and everybody signs again.</p>
+{% endblock %}

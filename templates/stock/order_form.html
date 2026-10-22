@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Order{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'stock:orders' %}">Orders</a>{% if o.pk %} › {{ o.number }}{% endif %}</div>
+  <h1>{% if o.pk %}Edit order {{ o.number }}{% else %}New order{% endif %}</h1></div></div>
+<form method="post" class="stack">{% csrf_token %}
+  {% if fs.non_form_errors %}<div class="msg error">{{ fs.non_form_errors }}</div>{% endif %}
+  <section class="card stack"><div class="grid-form">{% include "_field.html" with f=form.supplier %}{% include "_field.html" with f=form.date %}{% include "_field.html" with f=form.delivery_date %}</div>
+    {% if not o.pk %}<p class="small muted" style="margin:0">Tip: open Stock levels, pick a supplier and click "Order what's low" – the order fills itself.</p>{% endif %}</section>
+  <section class="card stack"><h2>Items</h2>{% include "stock/_lines.html" with grv=False %}</section>
+  <section class="card stack"><div class="grid-form">{% include "_field.html" with f=form.notes wide=1 %}</div></section>
+  <div class="actions"><button class="btn primary" type="submit">Save order</button><a class="btn quiet" href="{% if o.pk %}{% url 'stock:order' o.pk %}{% else %}{% url 'stock:orders' %}{% endif %}">Cancel</a></div>
+</form>
+{% endblock %}

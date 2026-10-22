@@ -1,0 +1,106 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Pay run{% endblock %}
+{% block head %}<style>
+  .steps{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none;counter-reset:st}
+  .steps li{counter-increment:st;display:flex;align-items:center;gap:8px;background:var(--orange-soft);border-radius:999px;padding:6px 14px 6px 6px;font-weight:700;font-size:14px}
+  .steps li::before{content:counter(st);display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--maroon);color:#fff3d7;font-size:13px}
+  .people{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:18px}
+  .pcard{background:var(--card);border-radius:var(--radius);box-shadow:0 1px 0 var(--line2);padding:18px 20px;display:flex;flex-direction:column;gap:14px;border:2px solid transparent}
+  .pcard.err{border-color:var(--low)}
+  .pcard.off{opacity:.55}
+  .ptop{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+  .ptop h3{margin:0;font-size:19px}
+  .ptype{display:inline-block;margin-top:4px;font-size:13px;font-weight:700;color:var(--muted)}
+  .pnet{text-align:right;white-space:nowrap}
+  .pnet .lbl{font-size:12px;color:var(--muted);font-weight:700}
+  .pnet .big{font-size:22px;font-weight:800;color:var(--maroon)}
+  .pnet .gross{font-size:12px;color:var(--muted)}
+  .pf{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+  .pf label{display:block;font-size:13px;font-weight:700;margin-bottom:4px}
+  .pf .hint{display:block;font-size:12px;color:var(--muted);margin-top:3px;font-weight:600}
+  .pf input{width:100%;min-height:44px;font-size:16px;border-radius:10px;border:2px solid var(--line2);padding:4px 10px;box-sizing:border-box}
+  .pf .main input{border-color:var(--maroon)}
+  .pf .wide{grid-column:1/-1}
+  .pmore summary{cursor:pointer;font-weight:700;color:var(--maroon);list-style:none;padding:6px 0}
+  .pmore summary::-webkit-details-marker{display:none}
+  .pmore summary::before{content:"+ "}
+  .pmore[open] summary::before{content:"– "}
+  .pmore h4{margin:10px 0 6px;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .pleave{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);font-weight:600;border-top:1px solid var(--line);padding-top:10px}
+  .pleave input{width:18px;height:18px}
+  .perr{color:var(--low);font-weight:700;font-size:14px}
+  .savebar{position:sticky;bottom:0;z-index:6;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;
+           background:var(--dark-bg,#7a1315);color:#fff3d7;border-radius:var(--radius);padding:12px 18px;box-shadow:0 -4px 14px rgba(0,0,0,.12)}
+  .savebar .tot{display:flex;gap:22px;flex-wrap:wrap}
+  .savebar .tot span{display:block;font-size:12px;opacity:.8;font-weight:700}
+  .savebar .tot b{font-size:19px}
+  .savebar .btn.quiet{color:#fff3d7}
+</style>{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'staff:payruns' %}">Payroll</a> › {{ run.number }}</div>
+  <h1>Pay run · {{ run.period|date:"F Y" }}</h1></div></div>
+<form method="post" class="stack">{% csrf_token %}
+  <section class="card stack">
+    <ol class="steps"><li>Fill in each person below</li><li>Press "Save &amp; work out"</li><li>Check the net pay</li><li>Make final</li></ol>
+    <p class="small muted" style="margin:0">Monthly staff get their full salary – only type something if they had <b>unpaid days</b>. Day staff need <b>days worked</b>, hourly staff need <b>hours worked</b>. Overtime pays {{ s.overtime_rate|num:2 }}×, Sundays / public holidays {{ s.holiday_rate|num:2 }}×. Advances that are still owed are already filled in.</p>
+  </section>
+
+  <div class="people">{% for ln, f in rows %}
+    <article class="pcard{% if f.errors %} err{% endif %}" data-type="{{ ln.pay_type }}">
+      <div class="ptop">
+        <div><h3>{{ ln.employee.name }}</h3>
+          <span class="ptype">{{ ln.rate|money }} {% if ln.pay_type == 'monthly' %}a month{% elif ln.pay_type == 'daily' %}a day{% else %}an hour{% endif %}</span></div>
+        <div class="pnet"><div class="lbl">Take-home pay</div><div class="big" {% if ln.net < 0 %}style="color:var(--low)"{% endif %}>{{ ln.net|money }}</div><div class="gross">before tax {{ ln.gross|money }}</div></div>
+      </div>
+      {% if f.errors %}<div class="perr">{{ f.non_field_errors|join:" " }}{% for fld in f %}{% for e in fld.errors %} {{ fld.label }}: {{ e }}{% endfor %}{% endfor %}</div>{% endif %}
+
+      <div class="pf">
+        {% if ln.pay_type == 'daily' or f.days.value %}<div class="{% if ln.pay_type == 'daily' %}main{% endif %}"><label for="{{ f.days.id_for_label }}">Days worked</label>{{ f.days }}</div>{% endif %}
+        {% if ln.pay_type == 'hourly' or f.hours.value %}<div class="{% if ln.pay_type == 'hourly' %}main{% endif %}"><label for="{{ f.hours.id_for_label }}">Hours worked</label>{{ f.hours }}</div>{% endif %}
+        {% if ln.pay_type == 'monthly' or f.unpaid_days.value %}<div><label for="{{ f.unpaid_days.id_for_label }}">Unpaid days</label>{{ f.unpaid_days }}<span class="hint">Empty = full month</span></div>{% endif %}
+        <div><label for="{{ f.overtime_hours.id_for_label }}">Overtime hours</label>{{ f.overtime_hours }}</div>
+        <div><label for="{{ f.holiday_hours.id_for_label }}">Sunday / holiday hours</label>{{ f.holiday_hours }}</div>
+      </div>
+
+      <details class="pmore"{% if f.allowances.value or f.bonus.value or f.other_earnings.value or f.advances.value or f.other_deductions.value or f.deduction_note.value or f.errors %} open{% endif %}>
+        <summary>Extra pay &amp; deductions</summary>
+        <h4>Extra pay</h4>
+        <div class="pf">
+          <div><label for="{{ f.allowances.id_for_label }}">Allowances $</label>{{ f.allowances }}</div>
+          <div><label for="{{ f.bonus.id_for_label }}">Bonus $</label>{{ f.bonus }}</div>
+          <div><label for="{{ f.other_earnings.id_for_label }}">Other pay $</label>{{ f.other_earnings }}</div>
+        </div>
+        <h4>Take off</h4>
+        <div class="pf">
+          <div><label for="{{ f.advances.id_for_label }}">Advance paid back $</label>{{ f.advances }}</div>
+          <div><label for="{{ f.other_deductions.id_for_label }}">Other deductions $</label>{{ f.other_deductions }}</div>
+          <div class="wide"><label for="{{ f.deduction_note.id_for_label }}">Reason (shows on the payslip)</label>{{ f.deduction_note }}</div>
+        </div>
+      </details>
+
+      <label class="pleave">{{ f.remove }} Leave {{ ln.employee.known_as|default:ln.employee.first_name|default:ln.employee.name }} off this pay run</label>
+    </article>
+  {% empty %}<section class="card muted">Nobody on this pay run yet – tick people below and press Save.</section>{% endfor %}</div>
+
+  {% if missing %}<section class="card stack"><h2>Add people to this pay run</h2>
+    <div class="row">{% for e in missing %}<label class="row" style="font-weight:700;gap:6px"><input type="checkbox" name="add" value="{{ e.pk }}" style="width:20px;height:20px"> {{ e.name }}</label>{% endfor %}</div></section>{% endif %}
+  <section class="card stack"><div class="grid-form">
+    <div class="field"><label for="pay_date">Pay date</label><input id="pay_date" type="date" name="pay_date" value="{{ run.pay_date|date:'Y-m-d' }}"></div>
+    <div class="field wide"><label for="notes">Notes</label><textarea id="notes" name="notes" rows="2">{{ run.notes }}</textarea></div></div></section>
+
+  <div class="savebar">
+    <div class="tot"><div><span>People</span><b>{{ t.n }}</b></div><div><span>Before tax</span><b>{{ t.gross|money }}</b></div><div><span>Take-home pay</span><b>{{ t.net|money }}</b></div><div><span>&nbsp;</span><span id="dirty" style="display:none;opacity:1;color:#ffd08a">Changed – press Save &amp; work out to update</span></div></div>
+    <div class="actions"><button class="btn primary" type="submit" name="stay" value="1">Save &amp; work out</button><button class="btn" type="submit">Save and close</button><a class="btn quiet" href="{% url 'staff:payrun' run.pk %}">Cancel</a></div>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+// remind to save after a change; fade a person who is being left off
+var form = document.querySelector('form.stack');
+form.addEventListener('input', function(){ document.getElementById('dirty').style.display = 'block'; });
+document.querySelectorAll('.pleave input').forEach(function(cb){
+  var card = cb.closest('.pcard'); function upd(){ card.classList.toggle('off', cb.checked); } cb.addEventListener('change', upd); upd();
+});
+</script>
+{% endblock %}

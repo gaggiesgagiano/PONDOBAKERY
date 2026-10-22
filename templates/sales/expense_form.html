@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Expense{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'sales:expenses' %}">Expenses</a> › {% if e.pk %}Change{% else %}New{% endif %}</div>
+  <h1>{% if e.pk %}Change expense{% else %}New expense{% endif %}</h1></div></div>
+<form method="post" class="stack">{% csrf_token %}
+  <section class="card stack"><div class="grid-form">
+    {% include "_field.html" with f=form.date %}{% include "_field.html" with f=form.category %}{% include "_field.html" with f=form.amount %}{% include "_field.html" with f=form.vat %}{% include "_field.html" with f=form.paid_from %}{% include "_field.html" with f=form.account %}
+    {% include "_field.html" with f=form.payee %}{% include "_field.html" with f=form.description %}{% include "_field.html" with f=form.receipt_no %}
+  </div>
+  <p class="small muted" style="margin:0">Cash paid out of the till is easier to add on that day's cash-up – it then counts in the till balance too.</p></section>
+  <div class="actions"><button class="btn primary" type="submit">Save</button>{% if not e.pk %}<button class="btn" type="submit" name="another" value="1">Save and add another</button>{% endif %}
+    <a class="btn quiet" href="{% url 'sales:expenses' %}">Cancel</a></div>
+</form>
+{% if e.pk %}<form method="post" action="{% url 'sales:expense_delete' e.pk %}" onsubmit="return confirm('Delete this expense?')">{% csrf_token %}<button class="btn danger small" type="submit">Delete expense</button></form>{% endif %}
+{% endblock %}

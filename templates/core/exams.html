@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}SOP exams{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Office · owner only</div><h1>SOP exams</h1>
+  <div class="small muted">The exam papers and their memos. Only you can open this page, and only after typing your login password again.</div></div>
+  {% if not locked %}<div class="actions"><form method="post" action="{% url 'core:exams_lock' %}">{% csrf_token %}<button class="btn" type="submit">Lock now</button></form></div>{% endif %}</div>
+{% if locked %}
+<form class="card stack" method="post" style="max-width:480px" autocomplete="off">{% csrf_token %}
+  <h2 style="margin:0">Type your password to open</h2>
+  <p class="small muted" style="margin:0">The same password you log in with. The page locks itself again after {{ minutes }} minutes.</p>
+  <label for="pw">Password</label>
+  <input id="pw" type="password" name="password" required autofocus autocomplete="current-password">
+  <button class="btn primary" type="submit">Open the exams</button>
+</form>
+{% else %}
+<section class="card stack"><h2 style="margin:0">Exam papers – to print for staff</h2>
+  <div class="tablebox"><table class="t"><tbody>{% for f in papers %}<tr><td><b>{{ f|cut:".pdf" }}</b></td><td style="text-align:right"><a class="btn" href="{% url 'core:exam_file' f %}" target="_blank">Open &amp; print</a></td></tr>{% empty %}<tr><td class="muted">No papers yet.</td></tr>{% endfor %}</tbody></table></div></section>
+<section class="card stack"><h2 style="margin:0">Memos – answers, never hand out</h2>
+  <div class="tablebox"><table class="t"><tbody>{% for f in memos %}<tr><td><b>{{ f|cut:".pdf" }}</b></td><td style="text-align:right"><a class="btn" href="{% url 'core:exam_file' f %}" target="_blank">Open &amp; print</a></td></tr>{% empty %}<tr><td class="muted">No memos yet.</td></tr>{% endfor %}</tbody></table></div></section>
+<p class="small muted">Locks itself in about {{ left }} minute{{ left|pluralize }}. Every opening is written in the change log (Settings → Change log). Always mark a paper with the memo of the same number. Printed memos are kept locked away.</p>
+{% endif %}
+{% endblock %}

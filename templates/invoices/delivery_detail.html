@@ -1,0 +1,70 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}{{ dl.number }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'invoices:deliveries' %}">Deliveries</a> › {{ dl.number }}</div>
+  <h1>Delivery {{ dl.number }}</h1>
+  <div class="chips"><span class="chip on">{% if dl.stage == 'out' %}Out with the driver{% elif dl.stage == 'delivered' %}Delivered – money not back yet{% elif dl.stage == 'done' %}Done{% else %}Cancelled{% endif %}</span>
+    <span class="chip">Left {{ dl.sent_at|date:"D d M, H:i" }}</span><a class="chip" href="{% url 'invoices:doc' doc.pk %}">Invoice {{ doc.number }}</a></div></div>
+  <div class="actions"><a class="btn primary" href="{% url 'invoices:delivery_note' dl.pk %}" target="_blank">Print delivery note</a><a class="btn" href="{% url 'invoices:print' doc.pk %}" target="_blank">Print invoice</a>
+    {% if can.deliveries_edit and dl.status == 'out' %}<a class="btn" href="{% url 'invoices:delivery_edit' dl.pk %}">Edit</a>{% endif %}</div></div>
+<ol class="dsteps">
+  <li class="on"><b>Sent</b><span>{{ dl.sent_at|date:"H:i" }}</span></li>
+  <li class="{% if dl.delivered_at %}on{% endif %}"><b>Delivered</b><span>{% if dl.delivered_at %}{{ dl.delivered_at|date:"H:i" }}{% else %}not yet{% endif %}</span></li>
+  <li class="{% if dl.status == 'done' %}on{% endif %}"><b>{% if dl.by_driver %}Money back{% else %}Paid{% endif %} &amp; on the till</b><span>{% if dl.done_at and dl.status == 'done' %}{{ dl.done_at|date:"d M H:i" }}{% else %}not yet{% endif %}</span></li>
+</ol>
+<div class="cols">
+  <div class="main stack">
+    <section class="card stack"><h2>Money</h2>
+      <div class="moneyflow">
+        <div><span>Goods (incl. VAT)</span><b>{{ dl.goods|money }}</b></div>
+        <div><span>+ Delivery fee for the driver</span><b>{{ dl.fee|money }}</b></div>
+        <div class="sum"><span>Customer pays</span><b>{{ dl.total|money }}</b></div>
+        {% if dl.by_driver %}<div class="drv"><span>The driver collects {{ dl.collect|money }}, keeps {{ dl.fee|money }} and brings back</span><b>{{ dl.expected_back|money }}</b></div>
+        {% else %}<div class="drv"><span>{{ dl.get_pay_display }}{% if dl.fee %} – pay the driver his fee{% endif %}</span><b>{% if dl.fee %}{{ dl.fee|money }}{% endif %}</b></div>{% endif %}
+      </div>
+      {% if dl.status == 'done' %}
+      <div class="tablebox"><table class="t"><tbody>
+        {% if dl.by_driver %}<tr><td>Money the driver brought back</td><td class="r"><b>{{ dl.money_back|money }}</b></td><td>{% if dl.difference %}<span class="pill gp-low">{% if dl.difference < 0 %}short{% else %}over{% endif %} {{ dl.difference|money|cut:"-" }}</span>{% else %}<span class="pill gp-ok">balances</span>{% endif %}</td></tr>{% endif %}
+        <tr><td>Rung up on the till</td><td class="r"><b>{{ dl.rung_up|money }}</b></td><td>{% if dl.rung_up != dl.goods %}<span class="pill gp-mid">invoice goods {{ dl.goods|money }}</span>{% else %}<span class="pill gp-ok">matches the invoice</span>{% endif %}</td></tr>
+        <tr><td>Till slip / receipt no.</td><td class="r">{{ dl.till_ref|default:"–" }}</td><td class="small muted">checked by {{ dl.checked_by|default:"–" }}</td></tr>
+        {% if dl.back_note %}<tr><td colspan="3" class="small">{{ dl.back_note }}</td></tr>{% endif %}
+      </tbody></table></div>{% endif %}
+    </section>
+    <section class="card stack"><h2>Products</h2>
+      <div class="tablebox"><table class="t"><thead><tr><th>Product</th><th class="r">Qty</th><th class="r">Price incl. VAT</th><th class="r">Total</th></tr></thead><tbody>
+        {% for ln in goods_lines %}<tr><td><b>{{ ln.description }}</b></td><td class="r">{{ ln.qty|num:2 }}</td><td class="r">{{ ln.price|money }}</td><td class="r">{{ ln.total|money }}</td></tr>{% endfor %}
+        <tr class="total"><td colspan="3" class="r">Goods</td><td class="r">{{ dl.goods|money }}</td></tr></tbody></table></div>
+      {% if dl.notes %}<p style="white-space:pre-line;margin:0"><b>Notes:</b> {{ dl.notes }}</p>{% endif %}
+    </section>
+  </div>
+  <aside class="aside">
+    <section class="card stack drvcard"><h2>Driver</h2>
+      <div class="row" style="gap:14px;align-items:center;flex-wrap:nowrap">{% if dl.driver %}{% include "invoices/_drv_ava.html" with d=dl.driver big=1 %}{% endif %}
+        <div><div class="drvname">{{ dl.driver_name }}</div>{% if dl.driver %}<a class="small" href="{% url 'invoices:driver' dl.driver.pk %}">{{ dl.driver.number }} · driver's page</a>{% endif %}</div></div>
+      {% if dl.driver_phone %}<a href="tel:{{ dl.driver_phone }}">{{ dl.driver_phone }}</a>{% endif %}
+      <div class="row" style="align-items:center;gap:10px"><span class="plate">{{ dl.car_reg }}</span><span><span class="cdot" data-colour="{{ dl.car_colour|lower }}"></span>{{ dl.car|default:"" }}</span></div>
+      {% if dl.driver and not dl.driver.photo %}<p class="small muted" style="margin:0">No photo of this driver yet – <a href="{% url 'invoices:driver' dl.driver.pk %}#photo">take one</a> when he is here.</p>{% endif %}
+    </section>
+    <section class="card stack"><h2>Customer</h2>
+      <div><b>{{ doc.name }}</b>{% if doc.company %}<br>{{ doc.company }}{% endif %}{% if doc.phone %}<br><a href="tel:{{ doc.phone }}">{{ doc.phone }}</a>{% endif %}</div>
+      <div>{{ doc.address1 }}{% if doc.address2 %}<br>{{ doc.address2 }}{% endif %}</div>
+      {% if dl.directions %}<div class="small"><b>Directions:</b> {{ dl.directions }}</div>{% endif %}
+      {% if doc.your_ref %}<div class="small">Order ref: <b>{{ doc.your_ref }}</b></div>{% endif %}
+    </section>
+    {% if can.deliveries_edit %}
+    <section class="card stack" id="next"><h2>Next step</h2>
+      {% if dl.status == 'out' %}
+        {% if not dl.delivered_at %}<form method="post" action="{% url 'invoices:delivery_status' dl.pk %}">{% csrf_token %}<button class="btn" name="to" value="delivered" type="submit">The customer has it – delivered</button></form>{% endif %}
+        <form method="post" action="{% url 'invoices:delivery_status' dl.pk %}" class="stack" style="border-top:1px solid var(--line);padding-top:12px">{% csrf_token %}<input type="hidden" name="to" value="back">
+          <h3>{% if dl.by_driver %}Money back from the driver{% else %}Payment in &amp; on the till{% endif %}</h3>
+          <p class="small muted" style="margin:0">{% if dl.by_driver %}Count the money: it should be <b>{{ dl.expected_back|money }}</b> (the driver keeps {{ dl.fee|money }}). {% endif %}Ring the goods up on the till, then type the till slip number.</p>
+          {% for f in form %}{% include "_field.html" %}{% endfor %}
+          <button class="btn primary" type="submit">Check off</button></form>
+        <form method="post" action="{% url 'invoices:delivery_status' dl.pk %}" onsubmit="return confirm('Cancel {{ dl.number }}? The invoice is cancelled too.')">{% csrf_token %}<button class="btn small quiet" name="to" value="cancel" type="submit">Cancel – the order came back</button></form>
+      {% else %}
+        <form method="post" action="{% url 'invoices:delivery_status' dl.pk %}">{% csrf_token %}<button class="btn small quiet" name="to" value="reopen" type="submit">Open again</button></form>
+      {% endif %}
+    </section>{% endif %}
+  </aside>
+</div>
+{% endblock %}

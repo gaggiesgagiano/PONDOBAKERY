@@ -1,0 +1,30 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Deliveries{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Invoices &amp; Quotes</div><h1>Deliveries</h1>
+  <div class="small muted">Orders taken to customers by a driver – cash only. The driver keeps the delivery fee and brings back the money for the goods.</div></div>
+  <div class="actions">{% if can.deliveries_edit %}<button class="btn" type="button" data-pick title="Choose a delivery to change">Edit</button>{% endif %}<a class="btn xl" href="{% url 'core:excel_file' 'deliveries' %}" title="Download as an Excel file">Excel</a>{% if can.deliveries_edit %}<a class="btn primary" href="{% url 'invoices:delivery_new' %}">+ New delivery</a>{% endif %}</div></div>
+{% include "invoices/_tabs.html" %}
+<div class="stats">
+  <a class="card stat dark" href="?show=open" style="text-decoration:none"><div class="lbl">Out with drivers now</div><div class="val">{{ out.n }}</div><div class="sub">{% if out.back %}{{ out.back|money }} still to come back{% else %}no money outstanding{% endif %}</div></a>
+  <div class="card stat"><div class="lbl">Checked off today</div><div class="val">{{ done_today }}</div><div class="sub">{{ back_today|money }} rung up on the till</div></div>
+  <div class="card stat"><div class="lbl">This month</div><div class="val">{{ month_n }}</div><div class="sub">{{ month_goods|money }} goods · {{ month_fees|money }} fees to drivers</div></div>
+</div>
+<form class="filters" method="get" role="search">
+  <label class="visually-hidden" for="q">Find</label><input type="search" id="q" name="q" value="{{ q }}" placeholder="Customer, driver, car reg or cell">
+  <label class="visually-hidden" for="show">Show</label>
+  <select id="show" name="show" onchange="this.form.submit()"><option value="open" {% if show == 'open' %}selected{% endif %}>Still out</option><option value="done" {% if show == 'done' %}selected{% endif %}>Done</option><option value="cancelled" {% if show == 'cancelled' %}selected{% endif %}>Cancelled</option><option value="all" {% if show == 'all' %}selected{% endif %}>All</option></select>
+  <button class="btn" type="submit">Find</button>
+</form>
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>No.</th><th>Left</th><th>Customer</th><th>Driver &amp; car</th><th class="r">Goods</th><th class="r">Fee</th><th class="r">Customer pays (cash)</th><th>Status</th></tr></thead>
+  <tbody>{% for d in rows %}<tr class="link" data-href="{% url 'invoices:delivery' d.pk %}"{% if can.deliveries_edit %} data-edit="{% url 'invoices:delivery_edit' d.pk %}"{% endif %}>
+    <td><a class="rowlink" href="{% url 'invoices:delivery' d.pk %}">{{ d.number }}</a></td>
+    <td class="small">{{ d.sent_at|date:"d M H:i" }}</td>
+    <td><b>{{ d.doc.name }}</b><br><span class="small muted">{{ d.doc.address2|default:d.doc.address1 }}</span></td>
+    <td><div class="who-cell">{% if d.driver %}{% include "invoices/_drv_ava.html" with d=d.driver %}{% endif %}<span>{{ d.driver_name }}<br><span class="plate sm">{{ d.car_reg }}</span> <span class="small muted">{{ d.car }}</span></span></div></td>
+    <td class="r">{{ d.goods|money }}</td><td class="r small">{{ d.fee|money }}</td><td class="r"><b>{{ d.total|money }}</b></td>
+    <td>{% if d.stage == 'out' %}<span class="pill gp-mid">out</span>{% elif d.stage == 'delivered' %}<span class="pill gp-mid">delivered – money not back</span>{% elif d.stage == 'cancelled' %}<span class="pill gp-none">cancelled</span>{% elif d.difference %}<span class="pill gp-low">{% if d.difference < 0 %}short{% else %}over{% endif %} {{ d.difference|money|cut:"-" }}</span>{% else %}<span class="pill gp-ok">done ✓</span>{% endif %}</td></tr>
+  {% empty %}<tr class="emptyrow"><td colspan="8" class="muted">{% if show == 'open' %}No deliveries out right now.{% else %}Nothing to show.{% endif %}{% if can.deliveries_edit %} <a href="{% url 'invoices:delivery_new' %}">Send a new delivery.</a>{% endif %}</td></tr>{% endfor %}</tbody>
+</table></div></section>
+{% endblock %}

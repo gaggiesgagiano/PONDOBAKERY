@@ -1,0 +1,31 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Production{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Production</div><h1>Production plans</h1></div><div class="actions">{% if can.production_edit %}<button class="btn" type="button" data-pick title="Choose a production plan to change">Edit</button>{% endif %}</div></div>
+<div class="cols">
+  <section class="card main stack"><h2>Plans</h2>
+    <div class="tablebox"><table class="t">
+      <thead><tr><th>Plan</th><th>Date</th><th>Shift</th><th class="r">Products</th><th class="r">Units to make</th><th>Status</th><th>Planned by</th></tr></thead>
+      <tbody>
+      {% for p, units in rows %}
+        <tr class="link" data-href="{% url 'production:plan' p.pk %}"{% if can.production_edit %} data-edit="{% url 'production:plan_edit' p.pk %}"{% endif %}>
+          <td class="small muted">{{ p.number }}</td>
+          <td><a class="rowlink" href="{% url 'production:plan' p.pk %}">{{ p.date|date:"D d M Y" }}</a>{% if p.date == today %} <span class="tag">today</span>{% endif %}</td>
+          <td>{{ p.get_shift_display }}</td><td class="r">{{ p.n }}</td><td class="r"><b>{{ units }}</b></td>
+          <td>{% if p.status == "done" %}<span class="pill gp-ok">Done</span>{% elif p.status == "final" %}<span class="pill gp-mid">Final</span>{% else %}<span class="pill gp-none">Draft</span>{% endif %}</td>
+          <td class="small">{{ p.planned_by|default:"" }}</td>
+        </tr>
+      {% empty %}<tr class="emptyrow"><td colspan="7" class="muted">No plans yet. Make the first one on the right.</td></tr>{% endfor %}
+      </tbody></table></div>
+  </section>
+  {% if can.production_edit %}
+  <aside class="aside"><form class="card stack" method="post" action="{% url 'production:plan_new' %}">{% csrf_token %}
+    <h2>New plan</h2>
+    {% if form.non_field_errors %}<div class="msg error">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+    {% for f in form %}{% include "_field.html" %}{% endfor %}
+    <button class="btn primary" type="submit">Make plan</button>
+    <p class="small muted" style="margin:0">Tip: give each product a <b>model stock</b> (Edit recipe → Model stock day / night). New plans then list those products by themselves and work out how many to make.</p>
+  </form></aside>
+  {% endif %}
+</div>
+{% endblock %}

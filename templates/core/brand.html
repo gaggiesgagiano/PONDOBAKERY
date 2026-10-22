@@ -1,0 +1,202 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Our Brand{% endblock %}
+{% block head %}<style>
+  .bhero{position:relative;overflow:hidden;isolation:isolate;border-radius:var(--radius);background:#e56026;color:#fff3d7;padding:30px 34px;display:flex;flex-wrap:wrap;gap:24px;align-items:center;justify-content:space-between}
+  .bhero::before{content:"";position:absolute;inset:0;background:url({% static 'brand/art/pattern_cream.svg' %}) 0 0/300px;opacity:.12;z-index:-1;
+    -webkit-mask-image:linear-gradient(90deg,#000 0 42%,transparent 55%);mask-image:linear-gradient(90deg,#000 0 42%,transparent 55%)}
+  .bhero img{width:min(420px,100%)}
+  .bhero .t{max-width:520px;display:flex;flex-direction:column;gap:10px}
+  .bhero h1{color:#fff3d7;font-size:54px}
+  .bhero p{margin:0;font-size:16px;line-height:1.55}
+  .four{display:flex;flex-wrap:wrap;gap:10px}
+  .four span{font-family:var(--head);text-transform:uppercase;background:#7a1315;color:#fff3d7;border-radius:12px;padding:8px 16px;font-size:20px}
+  .band{background:#7a1315;border-radius:var(--radius);padding:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
+  .band .c{background:#fff3d7;color:#2a1412;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:10px}
+  .band h2{color:#e56026;font-size:30px}
+  .band .c p{margin:0;line-height:1.6}
+  .band .c .goal{margin-top:auto;background:#e56026;color:#fff3d7;border-radius:12px;padding:12px 14px;font-weight:700;text-align:center}
+  .band ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+  .band ol li{background:#e56026;color:#fff3d7;border-radius:12px;padding:10px 14px;font-family:var(--head);text-transform:uppercase;font-size:16px}
+  .values{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+  .values div{background:var(--card);border-radius:16px;padding:16px 18px;box-shadow:0 1px 0 var(--line2)}
+  .values h3{font-family:var(--head);text-transform:uppercase;color:#f89b47;font-size:24px;font-weight:400;margin-bottom:6px}
+  html[data-theme="warm"] .values h3,html[data-theme="cream"] .values h3{color:#e56026}
+  .values p{margin:0;line-height:1.55}
+  .sw{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+  .sw .c{border-radius:16px;padding:16px;min-height:220px;display:flex;flex-direction:column;gap:4px;border:1px solid rgba(0,0,0,.06)}
+  .sw .n{font-family:var(--head);text-transform:uppercase;font-size:22px;line-height:1}
+  .sw .r{font-weight:700;opacity:.85;margin-bottom:6px}
+  .sw dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:0;font-size:13px}
+  .sw dt{font-weight:800;opacity:.8} .sw dd{margin:0}
+  .sw .u{font-size:12.5px;margin-top:auto;opacity:.9}
+  .sw button{align-self:flex-start;margin-top:8px;border:0;border-radius:10px;padding:6px 10px;font:inherit;font-weight:800;cursor:pointer;background:rgba(255,255,255,.85);color:#2a1412}
+  .pairs{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+  .pairs div{border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px;font-size:13px;font-weight:700}
+  .pairs img{width:100%}
+  .fonts{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+  .fonts .c{background:var(--card);border-radius:16px;padding:18px;box-shadow:0 1px 0 var(--line2);display:flex;flex-direction:column;gap:8px}
+  .fonts .k{font-size:12px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--rust)}
+  .fonts .s{font-size:34px;color:var(--maroon);line-height:1.1}
+  .fonts .abc{font-size:15px;letter-spacing:.12em;color:var(--maroon);word-break:break-all}
+  .lg{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+  .lg .c{border-radius:14px;overflow:hidden;border:1px solid var(--line2);background:var(--card);display:flex;flex-direction:column}
+  .lg .bg{height:150px;display:flex;align-items:center;justify-content:center;padding:16px}
+  .lg .bg img{max-width:100%;max-height:118px}
+  .lg .dl{display:flex;gap:8px;padding:8px 10px;font-size:12.5px;font-weight:800;align-items:center;justify-content:space-between}
+  .lg .dl span:last-child{white-space:nowrap}
+  .art{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+  .art a{background:var(--card);border-radius:14px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;font-size:12.5px;font-weight:800;box-shadow:0 1px 0 var(--line2)}
+  .art img{height:74px;max-width:100%}
+  .pats{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+  .pats a{height:120px;border-radius:14px;display:flex;align-items:flex-end;padding:8px;text-decoration:none;font-weight:800;font-size:12.5px;background-size:180px}
+  .pats a span{background:rgba(255,255,255,.88);color:#2a1412;border-radius:8px;padding:3px 8px}
+  .dont{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+  .dont div{border-radius:12px;padding:12px 14px;background:var(--low-bg);color:var(--low);font-weight:700}
+  .dont div.do{background:var(--ok-bg);color:var(--ok)}
+  .tips li{margin-bottom:6px;line-height:1.5}
+  nav.toc{display:flex;flex-wrap:wrap;gap:8px}
+</style>{% endblock %}
+{% block content %}
+<div class="bhero">
+  <div class="t">
+    <div class="crumbs" style="color:#ffe3c4">Our Brand · the Pondo Bakery brand guidelines</div>
+    <h1>Pondo Bakery</h1>
+    <p>Pondo is an everyday bakery built around a simple idea: <b>good food should feel like a good deal without feeling ordinary.</b></p>
+    <p>We make freshly prepared bakery treats for busy Zimbabweans who want something genuinely satisfying without spending too much time or money – proper bakery expertise in an easy, grab-and-go format.</p>
+    <div class="four"><span>Approachable</span><span>Playful</span><span>Crafted</span><span>Convenient</span></div>
+  </div>
+  <img src="{% static 'brand/logo/primary_reverse_cream.svg' %}" alt="Pondo Bakery logo">
+</div>
+
+<nav class="toc no-print">
+  <a class="chip" href="#mission">Mission &amp; values</a><a class="chip" href="#voice">Voice</a><a class="chip" href="#colours">Colours</a>
+  <a class="chip" href="#fonts">Fonts</a><a class="chip" href="#logos">Logos</a><a class="chip" href="#art">Illustrations</a>
+  <a class="chip" href="#rules">Do's &amp; don'ts</a><a class="chip" href="#social">Social media</a>
+  {% if user.is_superuser %}<a class="chip on" href="{% url 'core:look_business' %}">Look &amp; feel of this program</a>{% endif %}
+</nav>
+
+<div class="band" id="mission">
+  <div class="c"><h2>Mission</h2><p>Pondo exists to make quality bakery food an accessible part of everyday life. We create freshly made treats that balance quality, value and convenience, giving busy Zimbabweans something genuinely satisfying without unnecessary fuss. We want every visit to feel simple and enjoyable — good food, fair value and a little moment of pleasure in the day.</p>
+    <div class="goal">To make quality bakery treats accessible, convenient and enjoyable every day.</div></div>
+  <div class="c"><h2>Vision</h2><p>Pondo aims to become a recognisable and trusted everyday bakery brand in Zimbabwe, changing how people think about affordable bakery food. We want to prove that accessible doesn't have to mean generic or compromised, building a bakery experience people know, trust and enjoy.</p>
+    <div class="goal">To become Zimbabwe's go-to everyday bakery for quality, value and joy.</div></div>
+  <div class="c"><h2>Purpose</h2><p>Pondo exists to make the everyday treat feel like a small win. We bridge the gap between affordable bakery food and quality craftsmanship, making something genuinely good easier to enjoy.</p>
+    <ol><li>01. Make quality accessible</li><li>02. Make everyday moments better</li><li>03. Make good food easy</li></ol></div>
+</div>
+
+<section class="stack"><h2>Our values</h2>
+  <div class="small muted">They guide how we work, how we talk and how we show up for our customers.</div>
+  <div class="values">
+    <div><h3>Quality</h3><p>We take pride in making bakery products that are consistently fresh, satisfying and well crafted.</p></div>
+    <div><h3>Simplicity</h3><p>We keep the experience straightforward — easy to choose, easy to grab and easy to enjoy.</p></div>
+    <div><h3>Accessibility</h3><p>We believe good bakery food should be enjoyable without feeling expensive, exclusive or out of reach.</p></div>
+    <div><h3>Consistency</h3><p>We strive to give customers the same quality and experience they can rely on every time they choose Pondo.</p></div>
+    <div><h3>Joy</h3><p>We bring personality and positivity to the everyday, creating small moments that make people smile.</p></div>
+    <div><h3>Community</h3><p>We are an everyday bakery made for the people around us, creating something that feels familiar, welcoming and part of daily life.</p></div>
+  </div>
+</section>
+
+<section class="card stack" id="voice"><h2>Brand voice &amp; personality</h2>
+  <div class="cols"><div class="main stack">
+    <p style="margin:0;line-height:1.6">Pondo feels <b>friendly, playful and confident</b> – a bakery that knows its craft but doesn't take itself too seriously. We talk the way people talk: <b>conversational, upbeat and natural</b>, adding personality without sounding forced or overly formal. Use this for signs, WhatsApp messages, social media and how staff greet customers.</p>
+    <div class="row"><b>Personality:</b> <span class="chip">Playful</span><span class="chip">Warm</span><span class="chip">Confident</span><span class="chip">Approachable</span></div>
+    <div class="row"><b>Voice:</b> <span class="chip">Friendly</span><span class="chip">Upbeat</span><span class="chip">Conversational</span><span class="chip">Playful</span></div>
+    <div class="small muted">Say it like Pondo: “Pondo yako chete!” · “Freshly baked goods everyday” · “Grab a quick morning snack on the go!” · “Easy to enjoy”.</div>
+  </div></div>
+</section>
+
+<section class="stack" id="colours"><h2>Colour palette</h2>
+  <div class="small muted">Primary colour about 60% of a design, secondary colours about 30%, accent about 10%. Click a colour to copy its HEX code.</div>
+  <div class="sw">{% for key, c in brand.items %}
+    <div class="c" style="background:{{ c.hex }};color:{{ c.ink }}">
+      <div class="n">{{ c.name }}</div><div class="r">{{ c.role }}</div>
+      <dl><dt>HEX</dt><dd>{{ c.hex }}</dd><dt>RGB</dt><dd>{{ c.rgb }}</dd><dt>CMYK</dt><dd>{{ c.cmyk }}</dd><dt>PANTONE</dt><dd>{{ c.pantone }}</dd></dl>
+      <div class="u">{{ c.use }}</div>
+      <button type="button" class="no-print" data-copy="{{ c.hex }}">Copy {{ c.hex }}</button>
+    </div>{% endfor %}
+  </div>
+  <h3 style="margin-top:6px">Which colour goes on which background</h3>
+  <div class="pairs">
+    <div style="background:#e56026;color:#fff3d7">On Pondo Orange use Bakery Cream<img src="{% static 'brand/logo/primary_reverse_cream.svg' %}" alt=""></div>
+    <div style="background:#f89b47;color:#7a1315">On Warm Orange use Cream or Burgundy<img src="{% static 'brand/logo/primary_burgundy.svg' %}" alt=""></div>
+    <div style="background:#fff3d7;color:#7a1315;border:1px solid #ecd3ad">On Bakery Cream use Burgundy, Teal, Orange or Warm Orange<img src="{% static 'brand/logo/primary_teal.svg' %}" alt=""></div>
+    <div style="background:#7a1315;color:#fff3d7">On Pondo Burgundy use Cream or Warm Orange<img src="{% static 'brand/logo/primary_reverse_warm.svg' %}" alt=""></div>
+    <div style="background:#218d80;color:#fff3d7">On Pondo Teal use Bakery Cream<img src="{% static 'brand/logo/primary_reverse_cream.svg' %}" alt=""></div>
+  </div>
+</section>
+
+<section class="stack" id="fonts"><h2>Fonts</h2>
+  <div class="fonts">
+    <div class="c"><div class="k">Primary font – headers &amp; titles</div>
+      <div class="s" style="font-family:{% if look_now.has_brand_font %}'Pondo Brand',{% endif %}'Pondo Local',Gorditas;text-transform:uppercase">Pondo</div>
+      <div class="abc" style="font-family:{% if look_now.has_brand_font %}'Pondo Brand',{% endif %}'Pondo Local',Gorditas;text-transform:uppercase">A B C D E F G H I J K L M N O P Q R S T U V W X Y Z 1 2 3 4 5 6 7 8 9 0</div>
+      <div class="small muted">A capitals font – keep the letter spacing at 0. The brand font “Pondo” is <b>Retro Star by Genetype</b> – built into this program, so it shows on every computer and printout.</div></div>
+    <div class="c"><div class="k">Secondary font – sub-headings</div>
+      <div class="s" style="font-family:Nunito;font-weight:600">Nunito Semi Bold</div>
+      <div class="abc" style="font-family:Nunito;font-weight:600">a b c d e f g h i j k l m n o p q r s t u v w x y z 1 2 3 4 5 6 7 8 9 0</div>
+      <div class="small muted">Complements the primary font with a clean, friendly style. Free from Google Fonts.</div></div>
+    <div class="c"><div class="k">Supporting font – body text</div>
+      <div class="s" style="font-family:Nunito;font-weight:400">Nunito Regular</div>
+      <div class="abc" style="font-family:Nunito;font-weight:400">a b c d e f g h i j k l m n o p q r s t u v w x y z 1 2 3 4 5 6 7 8 9 0</div>
+      <div class="small muted">Keeps longer text clear, simple and easy to read. Used for all normal text in this program.</div></div>
+  </div>
+</section>
+
+<section class="stack" id="logos"><h2>Logos to download</h2>
+  <div class="small muted">Click <b>SVG</b> for sharp printing at any size (signs, the van, packaging) or <b>PNG</b> for WhatsApp, Word and social media. Always keep clear space around the logo – about the height of the “P” in Pondo.</div>
+  {% for title, say, items in logos %}
+  <h3>{{ title }}</h3><div class="small muted" style="margin-top:-6px">{{ say }}</div>
+  <div class="lg">{% for name, bg, label in items %}
+    <div class="c"><div class="bg" style="background:{{ bg }}"><img src="{% static 'brand/logo/' %}{{ name }}.svg" alt="{{ title }}"></div>
+      <div class="dl"><span class="muted">{{ label }}</span><span><a href="{% static 'brand/logo/' %}{{ name }}.svg" download>SVG</a> · <a href="{% static 'brand/png/' %}{{ name }}.png" download>PNG</a></span></div></div>
+  {% endfor %}</div>
+  {% endfor %}
+</section>
+
+<section class="stack" id="art"><h2>Illustrations &amp; pattern</h2>
+  <div class="small muted">Hand-drawn bakery illustrations bring Pondo's playful personality to packaging, menus, signs and social media.</div>
+  <div class="art">{% for a in art %}
+    <a href="{% static 'brand/png/' %}{{ a }}_orange.png" download><img src="{% static 'brand/art/' %}{{ a }}_orange.svg" alt="">{% if a == "glazed_bun" %}glazed bun{% else %}{{ a }}{% endif %} · PNG</a>{% endfor %}</div>
+  <div class="pats">
+    <a href="{% static 'brand/art/pattern_cream.svg' %}" download style="background-color:#e56026;background-image:url({% static 'brand/art/pattern_cream.svg' %})"><span>Cream pattern · SVG</span></a>
+    <a href="{% static 'brand/art/pattern_cream.svg' %}" download style="background-color:#7a1315;background-image:url({% static 'brand/art/pattern_cream.svg' %})"><span>On burgundy</span></a>
+    <a href="{% static 'brand/art/pattern_orange.svg' %}" download style="background-color:#fff3d7;background-image:url({% static 'brand/art/pattern_orange.svg' %})"><span>Orange pattern · SVG</span></a>
+    <a href="{% static 'brand/art/pattern_burgundy.svg' %}" download style="background-color:#f89b47;background-image:url({% static 'brand/art/pattern_burgundy.svg' %})"><span>Burgundy pattern · SVG</span></a>
+    <a href="{% static 'brand/art/pattern_cream.svg' %}" download style="background-color:#218d80;background-image:url({% static 'brand/art/pattern_cream.svg' %})"><span>On teal</span></a>
+  </div>
+</section>
+
+<section class="card stack" id="rules"><h2>Do's &amp; don'ts</h2>
+  <div class="dont">
+    <div class="do">✓ Use the logo files from this page – exactly as they are.</div>
+    <div class="do">✓ Only use the five brand colours, in the pairings above.</div>
+    <div class="do">✓ Keep clear space around the logo.</div>
+    <div>✗ Don't skew or stretch the logo.</div>
+    <div>✗ Don't change it to colours outside the brand.</div>
+    <div>✗ Don't change the layout or arrangement.</div>
+    <div>✗ Don't add a stroke or a drop shadow.</div>
+    <div>✗ Don't tweak individual letters.</div>
+    <div>✗ Don't put graphics into or behind the logo.</div>
+  </div>
+</section>
+
+<section class="card stack" id="social"><h2>Social media &amp; photos</h2>
+  <ul class="tips" style="margin:0;padding-left:20px">
+    <li><b>Checkerboard:</b> never post the same background colour twice in a row – alternate brand colours so every post stands out.</li>
+    <li>Use the brand fonts only: the Pondo font for big words, Nunito for the rest. No random fonts.</li>
+    <li>Stick to the five brand colours so people recognise Pondo straight away – highlights, stories and posts.</li>
+    <li>Photos: warm, close-up, freshly baked food and real people enjoying it. Add a sticker (starburst “Today's special”, “Only $1.80”) or the round “Fresh since ’26” badge.</li>
+    <li>Make your own price cards and posters in this program: <a href="{% url 'costing:cards' %}">Products &amp; Prices › Price cards &amp; posters</a>.</li>
+  </ul>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('[data-copy]').forEach(function(b){
+  b.addEventListener('click', function(){
+    var v = b.dataset.copy, done = function(){ b.textContent = 'Copied ' + v; setTimeout(function(){ b.textContent = 'Copy ' + v; }, 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(v).then(done, done); else done();
+  });
+});
+</script>
+{% endblock %}

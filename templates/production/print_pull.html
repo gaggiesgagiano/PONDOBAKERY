@@ -1,0 +1,12 @@
+{% extends "costing/print_base.html" %}{% load pondo %}
+{% block title %}Ingredient list {{ plan }}{% endblock %}
+{% block kind %}INGREDIENTS FROM STORE · {{ plan.number }}{% endblock %}
+{% block body %}
+<h1>Ingredients – {{ plan.get_shift_display }} {{ plan.date|date:"d M Y" }}</h1>
+<p class="small muted" style="margin:0">Everything needed for this shift, including what goes into the mother recipes. Tick each item as it leaves the store.</p>
+<table class="t">
+  <thead><tr><th>Ingredient</th><th>Supplier / group</th><th class="r">Quantity</th><th>Unit</th><th>Issued ✓</th></tr></thead>
+  <tbody>{% for d in res.ingredient_rows %}<tr><td>{{ d.ingredient.name }}</td><td class="small">{{ d.ingredient.supplier|default:"" }}</td><td class="r"><b>{{ d.qty|num:3 }}</b></td><td>{{ d.ingredient.unit }}</td><td>☐</td></tr>{% endfor %}</tbody>
+</table>
+<div class="sign"><div>Issued by (store)</div><div>Received by (baker)</div></div>
+{% endblock %}

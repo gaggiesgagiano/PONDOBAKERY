@@ -1,0 +1,229 @@
+{% extends "forms/_base.html" %}{% load static pondo %}
+{% block fit %}{% endblock %}
+{% block css %}
+  .page{gap:2.6mm}
+  table.ft td{height:auto;padding:1.1mm 2mm;vertical-align:top}
+  table.ft td.r,table.ft th.r{text-align:right;white-space:nowrap}
+  table.ft tr.tot td{background:#fff3d7;font-weight:800;color:#7a1315;border-top:.4mm solid #7a1315}
+  table.ft tr.sub td{font-weight:700;background:#fffaf0}
+  table.ft.small{font-size:8.2pt}
+  table.ft.small th{font-size:7.8pt;padding:1.2mm 1.5mm}
+  table.ft.small td{padding:.7mm 1.5mm}
+  table.ft tr.miss td{color:#b9977f}
+  .neg{color:#c62828}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:4mm;align-items:start}
+  .kp{display:grid;grid-template-columns:repeat(4,1fr);gap:2.5mm}
+  .kp div{background:#fff3d7;border-radius:2.5mm;padding:2mm 3mm}
+  .kp div.dark{background:#7a1315;color:#fff3d7}
+  .kp span{display:block;font-size:7.8pt;font-weight:700;opacity:.8}
+  .kp b{font-family:var(--head);font-size:15pt;font-weight:400}
+  .checks{border:.4mm solid #e56026;border-radius:3mm;padding:2.2mm 3.5mm;background:#fff7ef}
+  .checks li{margin:.6mm 0;font-size:9pt}
+  .checks.ok{border-color:#218d80;background:#eef8f6}
+  .meta{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:1mm 4mm;font-size:9pt}
+  .meta span{color:#7c5a4a}
+  .note{font-size:8.2pt;color:#7c5a4a;margin:0}
+  .sec.pb{break-before:page}
+  .toc{columns:2;font-size:9pt;margin:0;padding-left:5mm}
+  .ctrl{position:fixed;top:12px;left:12px;display:flex;gap:8px;align-items:center;z-index:9;background:#fff;padding:6px 10px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+  .ctrl input{width:160px}
+  @media print{.ctrl{display:none!important}}
+  .sig2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6mm;margin-top:4mm}
+{% endblock %}
+{% block pages %}
+<form class="ctrl" method="get"><a class="btn small quiet" href="{% url 'core:dashboard' %}">← Pondo</a><label class="small" for="mo"><b>Month</b></label>
+  <input type="month" id="mo" name="month" value="{{ p.start|date:'Y-m' }}" onchange="this.form.submit()">
+  <a class="btn small" href="{% url 'reports:accountant_excel' %}?month={{ p.start|date:'Y-m' }}">Excel</a><a class="btn small primary" href="{% url 'core:email' 'accountant' p.start|date:'Y-m' %}">✉ E-mail</a></form>
+{% with m=p.m %}
+<div class="page">
+  {% include "forms/_letterhead.html" %}
+  <div class="ttl"><h1>Accountant month report</h1><div class="sub"><b>{{ p.start|date:"j F Y" }} – {{ p.end|date:"j F Y" }}</b><br>US$ · amounts excl. VAT unless marked</div></div>
+  <div class="meta">
+    <span>Business</span><b>{{ current_shop.name|default:company.company_name }}</b>
+    <span>TIN</span><b>{{ current_shop.tin|default:"–" }}</b>
+    <span>Period</span><b>{{ p.start|date:"d/m/Y" }} to {{ p.end|date:"d/m/Y" }} ({{ p.end.day }} days)</b>
+    <span>VAT / reg. no.</span><b>{{ current_shop.vat_no|default:"–" }}</b>
+    <span>Printed</span><b>{% now "d M Y H:i" %} by {{ user.get_full_name|default:user.username }}</b>
+    <span>VAT rate</span><b>{{ p.cs.vat_rate|pct }}</b>
+  </div>
+  <div class="kp">
+    <div><span>Sales excl. VAT</span><b>{{ m.sales|money }}</b></div>
+    <div><span>Gross profit</span><b>{{ m.gross|money }}</b></div>
+    <div><span>Expenses</span><b>{{ m.expenses|money }}</b></div>
+    <div class="dark"><span>Net profit / (loss)</span><b>{{ m.net|money }}</b></div>
+  </div>
+  <div class="checks{% if not p.checks %} ok{% endif %}"><b>{% if p.checks %}Points to check before the books are closed{% else %}✓ Nothing missing – all days, cash-ups, pay run and stock takes are in{% endif %}</b>
+    {% if p.checks %}<ul style="margin:1mm 0 0;padding-left:5mm">{% for c in p.checks %}<li>{{ c }}</li>{% endfor %}</ul>{% endif %}</div>
+  <div><b style="font-size:9pt;color:#7a1315">IN THIS REPORT</b><ol class="toc"><li>Income statement</li><li>VAT summary</li><li>Sales &amp; takings per day</li><li>Sales per category &amp; payment type</li><li>Expenses</li><li>Purchases (supplier invoices)</li>{% if p.with_payroll %}<li>Payroll &amp; statutory payments</li>{% endif %}<li>Invoices issued &amp; debtors</li><li>Stock &amp; cost of sales</li><li>Equipment &amp; depreciation</li></ol></div>
+
+  <div class="sec"><div class="sh"><span class="n">1</span><h2>Income statement</h2><span class="hint">management accounts</span></div>
+  <table class="ft"><thead><tr><th></th><th class="r">US$</th><th class="r">% of sales</th></tr></thead><tbody>
+    <tr class="sub"><td>Sales (excl. VAT)</td><td class="r">{{ m.sales|money }}</td><td class="r">{% if m.sales %}100.0%{% endif %}</td></tr>
+    {% if m.cos_from == 'stock' %}
+    <tr><td>&nbsp;&nbsp;Opening stock ({{ m.opening.date|date:"d M Y" }})</td><td class="r">{{ m.opening.total_value|money }}</td><td></td></tr>
+    <tr><td>&nbsp;&nbsp;+ Purchases (excl. VAT)</td><td class="r">{{ m.purchases|money }}</td><td></td></tr>
+    <tr><td>&nbsp;&nbsp;− Closing stock ({{ m.closing.date|date:"d M Y" }})</td><td class="r">{{ m.closing.total_value|money }}</td><td></td></tr>{% endif %}
+    <tr><td>Cost of sales{% if m.cos_from == 'recipes' %} <span class="note">(from recipe costs – no stock takes)</span>{% endif %}</td><td class="r">{{ m.cos|money }}</td><td class="r">{{ m.pcts.cos|pct }}</td></tr>
+    <tr class="tot"><td>GROSS PROFIT</td><td class="r">{{ m.gross|money }}</td><td class="r">{{ m.gross_pct|pct }}</td></tr>
+    <tr><td>Salaries &amp; wages {% if m.wages_from == 'payroll' %}<span class="note">(payroll gross + employer NSSA + ZIMDEF)</span>{% else %}<span class="note">(salary list – no final pay run)</span>{% endif %}</td><td class="r">{{ m.wages|money }}</td><td class="r">{{ m.pcts.wages|pct }}</td></tr>
+    <tr><td>Casual wages &amp; overtime</td><td class="r">{{ m.casual|money }}</td><td class="r">{{ m.pcts.casual|pct }}</td></tr>
+    {% if m.running_from == 'actual' %}{% for name, v in m.by_cat %}{% if name|lower != 'casual wages & overtime' %}<tr><td>{{ name }}</td><td class="r">{{ v|money }}</td><td class="r"></td></tr>{% endif %}{% endfor %}
+    {% else %}<tr><td>Running expenses <span class="note">(monthly budget – no expenses typed)</span></td><td class="r">{{ m.running|money }}</td><td class="r">{{ m.pcts.running|pct }}</td></tr>{% endif %}
+    <tr><td>Depreciation – equipment</td><td class="r">{% if m.dep is not None %}{{ m.dep|money }}{% else %}–{% endif %}</td><td class="r">{{ m.pcts.dep|pct }}</td></tr>
+    <tr class="sub"><td>Total expenses</td><td class="r">{{ m.expenses|money }}</td><td class="r">{{ m.pcts.expenses|pct }}</td></tr>
+    <tr class="tot"><td>NET PROFIT / (LOSS) BEFORE TAX</td><td class="r{% if m.net < 0 %} neg{% endif %}">{{ m.net|money }}</td><td class="r">{{ m.pcts.net|pct }}</td></tr>
+  </tbody></table>
+  <p class="note">Waste at cost {{ m.waste|money }} and staff meals {{ m.meals|money }} are inside cost of sales. Expenses are shown in the month they were paid.</p></div>
+
+  <div class="sec"><div class="sh"><span class="n">2</span><h2>VAT summary</h2><span class="hint">for the VAT return – confirm with the till's Z-reports</span></div>
+  <table class="ft"><tbody>
+    <tr><td>Output VAT in till takings <span class="note">(till takings incl. VAT − sales excl. VAT, {{ p.vat_days }} day{{ p.vat_days|pluralize }} with both)</span></td><td class="r">{{ p.vat.out_till|money }}</td></tr>
+    <tr><td>Output VAT on tax invoices not linked to a delivery <span class="note">(only if not rung up on the till)</span></td><td class="r">{{ p.vat.out_inv_other|money }}</td></tr>
+    <tr class="sub"><td>Output VAT</td><td class="r">{{ p.vat.out|money }}</td></tr>
+    <tr><td>Input VAT – supplier invoices (goods received)</td><td class="r">{{ p.vat.in_grv|money }}</td></tr>
+    <tr><td>Input VAT – expenses with a VAT receipt</td><td class="r">{{ p.vat.in_exp|money }}</td></tr>
+    <tr class="sub"><td>Input VAT</td><td class="r">{{ p.vat.in|money }}</td></tr>
+    <tr class="tot"><td>VAT payable / (refundable)</td><td class="r">{{ p.vat.net|money }}</td></tr>
+  </tbody></table>
+  <p class="note">Input VAT can only be claimed with a valid tax invoice. Zero-rated sales (e.g. bread) carry no VAT.</p></div>
+</div>
+
+<div class="page pb">
+  <div class="sec"><div class="sh"><span class="n">3</span><h2>Sales &amp; takings per day</h2></div>
+  <table class="ft small"><thead><tr><th>Date</th><th class="r">Sales excl. VAT</th><th class="r">Till takings incl. VAT</th><th class="r">VAT in takings</th><th class="r">Over / (short)</th><th class="r">Pay-outs</th><th class="r">Banked</th><th class="r">ZiG</th><th class="r">Tills</th></tr></thead><tbody>
+  {% for r in p.days %}<tr{% if r.sales is None and r.till is None %} class="miss"{% endif %}><td>{{ r.date|date:"D d M" }}</td>
+    <td class="r">{% if r.sales is not None %}{{ r.sales|money }}{% else %}–{% endif %}</td>
+    <td class="r">{% if r.till is not None %}{{ r.till|money }}{% else %}–{% endif %}</td>
+    <td class="r">{% if r.vat is not None %}{{ r.vat|money }}{% endif %}</td>
+    <td class="r{% if r.variance and r.variance < 0 %} neg{% endif %}">{% if r.variance is not None %}{{ r.variance|money }}{% endif %}</td>
+    <td class="r">{% if r.payouts %}{{ r.payouts|money }}{% endif %}</td>
+    <td class="r">{% if r.banked %}{{ r.banked|money }}{% endif %}</td>
+    <td class="r">{% if r.zig %}{{ r.zig|floatformat:2 }}{% endif %}</td>
+    <td class="r">{% if r.n_tills %}{{ r.n_tills }}{% if r.unsigned %} <span class="neg" title="not signed off">●</span>{% endif %}{% endif %}</td></tr>{% endfor %}
+  <tr class="tot"><td>Month</td><td class="r">{{ p.tot_days.sales|money }}</td><td class="r">{{ p.tot_days.till|money }}</td><td class="r">{{ p.tot_days.vat|money }}</td><td class="r">{{ p.tot_days.variance|money }}</td><td class="r">{{ p.tot_days.payouts|money }}</td><td class="r">{{ p.tot_days.banked|money }}</td><td class="r">{{ p.tot_days.zig|floatformat:2 }}</td><td></td></tr>
+  </tbody></table>
+  <p class="note">– = nothing typed for that day. <span class="neg">●</span> = cash-up not signed off. ZiG is counted in ZiG and changed into US$ at the day's rate in the cash-up.</p></div>
+</div>
+
+<div class="page pb">
+  <div class="two">
+  <div class="sec"><div class="sh"><span class="n">4</span><h2>Sales per category</h2></div>
+  <table class="ft small"><thead><tr><th>Category</th><th class="r">Excl. VAT</th></tr></thead><tbody>
+  {% for name, v in p.by_category %}<tr><td>{{ name }}</td><td class="r">{{ v|money }}</td></tr>{% empty %}<tr><td colspan="2">No sales typed</td></tr>{% endfor %}
+  <tr class="tot"><td>Total</td><td class="r">{{ p.cat_total|money }}</td></tr></tbody></table></div>
+  <div class="sec"><div class="sh"><span class="n">4</span><h2>Takings per payment type</h2></div>
+  <table class="ft small"><thead><tr><th>Payment type</th><th class="r">Till says (incl. VAT)</th></tr></thead><tbody>
+  {% for name, v in p.methods %}<tr><td>{{ name }}</td><td class="r">{{ v|money }}</td></tr>{% empty %}<tr><td colspan="2">No cash-ups</td></tr>{% endfor %}
+  <tr class="tot"><td>Total</td><td class="r">{{ p.methods_total|money }}</td></tr></tbody></table>
+  <p class="note">Cash banked / to the safe: {{ p.tot_days.banked|money }} · paid out of the tills: {{ p.tot_days.payouts|money }}</p></div>
+  </div>
+
+  <div class="sec flow"><div class="sh"><span class="n">5</span><h2>Expenses</h2><span class="hint">every expense typed for the month</span></div>
+  <table class="ft small"><thead><tr><th>Date</th><th>Category</th><th>Paid to</th><th>What for</th><th>Receipt no.</th><th>Paid from</th><th class="r">Excl. VAT</th><th class="r">VAT</th><th class="r">Total</th></tr></thead><tbody>
+  {% for r in p.exp_rows %}<tr><td>{{ r.e.date|date:"d M" }}</td><td>{{ r.e.category.name }}</td><td>{{ r.e.payee }}</td><td>{{ r.e.description }}</td><td>{{ r.e.receipt_no|default:"–" }}</td><td>{{ r.e.get_paid_from_display }}</td><td class="r">{{ r.excl|money }}</td><td class="r">{% if r.vat %}{{ r.vat|money }}{% endif %}</td><td class="r">{{ r.incl|money }}</td></tr>
+  {% empty %}<tr><td colspan="9">No expenses typed for this month.</td></tr>{% endfor %}
+  <tr class="tot"><td colspan="6">Total</td><td class="r">{{ p.exp_tot.excl|money }}</td><td class="r">{{ p.exp_tot.vat|money }}</td><td class="r">{{ p.exp_tot.incl|money }}</td></tr></tbody></table>
+  {% if p.exp_rows %}<div class="two" style="margin-top:2mm">
+    <table class="ft small"><thead><tr><th>Per category</th><th class="r">Excl. VAT</th></tr></thead><tbody>{% for name, v in p.m.by_cat %}<tr><td>{{ name }}</td><td class="r">{{ v|money }}</td></tr>{% endfor %}</tbody></table>
+    <table class="ft small"><thead><tr><th>Paid from</th><th class="r">Incl. VAT</th></tr></thead><tbody>{% for name, v in p.by_paid %}<tr><td>{{ name }}</td><td class="r">{{ v|money }}</td></tr>{% endfor %}</tbody></table>
+  </div>{% endif %}</div>
+</div>
+
+<div class="page pb">
+  <div class="sec flow"><div class="sh"><span class="n">6</span><h2>Purchases – supplier invoices</h2><span class="hint">goods received (GRV)</span></div>
+  <table class="ft small"><thead><tr><th>Date</th><th>GRV</th><th>Supplier</th><th>Invoice no.</th><th class="r">Excl. VAT</th><th class="r">VAT</th><th class="r">Total</th><th class="r">Invoice says</th></tr></thead><tbody>
+  {% for r in p.grv_rows %}<tr><td>{{ r.g.date|date:"d M" }}</td><td>{{ r.g.number }}</td><td>{{ r.g.supplier.name }}</td><td>{{ r.g.invoice_no|default:"–" }}</td><td class="r">{{ r.excl|money }}</td><td class="r">{{ r.vat|money }}</td><td class="r">{{ r.incl|money }}</td><td class="r{% if r.bad %} neg{% endif %}">{% if r.invoice_total is not None %}{{ r.invoice_total|money }}{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="8">No goods received this month.</td></tr>{% endfor %}
+  <tr class="tot"><td colspan="4">Total</td><td class="r">{{ p.grv_tot.excl|money }}</td><td class="r">{{ p.grv_tot.vat|money }}</td><td class="r">{{ p.grv_tot.incl|money }}</td><td></td></tr></tbody></table>
+  {% if p.by_supplier %}<table class="ft small" style="margin-top:2mm"><thead><tr><th>Per supplier</th><th class="r">Deliveries</th><th class="r">Excl. VAT</th><th class="r">VAT</th><th class="r">Total</th></tr></thead><tbody>
+  {% for name, ex, vat, inc, n in p.by_supplier %}<tr><td>{{ name }}</td><td class="r">{{ n }}</td><td class="r">{{ ex|money }}</td><td class="r">{{ vat|money }}</td><td class="r">{{ inc|money }}</td></tr>{% endfor %}</tbody></table>{% endif %}
+  <p class="note">"Invoice says" in red = the supplier's invoice total differs from the goods received – check for short deliveries or price differences.</p></div>
+</div>
+
+{% if p.with_payroll %}
+<div class="page pb">
+  <div class="sec flow"><div class="sh"><span class="n">7</span><h2>Payroll &amp; statutory payments</h2><span class="hint">final pay runs only</span></div>
+  {% if p.pay.lines %}
+  <table class="ft small"><thead><tr><th>Staff no.</th><th style="min-width:34mm">Name</th><th class="r">Basic</th><th class="r">Overtime</th><th class="r">Allow. &amp; other</th><th class="r">Gross</th><th class="r">NSSA</th><th class="r">PAYE</th><th class="r">AIDS levy</th><th class="r">Advances &amp; other</th><th class="r">Net pay</th><th class="r">NSSA employer</th><th class="r">ZIMDEF</th></tr></thead><tbody>
+  {% for ln in p.pay.lines %}<tr><td>{{ ln.employee.code }}</td><td>{{ ln.employee.full_name }}</td><td class="r">{{ ln.basic|money }}</td><td class="r">{{ ln.overtime_pay|money }}</td><td class="r">{{ ln.extra|money }}</td><td class="r">{{ ln.gross|money }}</td><td class="r">{{ ln.nssa|money }}</td><td class="r">{{ ln.paye|money }}</td><td class="r">{{ ln.aids_levy|money }}</td><td class="r">{{ ln.deduct|money }}</td><td class="r"><b>{{ ln.net|money }}</b></td><td class="r">{{ ln.nssa_employer|money }}</td><td class="r">{{ ln.zimdef|money }}</td></tr>{% endfor %}
+  <tr class="tot"><td colspan="2">Total ({{ p.pay.lines|length }} people)</td><td class="r">{{ p.pay.t.basic|money }}</td><td class="r">{{ p.pay.t.overtime_pay|money }}</td><td class="r">{{ p.pay.t.extra|money }}</td><td class="r">{{ p.pay.t.gross|money }}</td><td class="r">{{ p.pay.t.nssa|money }}</td><td class="r">{{ p.pay.t.paye|money }}</td><td class="r">{{ p.pay.t.aids_levy|money }}</td><td class="r">{{ p.pay.t.deduct|money }}</td><td class="r">{{ p.pay.t.net|money }}</td><td class="r">{{ p.pay.t.nssa_employer|money }}</td><td class="r">{{ p.pay.t.zimdef|money }}</td></tr></tbody></table>
+  <div class="two" style="margin-top:2mm">
+    <table class="ft small"><thead><tr><th>To pay over</th><th class="r">US$</th></tr></thead><tbody>
+      <tr><td>ZIMRA – PAYE + AIDS levy</td><td class="r">{{ p.pay.zimra|money }}</td></tr>
+      <tr><td>NSSA – employee + employer</td><td class="r">{{ p.pay.nssa_total|money }}</td></tr>
+      <tr><td>ZIMDEF (employer)</td><td class="r">{{ p.pay.t.zimdef|money }}</td></tr>
+      <tr><td>Net pay to staff</td><td class="r">{{ p.pay.t.net|money }}</td></tr></tbody></table>
+    <table class="ft small"><thead><tr><th>Cost to the business</th><th class="r">US$</th></tr></thead><tbody>
+      <tr><td>Gross pay</td><td class="r">{{ p.pay.t.gross|money }}</td></tr>
+      <tr><td>+ NSSA employer</td><td class="r">{{ p.pay.t.nssa_employer|money }}</td></tr>
+      <tr><td>+ ZIMDEF</td><td class="r">{{ p.pay.t.zimdef|money }}</td></tr>
+      <tr class="tot"><td>Total payroll cost</td><td class="r">{{ p.pay.t.cost|money }}</td></tr></tbody></table>
+  </div>
+  {% else %}<p class="note">No final pay run for this month.</p>{% endif %}</div>
+</div>
+{% endif %}
+
+<div class="page pb">
+  <div class="sec flow"><div class="sh"><span class="n">8</span><h2>Tax invoices issued</h2></div>
+  <table class="ft small"><thead><tr><th>Number</th><th>Date</th><th>Customer</th><th>Type</th><th class="r">Excl. VAT</th><th class="r">VAT</th><th class="r">Total</th><th>Status</th></tr></thead><tbody>
+  {% for r in p.inv_rows %}<tr><td>{{ r.d.number }}</td><td>{{ r.d.date|date:"d M" }}</td><td>{{ r.d.company|default:r.d.name }}</td><td>{% if r.delivery %}Delivery (on till){% else %}Invoice{% endif %}</td><td class="r">{{ r.d.subtotal|money }}</td><td class="r">{{ r.d.vat|money }}</td><td class="r">{{ r.d.total|money }}</td><td>{% if r.d.status == 'paid' %}Paid {{ r.d.paid_on|date:"d M" }}{% else %}{{ r.d.get_status_display }}{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="8">No tax invoices this month.</td></tr>{% endfor %}
+  <tr class="tot"><td colspan="4">Total</td><td class="r">{{ p.inv_tot.subtotal|money }}</td><td class="r">{{ p.inv_tot.vat|money }}</td><td class="r">{{ p.inv_tot.total|money }}</td><td></td></tr></tbody></table>
+  {% if p.inv_cancelled %}<p class="note">{{ p.inv_cancelled }} cancelled invoice{{ p.inv_cancelled|pluralize }} left out.</p>{% endif %}
+  <p class="note">Deliveries: {{ p.del_sum.n }} this month · goods {{ p.del_sum.goods|money }} (rung up on the till, so inside till takings) · delivery fees {{ p.del_sum.fees|money }} paid by customers straight to the drivers (not Pondo income).</p></div>
+
+  <div class="sec flow"><div class="sh"><span class="n">8</span><h2>Debtors – unpaid at {{ p.end|date:"j F Y" }}</h2></div>
+  <table class="ft small"><thead><tr><th>Number</th><th>Date</th><th>Customer</th><th class="r">Days</th><th class="r">Amount incl. VAT</th></tr></thead><tbody>
+  {% for r in p.deb_rows %}<tr><td>{{ r.d.number }}</td><td>{{ r.d.date|date:"d M Y" }}</td><td>{{ r.d.company|default:r.d.name }}</td><td class="r{% if r.days > 30 %} neg{% endif %}">{{ r.days }}</td><td class="r">{{ r.d.total|money }}</td></tr>
+  {% empty %}<tr><td colspan="5">No unpaid invoices at month end.</td></tr>{% endfor %}
+  <tr class="tot"><td colspan="4">Total debtors</td><td class="r">{{ p.deb_tot|money }}</td></tr></tbody></table></div>
+
+  <div class="sec"><div class="sh"><span class="n">9</span><h2>Stock &amp; cost of sales</h2></div>
+  <table class="ft small"><tbody>
+  {% if m.cos_from == 'stock' %}
+    <tr><td>Opening stock – final stock take {{ m.opening.date|date:"d M Y" }}</td><td class="r">{{ m.opening.total_value|money }}</td></tr>
+    <tr><td>+ Purchases between the two stock takes (excl. VAT)</td><td class="r">{{ m.purchases|money }}</td></tr>
+    <tr><td>− Closing stock – final stock take {{ m.closing.date|date:"d M Y" }}</td><td class="r">{{ m.closing.total_value|money }}</td></tr>
+    <tr class="tot"><td>Cost of sales</td><td class="r">{{ m.cos|money }}</td></tr>
+  {% else %}
+    <tr><td>Cost of sales from recipe costs (no stock takes at the start and end of the month)</td><td class="r">{{ m.cos|money }}</td></tr>
+    <tr><td>Purchases in the month (excl. VAT)</td><td class="r">{{ m.purchases|money }}</td></tr>
+  {% endif %}
+    <tr><td>Waste at cost (inside cost of sales)</td><td class="r">{{ m.waste|money }}</td></tr>
+    <tr><td>Staff meals / tasting at cost</td><td class="r">{{ m.meals|money }}</td></tr>
+    <tr><td>Recipe GP % (what it should be)</td><td class="r">{{ m.gp_recipes_pct|pct }}</td></tr>
+  </tbody></table></div>
+
+  <div class="sec"><div class="sh"><span class="n">10</span><h2>Equipment &amp; depreciation</h2><span class="hint">straight line over the useful life</span></div>
+  <table class="ft small"><thead><tr><th>Category</th><th class="r">Cost</th><th class="r">Depreciation this month</th><th class="r">Book value</th></tr></thead><tbody>
+  {% for name, cost, dep, book in p.eq_rows %}<tr><td>{{ name }}</td><td class="r">{{ cost|money }}</td><td class="r">{{ dep|money }}</td><td class="r">{{ book|money }}</td></tr>{% empty %}<tr><td colspan="4">No equipment in the register.</td></tr>{% endfor %}
+  <tr class="tot"><td>Total</td><td class="r">{{ p.eq_tot.0|money }}</td><td class="r">{{ p.eq_tot.1|money }}</td><td class="r">{{ p.eq_tot.2|money }}</td></tr></tbody></table>
+  {% if p.added %}<p class="note"><b>Bought this month:</b> {% for i in p.added %}{{ i.asset_no }} {{ i.description }} ({{ i.total_cost|money }}){% if not forloop.last %} · {% endif %}{% endfor %}</p>{% endif %}
+  {% if p.disposed %}<p class="note"><b>Sold / scrapped this month:</b> {% for i in p.disposed %}{{ i.asset_no }} {{ i.description }} – {{ i.disposed_note|default:"no note" }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>{% endif %}</div>
+
+  {% if p.money %}{% with mx=p.money %}
+  <div class="sec flow"><div class="sh"><span class="n">11</span><h2>Cash book – safe, bank &amp; EcoCash</h2><span class="hint">checked against the statements</span></div>
+  <table class="ft small"><thead><tr><th>Account</th><th class="r">Opening</th><th class="r">In</th><th class="r">Out</th><th class="r">Closing</th><th class="r">Statement / count</th><th class="r">Difference</th></tr></thead><tbody>
+  {% for b in mx.books %}<tr><td>{{ b.a.name }}</td><td class="r">{{ b.cb.opening|money }}</td><td class="r">{{ b.cb.in|money }}</td><td class="r">{{ b.cb.out|money }}</td><td class="r"><b>{{ b.cb.closing|money }}</b></td>
+    <td class="r">{% if b.check %}{{ b.check.statement_balance|money }} <span class="hint">{{ b.check.date|date:"d M" }}</span>{% else %}not checked{% endif %}</td><td class="r">{% if b.check %}{{ b.check.difference|money }}{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+  <div class="sec flow"><div class="sh"><span class="n">12</span><h2>Suppliers we owe at {{ p.end|date:"j F Y" }}</h2></div>
+  <table class="ft small"><thead><tr><th>Supplier</th><th>Received</th><th>Invoice</th><th class="r">Owe</th><th>Due</th></tr></thead><tbody>
+  {% for r in mx.cred %}<tr><td>{{ r.supplier }}</td><td>{{ r.grv.date|date:"d M Y" }}</td><td>{{ r.grv.invoice_no|default:r.grv.number }}</td><td class="r">{{ r.owing|money }}</td><td>{{ r.due|date:"d M" }}{% if r.late %} ({{ r.late }} days late){% endif %}</td></tr>{% empty %}<tr><td colspan="5">Nothing owed.</td></tr>{% endfor %}
+  <tr class="tot"><td colspan="3">Total</td><td class="r">{{ mx.cred_total|money }}</td><td></td></tr></tbody></table></div>
+  {% if mx.bs %}<div class="sec"><div class="sh"><span class="n">13</span><h2>Balance sheet at {{ p.end|date:"j F Y" }}</h2><span class="hint">management figures – books start {{ mx.bs.start|date:"j M Y" }}</span></div>
+  <table class="ft small"><tbody>
+  {% for a, b in mx.bs.money %}<tr><td>&nbsp;&nbsp;{{ a.name }}</td><td class="r">{{ b|money }}</td></tr>{% endfor %}
+  {% for n, v in mx.bs.assets %}<tr><td>{{ n }}</td><td class="r">{{ v|money }}</td></tr>{% endfor %}
+  <tr class="tot"><td>Total owned</td><td class="r">{{ mx.bs.total_assets|money }}</td></tr>
+  {% for n, v in mx.bs.liabilities %}<tr><td>{{ n }}</td><td class="r">{{ v|money }}</td></tr>{% endfor %}
+  <tr class="tot"><td>Total owed</td><td class="r">{{ mx.bs.total_liab|money }}</td></tr>
+  <tr class="tot"><td>Net worth</td><td class="r">{{ mx.bs.net|money }}</td></tr>
+  <tr><td>Already there when the books started (owner's / boss's investment)</td><td class="r">{{ mx.bs.opening|money }}</td></tr><tr><td>Capital put in since then</td><td class="r">{{ mx.bs.capital|money }}</td></tr><tr><td>Drawings</td><td class="r">{{ mx.bs.drawings|money }}</td></tr>
+  <tr><td>Profit kept in the business (balancing figure)</td><td class="r">{{ mx.bs.kept|money }}</td></tr></tbody></table></div>{% endif %}
+  {% endwith %}{% endif %}
+
+  <div class="sig2"><div class="f"><span>Prepared by</span><i></i></div><div class="f"><span>Checked by</span><i></i></div><div class="f"><span>Date sent</span><i></i></div></div>
+  <div class="foot"><span><b>{{ company.tagline|default:"Easy to enjoy" }}</b></span><span>Accountant month report · {{ p.start|date:"F Y" }} · figures from the Pondo program</span><img src="{% static 'brand/logo/mark_orange.svg' %}" alt=""></div>
+</div>
+{% endwith %}
+{% endblock %}

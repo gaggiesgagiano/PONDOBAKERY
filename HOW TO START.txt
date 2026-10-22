@@ -1,0 +1,36 @@
+PONDO BAKERY PROGRAM – HOW TO START
+===================================
+
+NOTHING TO INSTALL. Python (the engine the program runs on) is inside the "python" folder.
+
+ONE TIME ONLY
+1. Put this whole "Pondo Bakery" folder on the laptop (e.g. C:\Pondo Bakery).
+   Keep everything in it together – Pondo Bakery.exe needs the folders next to it.
+2. Pin it to the taskbar: right-click "Pondo Bakery.exe" > "Show more options" (Windows 11) > "Pin to taskbar".
+3. Want an icon on the desktop and in the Start menu too? Double-click "Create desktop icon".
+   (Windows always shows a small arrow on desktop icons of programs – that's normal.)
+
+EVERY DAY
+1. Click the Pondo Bakery (donut) icon on the taskbar.
+2. A small Pondo window appears, and after a few seconds the program opens in your browser.
+   KEEP THE SMALL PONDO WINDOW OPEN while you work (you can minimise it).
+   Closed the browser by mistake? Click "Open Pondo" in the small window.
+3. When you are finished for the day: click "Close Pondo" in the small window.
+
+MOVING TO ANOTHER LAPTOP
+- Close Pondo first, then copy the WHOLE "Pondo Bakery" folder (flash drive is fine).
+- Your information is in the "data" folder, so it moves with it.
+- Use the program on ONE laptop only. Two copies do not share information.
+
+THE VERY FIRST TIME the program opens, it asks you to choose your owner username and password.
+Your recipes, ingredients and prices from the Excel master file are already inside.
+
+BACKUPS
+- The program keeps an automatic copy on the laptop every time it starts (data\backups),
+  made BEFORE any update, so an update can always be undone.
+- Once a week: plug in your flash drive and click "Back up now" in the menu.
+
+IF SOMETHING GOES WRONG
+- Pondo shows a message: take a photo of it and send it to Claude.
+- For more detail, double-click "Start Pondo.bat". It starts the program with a black window
+  that shows any error. Take a photo of the black window and send it to Claude.

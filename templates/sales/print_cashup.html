@@ -1,0 +1,19 @@
+{% extends "costing/print_base.html" %}{% load pondo %}
+{% block title %}{{ cu }}{% endblock %}
+{% block kind %}Cash-up {{ cu.number }}{% endblock %}
+{% block body %}
+<h1>Cash-up · {{ cu.till }}</h1>
+<div class="facts"><div>Date<b>{{ cu.date|date:"d M Y" }}</b></div><div>Sales<b>{{ res.total_till|money }}</b></div><div>Over / short<b>{{ res.variance|money }}</b></div><div>Cash to bank<b>{{ res.to_bank|money }}</b></div></div>
+<table class="t"><thead><tr><th>Payment type</th><th class="r">Till says</th><th class="r">Really received</th><th class="r">Over / short</th></tr></thead><tbody>
+{% for r in res.rows %}<tr><td>{{ r.method.name }}</td><td class="r">{{ r.till|money }}</td><td class="r">{% if r.method.is_cash %}{{ res.cash_taken|money }}{% else %}{{ r.actual|money }}{% endif %}</td><td class="r">{% if r.method.is_cash %}{{ res.cash_variance|money }}{% else %}{{ r.variance|money }}{% endif %}</td></tr>{% endfor %}
+<tr class="total"><td>Total</td><td class="r">{{ res.total_till|money }}</td><td></td><td class="r">{{ res.variance|money }}</td></tr></tbody></table>
+<table class="t"><tbody>
+<tr><td>Cash counted</td><td class="r">{{ cu.cash_counted|money }}</td><td>Float at start</td><td class="r">{{ cu.opening_float|money }}</td></tr>
+{% if res.zig_usd %}<tr><td>ZiG counted</td><td class="r">{{ cu.zig_counted|num:2 }} ZiG</td><td>ZiG in US$ (rate {{ cu.zig_rate|num:4 }})</td><td class="r">{{ res.zig_usd|money }}</td></tr>{% endif %}
+<tr><td>Paid out of till</td><td class="r">{{ res.payouts|money }}</td><td>Float left</td><td class="r">{{ cu.float_left|money }}</td></tr>
+{% if cu.drops %}<tr><td>Cash drops to the safe</td><td class="r">{{ cu.drops|money }}</td><td></td><td></td></tr>{% endif %}
+<tr><td>Cash taken today</td><td class="r">{{ res.cash_taken|money }}</td><td>Banked</td><td class="r">{{ cu.banked|money }}</td></tr></tbody></table>
+{% if payouts %}<h3>Paid out</h3><table class="t"><tbody>{% for e in payouts %}<tr><td>{{ e.category }}</td><td>{{ e.payee }}</td><td>{{ e.description }}</td><td>{{ e.receipt_no }}</td><td class="r">{{ e.amount|money }}</td></tr>{% endfor %}</tbody></table>{% endif %}
+{% if cu.notes %}<p><b>Notes:</b> {{ cu.notes }}</p>{% endif %}
+<div class="sign"><div>Cashier: {{ cu.cashier }}</div><div>Checked by: {{ cu.signed_off_by|default:"" }}</div></div>
+{% endblock %}

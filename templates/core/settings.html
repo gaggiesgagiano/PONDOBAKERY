@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Settings</div><h1>Settings</h1></div>
+  <div class="actions"><a class="btn quiet" href="{% url 'core:look_business' %}">Look &amp; feel</a><a class="btn quiet" href="{% url 'core:targets' %}">Costs &amp; targets</a><a class="btn quiet" href="{% url 'core:users' %}">Users &amp; rights</a><a class="btn quiet" href="{% url 'core:cards' %}">Staff cards</a><a class="btn quiet" href="{% url 'core:email_settings' %}">E-mail</a><a class="btn quiet" href="{% url 'costing:lists' %}">Categories &amp; suppliers</a><a class="btn quiet" href="{% url 'sales:setup' %}">Payment &amp; expense types</a><a class="btn quiet" href="{% url 'staff:settings' %}">Tax &amp; NSSA rates</a><a class="btn quiet" href="{% url 'core:changelog' %}">Change history</a><a class="btn quiet" href="{% url 'core:changelog' %}?tab=logins">Login register</a></div></div>
+<form method="post" class="stack">{% csrf_token %}
+  <section class="card stack"><h2>Money settings</h2>
+    <div class="grid-form">{% include "_field.html" with f=f1.company_name %}{% include "_field.html" with f=f1.vat_percent %}{% include "_field.html" with f=f1.target_percent %}{% include "_field.html" with f=f1.low_percent %}</div>
+  </section>
+  <section class="card stack"><h2>ZWG rate <span class="muted small">(ZiG – used by the till)</span></h2>
+    <div class="grid-form">{% include "_field.html" with f=f1.zwg_rate %}</div>
+    <p class="small muted" style="margin:0">{% if company.zwg_rate_at %}Last changed {{ company.zwg_rate_at|date:"D j M Y, H:i" }}. {% endif %}Open tills use a new rate straight away; each payment keeps the rate it was taken at. Every change is written in the change history.</p>
+  </section>
+  <section class="card stack"><h2>Shop details <span class="muted small">(printed on payslips, invoices and order forms)</span></h2>
+    <div class="grid-form">{% for f in f2 %}{% include "_field.html" %}{% endfor %}</div>
+  </section>
+  <div class="actions"><button class="btn primary" type="submit">Save settings</button></div>
+</form>
+{% endblock %}

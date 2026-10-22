@@ -1,0 +1,1 @@
+{% load static %}<div class="slim"><img src="{% static 'brand/logo/primary_orange.svg' %}" alt=""><span><b>{{ current_shop.name|default:company.company_name|default:"Pondo Bakery" }}</b>{% if current_shop.address_line1 %} · {{ current_shop.address_line1 }}{% endif %}</span><span class="file">File in: <b>Food safety file</b></span></div>

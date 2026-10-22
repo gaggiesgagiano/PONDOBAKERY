@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}{{ w }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'production:waste_list' %}">Waste</a> › {{ w.number }}</div>
+  <h1>Waste · {{ w.get_shift_display }} {{ w.date|date:"D d M Y" }}</h1>
+  <div class="chips"><span class="chip">Recorded by {{ w.recorded_by|default:"–" }}</span>{% if w.signed_off_by %}<span class="chip on">Signed off by {{ w.signed_off_by }} · {{ w.signed_off_at|date:"d M H:i" }}</span>{% endif %}</div></div>
+  <div class="actions"><button class="btn" type="button" onclick="window.print()">Print</button>
+    {% if can.waste_edit and not w.signed_off_by or can.owner %}<a class="btn primary" href="{% url 'production:waste_edit' w.pk %}">Edit</a>{% endif %}
+    {% if can.waste_edit and can.costs and not w.signed_off_by %}<form method="post" action="{% url 'production:waste_signoff' w.pk %}">{% csrf_token %}<button class="btn" type="submit">Sign off</button></form>{% endif %}</div></div>
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>Product</th><th>Category</th><th class="r">Qty</th><th>Reason</th><th>Notes</th>{% if can.costs %}<th class="r">Cost each</th><th class="r">Cost</th>{% endif %}</tr></thead>
+  <tbody>{% for ln in lines %}<tr><td><b>{{ ln.recipe.name }}</b></td><td class="small">{{ ln.recipe.category|default:"" }}</td><td class="r">{{ ln.qty|num:2 }}</td><td>{{ ln.reason }}</td><td class="small">{{ ln.notes }}</td>
+    {% if can.costs %}<td class="r">{{ ln.unit_cost|money:3 }}</td><td class="r">{{ ln.line_cost|money }}</td>{% endif %}</tr>
+  {% empty %}<tr class="emptyrow"><td colspan="7" class="muted">Nothing logged yet.</td></tr>{% endfor %}
+  {% if lines and can.costs %}<tr class="total"><td colspan="6">Total waste at cost</td><td class="r">{{ total|money }}</td></tr>{% endif %}</tbody>
+</table></div></section>
+{% if w.notes %}<section class="card"><h3>Notes</h3><p style="white-space:pre-line;margin:6px 0 0">{{ w.notes }}</p></section>{% endif %}
+{% endblock %}

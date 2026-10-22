@@ -1,0 +1,26 @@
+{% extends "forms/_base.html" %}
+{% block css %}{% include "forms/_check_css.html" %}
+  table.ck td{height:6.8mm}
+{% endblock %}
+{% block letterhead %}{% load static %}<div class="slim"><img src="{% static 'brand/logo/primary_orange.svg' %}" alt=""><span><b>{{ current_shop.name|default:company.company_name|default:"Pondo Bakery" }}</b></span><span class="file">Use only when <b>Pondo can't be used</b> · one sheet per day</span></div>{% endblock %}
+{% block subtitle %}<div class="sub">Everything that would normally be typed in Pondo.<br>Type it in as soon as Pondo works again.</div>{% endblock %}
+{% block content %}
+<div class="g g3"><div class="f"><span>Date</span><i></i></div><div class="f"><span>Pondo down from</span><i></i></div><div class="f"><span>until</span><i></i></div></div>
+<div class="sec"><div class="sh"><span class="n">1</span><h2>Waste</h2></div>
+<table class="ck"><colgroup><col><col style="width:22mm"><col style="width:50mm"><col style="width:22mm"></colgroup>
+  <thead><tr><th class="l">Product</th><th>Qty</th><th class="l">Reason</th><th>Shift</th></tr></thead>
+  <tbody>{% for i in "123456" %}<tr><td></td><td></td><td></td><td></td></tr>{% endfor %}</tbody></table></div>
+<div class="sec"><div class="sh"><span class="n">2</span><h2>Goods received (GRV)</h2><span class="hint">staple the invoice to this sheet</span></div>
+<table class="ck"><colgroup><col style="width:46mm"><col style="width:30mm"><col style="width:26mm"><col></colgroup>
+  <thead><tr><th class="l">Supplier</th><th class="l">Invoice no.</th><th>Invoice total $</th><th class="l">Problems</th></tr></thead>
+  <tbody>{% for i in "1234" %}<tr><td></td><td></td><td></td><td></td></tr>{% endfor %}</tbody></table></div>
+<div class="sec"><div class="sh"><span class="n">3</span><h2>Orders &amp; deposits taken</h2></div>
+<table class="ck"><colgroup><col style="width:46mm"><col style="width:30mm"><col><col style="width:24mm"><col style="width:24mm"></colgroup>
+  <thead><tr><th class="l">Customer</th><th class="l">Phone</th><th class="l">What</th><th>Collect on</th><th>Deposit $</th></tr></thead>
+  <tbody>{% for i in "1234" %}<tr><td></td><td></td><td></td><td></td><td></td></tr>{% endfor %}</tbody></table></div>
+<div class="sec"><div class="sh"><span class="n">4</span><h2>Deliveries with a driver</h2></div>
+<table class="ck"><colgroup><col style="width:40mm"><col style="width:34mm"><col style="width:28mm"><col><col style="width:24mm"></colgroup>
+  <thead><tr><th class="l">Customer</th><th class="l">Driver &amp; cell</th><th class="l">Car reg.</th><th class="l">Goods</th><th>Money back $</th></tr></thead>
+  <tbody>{% for i in "123" %}<tr><td></td><td></td><td></td><td></td><td></td></tr>{% endfor %}</tbody></table></div>
+<div class="g g2 signrow"><div class="f"><span>Supervisor signature</span><i></i></div><div class="f"><span>Typed into Pondo on / by</span><i></i></div></div>
+{% endblock %}

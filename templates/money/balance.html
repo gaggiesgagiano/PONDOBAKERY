@@ -1,0 +1,30 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Balance sheet{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'money:home' %}">Money &amp; accounts</a></div><h1>Balance sheet – {{ as_at|date:"d F Y" }}</h1>
+  <div class="small muted">What the business owns and what it owes on one day. A management balance sheet from Pondo's figures – your accountant makes the official one.</div></div>
+  <div class="actions no-print"><form method="get" class="row"><input type="date" name="date" value="{{ as_at|date:'Y-m-d' }}" onchange="this.form.submit()" aria-label="Date"></form><button class="btn quiet" onclick="window.print()">Print</button></div></div>
+{% include "money/_tabs.html" %}
+{% if not bs %}<section class="card"><p class="muted" style="margin:0">The books start {% if can.owner %}when the money accounts are set up (<a href="{% url 'money:accounts' %}">Accounts set-up</a>){% else %}when the Manager sets up the money accounts{% endif %}.</p></section>{% else %}
+<div class="cols"><section class="card main">
+<div class="tablebox"><table class="t"><tbody>
+<tr><td colspan="2"><h2 style="margin:0">What the business owns</h2></td></tr>
+{% for a, b in bs.money %}<tr><td style="padding-left:24px" class="small">{{ a.name }}</td><td class="r small">{{ b|money }}</td></tr>{% endfor %}
+{% for label, v in bs.assets %}<tr><td>{{ label }}</td><td class="r">{{ v|money }}</td></tr>{% endfor %}
+<tr class="total"><td>Total owned</td><td class="r">{{ bs.total_assets|money }}</td></tr>
+<tr><td colspan="2"><h2 style="margin:12px 0 0">What the business owes</h2></td></tr>
+{% for label, v in bs.liabilities %}<tr><td>{{ label }}</td><td class="r">{{ v|money }}</td></tr>{% endfor %}
+<tr class="total"><td>Total owed</td><td class="r">{{ bs.total_liab|money }}</td></tr>
+<tr class="total"><td style="font-size:18px">What the business is worth (owned minus owed)</td><td class="r" style="font-size:20px">{{ bs.net|money }}</td></tr>
+<tr><td colspan="2"><h2 style="margin:12px 0 0">Made up of</h2></td></tr>
+<tr><td>Already there when the books started ({{ bs.start|date:"d M Y" }}) – the owner's / boss's investment <div class="small muted">money {{ bs.open_parts.money|money }} · equipment {{ bs.open_parts.equip|money }} · stock {{ bs.open_parts.stock|money }}</div></td><td class="r">{{ bs.opening|money }}</td></tr>
+<tr><td>Money the owner / boss put in since then (capital)</td><td class="r">{{ bs.capital|money }}</td></tr>
+<tr><td>Less: money the owner took out (drawings)</td><td class="r">{{ bs.drawings|money }}</td></tr>
+<tr><td>Profit kept in the business since {{ bs.start|date:"d M Y" }} <span class="small muted">(worked out: the balancing figure)</span></td><td class="r">{{ bs.kept|money }}</td></tr>
+</tbody></table></div></section>
+<aside class="aside"><section class="card stack"><h2 style="margin:0">How to read it</h2>
+<p class="small" style="margin:0"><b>Profit kept</b> is what is left after everything else – compare it with the profit on the Month-end reports since the books started. A big difference means something is missing: a stock take, a GRV, a payment or money the owner put in.<br><br>
+Stock is the value of the last <b>final</b> stock take{% if bs.stock_count %} ({{ bs.stock_count.date|date:"d M Y" }}){% endif %}. Equipment is at book value (cost less wear and tear) from the equipment register.<br><br>
+Money in the accounts is only right when the cash books agree with the bank statements and the safe count.<br><br>
+Equipment the boss pays for himself after the start: type <i>Owner / boss put money in</i> and <i>Bought equipment</i> on the same account and day – then it balances.</p></section></aside></div>{% endif %}
+{% endblock %}

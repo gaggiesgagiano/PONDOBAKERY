@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Refund {{ sale.number }}<script>(function(){var c=document.getElementById("card");if(!c)return;c.addEventListener("keydown",function(e){if(e.key==="Enter"&&c.value.trim()){e.preventDefault();c.form.requestSubmit?c.form.requestSubmit():c.form.submit();}});})();</script>
+{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'till:sales' shift.pk %}">Sales on {{ shift.till }}</a></div><h1>Refund slip {{ sale.number }}</h1>
+  <div class="small muted">Only with a reasonable reason and the till slip. Up to $5 the Supervisor approves; more needs a manager. Food that has left the shop is never taken back (SOP 6.02).</div></div></div>
+{% if sale.in_zwg %}<div class="msg info">This slip was paid in ZWG at ZWG {{ sale.fx_rate|floatformat:2 }} = US$1 – the refund (credit note) is in ZWG at the same rate and the money goes back in ZWG.</div>{% endif %}
+{% if error %}<div class="msg error">{{ error }}</div>{% endif %}
+<form class="card stack" method="post" autocomplete="off">{% csrf_token %}
+  <div class="tablebox"><table class="t"><thead><tr><th>Product</th><th>Sold</th><th>Price</th><th>Refund how many</th></tr></thead><tbody>
+  {% for r in rows %}<tr><td>{{ r.it.name }}</td><td>{{ r.it.qty|floatformat:"-3" }}</td><td>{{ r.it.price }}</td>
+    <td>{% if r.left > 0 %}<input name="q{{ r.it.pk }}" inputmode="decimal" style="width:90px" placeholder="0"> <span class="small muted">max {{ r.left|floatformat:"-3" }}</span>{% else %}<span class="muted">already refunded</span>{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
+  <div class="field"><label for="reason">Reason</label><input id="reason" name="reason" required placeholder="e.g. wrong product rung up, noticed before leaving the shop"></div>
+  <label class="row" style="gap:10px;font-weight:800"><input type="checkbox" name="waste" value="1" checked style="width:22px;height:22px"> Product goes to waste (logged as <i>Customer return</i>)</label>
+  <p class="small muted" style="margin:-6px 0 0">Untick only when the product never left the counter and goes back on the shelf, e.g. the wrong product was rung up.</p>
+  <div class="field"><label for="method">Money goes back as</label><select id="method" name="method">{% for m in methods %}<option value="{{ m.pk }}" {% if m.pk == first %}selected{% endif %}>{{ m }}</option>{% endfor %}</select></div>
+  <h3 style="margin:6px 0 0">Approval</h3>
+  <div class="field scanbox"><label for="card">Scan the approver's staff card</label><input id="card" name="card" type="password" autocomplete="off" inputmode="none" placeholder="▮▮▮ scan card ▮▮▮" style="font-size:20px"></div>
+  <div class="small muted" style="margin:-4px 0 2px">No card? Type the username and password instead.</div>
+  <div class="field"><label for="by">Supervisor / manager username</label><input id="by" name="by" autocomplete="off"></div>
+  <div class="field"><label for="pw">Their password</label><input id="pw" name="pw" type="password" autocomplete="new-password"></div>
+  <div class="row"><button class="btn primary" type="submit">Approve &amp; refund</button><a class="btn quiet" href="{% url 'till:sales' shift.pk %}">Cancel</a></div>
+</form>
+<script>(function(){var c=document.getElementById("card");if(!c)return;c.addEventListener("keydown",function(e){if(e.key==="Enter"&&c.value.trim()){e.preventDefault();c.form.requestSubmit?c.form.requestSubmit():c.form.submit();}});})();</script>
+{% endblock %}

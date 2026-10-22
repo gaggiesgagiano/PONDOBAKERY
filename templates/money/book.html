@@ -1,0 +1,25 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}{{ acc.name }} – cash book{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'money:home' %}">Money &amp; accounts</a></div><h1>{{ acc.name }} – {{ month|date:"F Y" }}</h1>
+  <div class="small muted">{{ acc.get_kind_display }}{% if acc.number %} · {{ acc.number }}{% endif %} · books start {{ acc.opening_date|date:"d M Y" }}</div></div>
+  <div class="actions no-print"><a class="btn quiet" href="?month={{ prev|date:'Y-m' }}">← {{ prev|date:"M" }}</a>{% if next %}<a class="btn quiet" href="?month={{ next|date:'Y-m' }}">{{ next|date:"M" }} →</a>{% endif %}
+    <button class="btn quiet" onclick="window.print()">Print</button>
+    {% if can.money_edit %}<a class="btn" href="{% url 'money:bank_check' acc.pk %}">{% if acc.kind == "safe" %}Safe count{% else %}Check statement{% endif %}</a><a class="btn primary" href="{% url 'money:entry_new' %}?account={{ acc.pk }}">+ Money in / out</a>{% endif %}</div></div>
+{% include "money/_tabs.html" %}
+<div class="chips no-print" style="margin:0">{% for a in accounts %}<a class="chip {% if a.pk == acc.pk %}on{% endif %}" href="{% url 'money:book' a.pk %}?month={{ month|date:'Y-m' }}">{{ a.name }}</a>{% endfor %}</div>
+<section class="card">
+  {% if cb.opening is None %}<p class="muted">This account starts on {{ acc.opening_date|date:"d M Y" }}.</p>{% else %}
+  <div class="tablebox"><table class="t"><thead><tr><th>Date</th><th>What</th><th>Ref</th><th class="r">In</th><th class="r">Out</th><th class="r">Balance</th></tr></thead><tbody>
+  <tr><td>{{ cb.start|date:"d M" }}</td><td><b>Balance at the start</b></td><td></td><td></td><td></td><td class="r"><b>{{ cb.opening|money }}</b></td></tr>
+  {% for r in cb.rows %}<tr {% if r.url %}class="link" data-href="{{ r.url }}"{% endif %}><td>{{ r.date|date:"D d M" }}</td><td>{{ r.what }}</td><td class="small">{{ r.ref }}</td>
+    <td class="r">{% if r.amount > 0 %}{{ r.amount|money }}{% endif %}</td><td class="r">{% if r.amount < 0 %}{{ r.amount|money|cut:"-" }}{% endif %}</td><td class="r">{{ r.balance|money }}</td></tr>
+  {% empty %}<tr><td colspan="6" class="muted">No money in or out this month.</td></tr>{% endfor %}
+  <tr class="total"><td colspan="3">Totals · balance at the end</td><td class="r">{{ cb.in|money }}</td><td class="r">{{ cb.out|money }}</td><td class="r">{{ cb.closing|money }}</td></tr>
+  </tbody></table></div>{% endif %}
+</section>
+{% if checks %}<section class="card"><h2 style="margin-top:0">Statement checks</h2><div class="tablebox"><table class="t"><tbody>
+{% for c in checks %}<tr><td>{{ c.date|date:"d M Y" }}</td><td>Statement {{ c.statement_balance|money }} · Pondo {{ c.pondo_balance|money }}</td><td>{% if c.difference %}<span style="color:#c0392b">Differs {{ c.difference|money }}</span>{% else %}Agreed ✓{% endif %}</td></tr>{% endfor %}
+</tbody></table></div></section>{% endif %}
+<p class="small muted">Comes in by itself: cash-ups (cash to the safe, swipe and bank transfers to the bank, EcoCash), expenses paid from the bank, supplier payments, final pay runs (by how each person is paid), staff advances (from the safe) and invoices marked paid. Click a line to open where it came from.</p>
+{% endblock %}

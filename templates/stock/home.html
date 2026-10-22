@@ -1,0 +1,32 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Stock{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Stock</div><h1>Stock levels</h1>
+  <div class="small muted">{% if lc %}From the stock take on {{ lc.date|date:"d M Y" }} + goods received − what finished plans used.{% else %}No stock take yet – do your first one so stock levels are right.{% endif %}</div></div>
+  <div class="actions"><a class="btn xl" href="{% url 'core:excel_file' 'stock' %}" title="Download this list as an Excel file">Excel</a>{% if can.stock_edit %}<a class="btn" href="{% url 'stock:grv_new' %}">Receive goods</a><a class="btn primary" href="{% url 'stock:order_new' %}">New order</a>{% endif %}</div></div>
+{% include "stock/_tabs.html" %}
+<div class="stats">
+  {% if can.costs %}<div class="card stat dark"><div class="lbl">Stock value (shown items)</div><div class="val">{{ total|money }}</div><div class="sub">excl. VAT</div></div>{% endif %}
+  <a class="card stat" href="?low=1" style="text-decoration:none;color:inherit"><div class="lbl">Below re-order level</div><div class="val">{{ n_low }}</div><div class="sub">click to see them</div></a>
+  <a class="card stat" href="{% url 'stock:orders' %}" style="text-decoration:none;color:inherit"><div class="lbl">Orders on the way</div><div class="val">{{ open_orders }}</div></a>
+</div>
+<form class="filters" method="get">
+  <label class="visually-hidden" for="sup">Supplier</label>
+  <select id="sup" name="sup" onchange="this.form.submit()"><option value="">All suppliers</option>{% for s in suppliers %}<option value="{{ s.pk }}" {% if sup == s.pk|stringformat:'s' %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select>
+  <label class="row small" style="font-weight:700"><input type="checkbox" name="low" value="1" {% if low %}checked{% endif %} onchange="this.form.submit()" style="width:20px;height:20px"> Only low stock</label>
+  {% if sup and can.stock_edit %}<a class="btn small" href="{% url 'stock:order_new' %}?supplier={{ sup }}">Order what's low from this supplier</a>{% endif %}
+</form>
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>Item</th><th>Supplier</th><th class="r">On hand</th><th class="r">Packs</th><th class="r">Re-order below</th><th class="r">Suggest order</th>{% if can.costs %}<th class="r">Value</th>{% endif %}</tr></thead>
+  <tbody>{% for r in rows %}<tr>
+    <td>{% if can.ingredients_view %}<a href="{% url 'costing:ingredient' r.i.pk %}">{{ r.i.name }}</a>{% else %}{{ r.i.name }}{% endif %}{% if r.low %} <span class="pill gp-low">low</span>{% endif %}</td>
+    <td class="small">{{ r.i.supplier|default:"" }}</td>
+    <td class="r"><b {% if r.qty < 0 %}style="color:var(--low)"{% endif %}>{{ r.qty|num:2 }}</b> {{ r.i.unit }}</td>
+    <td class="r small">{{ r.packs|num:1 }}</td>
+    <td class="r small">{% if r.i.reorder_level is not None %}{{ r.i.reorder_level|num:2 }}{% else %}<span class="muted">not set</span>{% endif %}</td>
+    <td class="r">{% if r.suggest %}<b>{{ r.suggest|num:0 }}</b> pack{{ r.suggest|pluralize }}{% endif %}</td>
+    {% if can.costs %}<td class="r">{{ r.value|money }}</td>{% endif %}
+  </tr>{% empty %}<tr class="emptyrow"><td colspan="7" class="muted">Nothing to show.</td></tr>{% endfor %}</tbody>
+</table></div></section>
+<p class="small muted">Set "Re-order when stock is below" and "Order up to" on each ingredient (Ingredients → Change price / edit) to get order suggestions. A minus number means more was used than was counted or received – check the next stock take.</p>
+{% endblock %}

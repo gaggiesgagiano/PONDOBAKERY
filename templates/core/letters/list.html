@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Letters{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Office</div><h1>Letters</h1>
+  <div class="small muted">Letters typed in Pondo – printed on the letterhead, kept here to print again. {{ total }} saved.</div></div>
+  <div class="actions">{% if can.letters_edit %}<button class="btn" type="button" data-pick title="Choose a letter to change">Edit</button>{% endif %}
+    <a class="btn quiet" href="{% url 'core:form_print' 'letterhead' %}" target="_blank">Blank letterhead</a>
+    {% if can.letters_edit %}<a class="btn primary" href="{% url 'core:letter_new' %}">+ New letter</a>{% endif %}</div></div>
+<form class="filters no-print" method="get">
+  <label class="visually-hidden" for="q">Search</label>
+  <input id="q" type="search" name="q" value="{{ q }}" placeholder="Search who it's to, the subject or the text">
+  <button class="btn quiet" type="submit">Search</button>{% if q %}<a class="small" href="?">Clear</a>{% endif %}
+</form>
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>No.</th><th>Date</th><th>To</th><th>Subject</th><th>By</th><th class="no-print"></th></tr></thead>
+  <tbody>{% for l in rows %}<tr class="link" data-href="{% url 'core:letter' l.pk %}" data-edit="{% url 'core:letter_edit' l.pk %}">
+    <td class="small muted">{{ l.number }}</td><td>{{ l.date|date:"d M Y" }}</td>
+    <td><a class="rowlink" href="{% url 'core:letter' l.pk %}">{{ l.to_first_line|default:"–" }}</a></td>
+    <td>{{ l.subject|default:"" }}</td><td class="small">{{ l.sign_name }}</td>
+    <td class="no-print" style="text-align:right;white-space:nowrap"><a class="btn small" href="{% url 'core:letter' l.pk %}?print=1" target="_blank">Print</a></td></tr>
+  {% empty %}<tr class="emptyrow"><td colspan="6" class="muted">{% if q %}No letters match "{{ q }}".{% else %}No letters yet – press "+ New letter".{% endif %}</td></tr>{% endfor %}</tbody>
+</table></div></section>
+<p class="small muted">Click a letter to see it as it prints. Use <b>Edit</b> at the top, then click a letter, to change it. Delete is on the letter's edit screen.</p>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "print/onepage_base.html" %}{% load pondo %}
+{% block title %}Dashboard {{ d|date:"d M Y" }}{% endblock %}
+{% block heading %}Daily dashboard · {{ d|date:"D d M Y" }}{% endblock %}
+{% block sub %}Week {{ d|date:"W" }} · all sales excl. VAT · GP used {{ t.gp|pct }} · {{ t.staff_count }} staff · {{ t.trading_days|num:0 }} trading days a week{% endblock %}
+{% block body %}
+<div class="kpis">
+  <div class="kpi dark"><div class="l">Sales {{ d|date:"D d M" }}</div><div class="v">{{ s.today.sales|money:0 }}</div><div class="u">break-even {{ t.be_day|money:0 }} a day</div></div>
+  <div class="kpi"><div class="l">Week to date</div><div class="v">{{ s.week.sales|money:0 }}</div><div class="u">{{ s.week.days }} day{{ s.week.days|pluralize }} · GP {{ s.week.gp|pct }}</div></div>
+  <div class="kpi"><div class="l">Month to date</div><div class="v">{{ s.month.sales|money:0 }}</div><div class="u">{{ s.month.days }} day{{ s.month.days|pluralize }} · GP {{ s.month.gp|pct }}</div></div>
+  <div class="kpi"><div class="l">Profit this month so far</div><div class="v {{ s.month.net|sign }}">{{ s.month.net|money:0 }}</div><div class="u">gross profit − costs of days typed</div></div>
+</div>
+<div class="say {{ status.0 }}">{{ d|date:"F" }}: {{ status.1 }}</div>
+<div class="grid">
+  <div class="col">
+    <div class="box"><h2>Our sales</h2><table class="p"><thead><tr><th></th><th>The day</th><th>Week</th><th>Month</th></tr></thead><tbody>
+      <tr class="b"><td>Sales</td><td>{{ s.today.sales|money }}</td><td>{{ s.week.sales|money }}</td><td>{{ s.month.sales|money }}</td></tr>
+      <tr><td>GP %</td><td>{{ s.today.gp|pct }}</td><td>{{ s.week.gp|pct }}</td><td>{{ s.month.gp|pct }}</td></tr>
+      <tr><td>Break-even (so far)</td><td>{{ s.today.be|money }}</td><td>{{ s.week.be|money }}</td><td>{{ s.month.be|money }}</td></tr>
+      <tr class="b"><td>Over / (short) break-even</td><td class="{{ s.today.over_be|sign }}">{{ s.today.over_be|money }}</td><td class="{{ s.week.over_be|sign }}">{{ s.week.over_be|money }}</td><td class="{{ s.month.over_be|sign }}">{{ s.month.over_be|money }}</td></tr>
+      <tr><td>Break-even + profit (so far)</td><td>{{ s.today.bep|money }}</td><td>{{ s.week.bep|money }}</td><td>{{ s.month.bep|money }}</td></tr>
+      <tr class="b"><td>Over / (short) profit target</td><td class="{{ s.today.over_bep|sign }}">{{ s.today.over_bep|money }}</td><td class="{{ s.week.over_bep|sign }}">{{ s.week.over_bep|money }}</td><td class="{{ s.month.over_bep|sign }}">{{ s.month.over_bep|money }}</td></tr>
+      <tr class="tot"><td>Net profit / (loss)</td><td class="{{ s.today.net|sign }}">{{ s.today.net|money }}</td><td class="{{ s.week.net|sign }}">{{ s.week.net|money }}</td><td class="{{ s.month.net|sign }}">{{ s.month.net|money }}</td></tr>
+    </tbody></table></div>
+
+    <div class="box"><h2>Rest of the month <span class="note">· {{ rest.days_left }} of {{ rest.days_month }} trading days left</span></h2><table class="p"><thead><tr><th></th><th>Goal</th><th>Sold</th><th>Still to sell</th><th>A day</th></tr></thead><tbody>
+      {% for r in rest.rows %}<tr><td>{{ r.label }}</td><td>{{ r.goal|money:0 }}</td><td>{{ r.sold|money:0 }}</td><td><b>{{ r.still|money:0 }}</b></td><td>{{ r.per_day|money:0 }}</td></tr>{% endfor %}
+    </tbody></table></div>
+
+    <div class="box"><h2>Waste <span class="note">· {{ waste.status.1 }}</span></h2><table class="p"><thead><tr><th></th><th>{{ waste.prev|date:"D d" }}</th><th>Week</th><th>Month</th></tr></thead><tbody>
+      <tr class="b"><td>Waste at cost</td><td>{{ waste.cols.today.cost|money }}</td><td>{{ waste.cols.week.cost|money }}</td><td>{{ waste.cols.month.cost|money }}</td></tr>
+      <tr><td>Sales</td><td>{{ waste.cols.today.sales|money }}</td><td>{{ waste.cols.week.sales|money }}</td><td>{{ waste.cols.month.sales|money }}</td></tr>
+      <tr><td>Waste % of sales (max {{ company.waste_target|pct:0 }})</td><td>{{ waste.cols.today.pct|pct }}</td><td>{{ waste.cols.week.pct|pct }}</td><td>{{ waste.cols.month.pct|pct }}</td></tr>
+      <tr><td>Above / (below) target</td><td class="{% if waste.cols.today.over > 0 %}neg{% endif %}">{{ waste.cols.today.over|money }}</td><td class="{% if waste.cols.week.over > 0 %}neg{% endif %}">{{ waste.cols.week.over|money }}</td><td class="{% if waste.cols.month.over > 0 %}neg{% endif %}">{{ waste.cols.month.over|money }}</td></tr>
+      {% for r, v in waste.reasons %}<tr><td class="note">{{ r }}</td><td>{{ v.today|money }}</td><td>{{ v.week|money }}</td><td>{{ v.month|money }}</td></tr>{% endfor %}
+    </tbody></table></div>
+
+    <div class="box"><h2>Till</h2><table class="p"><tbody>
+      <tr><td>Cash-up {{ d|date:"D d" }} (incl. VAT)</td><td>{% if till_total is not None %}{{ till_total|money }}{% else %}not done{% endif %}</td></tr>
+      <tr><td>Over / (short)</td><td class="{{ till_variance|sign }}">{% if till_total is not None %}{{ till_variance|money }}{% else %}–{% endif %}</td></tr>
+      <tr><td>Cash-ups not signed off</td><td>{{ cu_waiting }}</td></tr></tbody></table></div>
+  </div>
+
+  <div class="col">
+    <div class="box"><h2>What we need to sell</h2><table class="p"><thead><tr><th></th><th>Day</th><th>Week</th><th>Month</th></tr></thead><tbody>
+      {% for label, a, b, c in t.rows %}<tr{% if forloop.counter > 2 %} class="b"{% endif %}><td>{{ label }}</td><td>{{ a|money:0 }}</td><td>{{ b|money:0 }}</td><td>{{ c|money:0 }}</td></tr>{% endfor %}
+    </tbody></table></div>
+
+    <div class="box"><h2>Sales per category</h2><table class="p"><thead><tr><th></th><th>The day</th><th>Week</th><th>Month</th><th>Share</th></tr></thead><tbody>
+      {% for c, v in cats.rows %}<tr><td>{{ c.name }}</td><td>{% if v.today %}{{ v.today|money:0 }}{% endif %}</td><td>{% if v.week %}{{ v.week|money:0 }}{% endif %}</td><td>{{ v.month|money:0 }}</td><td>{{ v.share|pct:0 }}</td></tr>
+      {% empty %}<tr><td colspan="5" class="note">No sales typed this month.</td></tr>{% endfor %}
+      {% if cats.rows %}<tr class="tot"><td>Total</td><td>{{ cats.total.today|money:0 }}</td><td>{{ cats.total.week|money:0 }}</td><td>{{ cats.total.month|money:0 }}</td><td></td></tr>{% endif %}
+    </tbody></table></div>
+
+    {% if staff %}<div class="box"><h2>Per staff member <span class="note">· {{ staff.n }} staff</span></h2><table class="p"><thead><tr><th></th><th>Day</th><th>Week</th><th>Month</th></tr></thead><tbody>
+      {% for label, a, b, c in staff.targets %}<tr><td>{{ label|cut:" per staff member" }}</td><td>{{ a|money:0 }}</td><td>{{ b|money:0 }}</td><td>{{ c|money:0 }}</td></tr>{% endfor %}
+      {% for label, a, b, c in staff.actual %}<tr class="b"><td>{{ label|cut:" per staff member" }}</td><td class="{{ a|sign }}">{{ a|money:0 }}</td><td class="{{ b|sign }}">{{ b|money:0 }}</td><td class="{{ c|sign }}">{{ c|money:0 }}</td></tr>{% endfor %}
+    </tbody></table></div>{% endif %}
+  </div>
+</div>
+<div class="note">"So far" = the daily figure × the days sales were typed for. Waste is for the day before, because a day's waste is only complete after closing.</div>
+{% endblock %}

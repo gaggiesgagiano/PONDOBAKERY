@@ -1,0 +1,99 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}{% if r.pk %}Edit {{ r.name }}{% else %}New recipe{% endif %}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'costing:recipes' %}">Recipes &amp; Costing</a>{% if r.pk %} › <a href="{% url 'costing:recipe' r.pk %}">{{ r.name }}</a>{% endif %}</div>
+  <h1>{% if r.pk %}Edit recipe{% else %}New recipe{% endif %}</h1></div></div>
+
+<form method="post" enctype="multipart/form-data" class="stack" id="recipe-form">{% csrf_token %}
+  {% if form.non_field_errors or fs.non_form_errors %}<div class="msg error">{{ form.non_field_errors }}{{ fs.non_form_errors }}</div>{% endif %}
+  <section class="card stack"><h2>The recipe</h2>
+    <div class="grid-form">
+      {% include "_field.html" with f=form.name %}{% include "_field.html" with f=form.number %}{% if free_numbers %}
+      <div class="small freenums" style="grid-column:1/-1;margin-top:-6px">Free numbers – click one to use it:
+        {% for n in free_numbers %}<button type="button" class="chip" data-num="{{ n }}" style="border:0;cursor:pointer;margin:2px">{{ n }}</button>{% endfor %}</div>
+      <script>document.addEventListener('click',function(e){var b=e.target.closest('.freenums [data-num]');if(!b)return;var f=document.getElementById('id_number');if(f){f.value=b.dataset.num;f.focus();}});</script>{% endif %}{% include "_field.html" with f=form.category %}
+      {% include "_field.html" with f=form.scaling_weight %}{% include "_field.html" with f=form.loss_percent %}{% include "_field.html" with f=form.yield_override %}
+      {% include "_field.html" with f=form.bake_temp %}{% include "_field.html" with f=form.bake_time %}{% include "_field.html" with f=form.is_subrecipe %}
+      {% include "_field.html" with f=form.par_day %}{% include "_field.html" with f=form.par_night %}
+    </div>
+  </section>
+
+  <section class="card stack">
+    <div class="row" style="justify-content:space-between"><h2>What goes in</h2><div class="small muted" {% if not can.costs %}hidden{% endif %}>Live total: <b id="live-total" style="color:var(--maroon);font-size:18px">–</b> · <span id="live-yield"></span></div></div>
+    <p class="small muted" style="margin:0">Start typing an ingredient name and pick it from the list. Quantities are in the ingredient's unit (kg, litre or each). Packaging is usually "per finished item".</p>
+    {{ fs.management_form }}
+    <datalist id="ingredient-names">{% for n, u in ingredient_names %}<option value="{{ n }}">{% endfor %}</datalist>
+    <div class="tablebox"><table class="t lines" style="min-width:760px">
+      <thead><tr><th>Part</th><th>Ingredient</th><th>Qty</th><th>How much</th><th class="r">{% if can.costs %}Cost{% endif %}</th><th>Remove</th></tr></thead>
+      <tbody id="line-body">
+      {% for f in fs %}
+        <tr class="line{% if f.errors %} has-error{% endif %}">
+          <td>{{ f.section }}</td><td class="ing">{{ f.ingredient }}</td><td class="qty">{{ f.qty }}</td><td>{{ f.qty_mode }}</td>
+          <td class="cost">–</td><td style="text-align:center">{{ f.DELETE }}</td>
+        </tr>
+        {% if f.errors %}<tr><td colspan="6" class="err" style="color:var(--low);font-weight:700">{{ f.non_field_errors|join:" " }}{% for fld in f %}{{ fld.errors|join:" " }}{% endfor %}</td></tr>{% endif %}
+      {% endfor %}
+      </tbody>
+    </table></div>
+    <template id="line-template"><tr class="line"><td>{{ fs.empty_form.section }}</td><td class="ing">{{ fs.empty_form.ingredient }}</td><td class="qty">{{ fs.empty_form.qty }}</td><td>{{ fs.empty_form.qty_mode }}</td><td class="cost">–</td><td style="text-align:center">{{ fs.empty_form.DELETE }}</td></tr></template>
+    <div class="row"><button class="btn quiet small" type="button" id="add-line">+ Add line</button><button class="btn quiet small" type="button" id="add-5">+ Add 5 lines</button></div>
+  </section>
+
+  <section class="card stack"><h2>{% if form.sell_price %}Selling{% else %}Status{% endif %}</h2>
+    <div class="grid-form">{% if form.sell_price %}{% include "_field.html" with f=form.sell_price %}{% include "_field.html" with f=form.sold_per %}{% include "_field.html" with f=form.vat_percent %}{% endif %}{% include "_field.html" with f=form.active %}</div>
+  </section>
+
+  <section class="card stack"><h2>Method &amp; notes</h2>
+    <div class="grid-form">{% include "_field.html" with f=form.method wide=1 %}{% include "_field.html" with f=form.allergens wide=1 %}{% include "_field.html" with f=form.photo %}</div>
+  </section>
+
+  <div class="actions"><button class="btn primary" type="submit">Save recipe</button>
+    <a class="btn quiet" href="{% if r.pk %}{% url 'costing:recipe' r.pk %}{% else %}{% url 'costing:recipes' %}{% endif %}">Cancel</a></div>
+</form>
+{% if can.costs %}{{ ing_costs|json_script:"ing-costs" }}{% else %}<script id="ing-costs" type="application/json">{}</script>{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+// a name like "Rusks p/kg" means the product is sold per kg
+(function(){ var n = document.getElementById('id_name'), s = document.getElementById('id_sold_per'); if (!n || !s) return;
+  n.addEventListener('input', function(){ if (/p\/\s*kg|per\s*kg|\/\s*kg\b/i.test(n.value)) s.value = 'kg'; }); })();
+(function(){
+  var costs = JSON.parse(document.getElementById('ing-costs').textContent);
+  var lower = {}; Object.keys(costs).forEach(function(k){ lower[k.toLowerCase()] = costs[k]; });
+  var body = document.getElementById('line-body');
+  var total = document.getElementById('id_ln-TOTAL_FORMS');
+  function addLine(){
+    var html = document.getElementById('line-template').innerHTML.replace(/__prefix__/g, total.value);
+    body.insertAdjacentHTML('beforeend', html); total.value = parseInt(total.value) + 1; hook(); recalc();
+  }
+  document.getElementById('add-line').onclick = addLine;
+  document.getElementById('add-5').onclick = function(){ for (var i=0;i<5;i++) addLine(); };
+  function val(id){ var el = document.getElementById(id); return el && el.value !== '' ? parseFloat(el.value) : null; }
+  function money(x){ return '$' + x.toFixed(2); }
+  function recalc(){
+    var rows = body.querySelectorAll('tr.line'), dough = 0, data = [];
+    rows.forEach(function(tr){
+      var sec = tr.querySelector('select[name$="-section"]').value, name = tr.querySelector('input[name$="-ingredient"]').value.trim().toLowerCase();
+      var q = parseFloat(tr.querySelector('input[name$="-qty"]').value), mode = tr.querySelector('select[name$="-qty_mode"]').value;
+      var del = tr.querySelector('input[name$="-DELETE"]').checked;
+      data.push({tr:tr, sec:sec, info: lower[name], q:q, mode:mode, del:del});
+      if (!del && sec === 'dough' && mode === 'fixed' && !isNaN(q)) dough += q;
+    });
+    var loss = (val('id_loss_percent') || 0)/100, sw = val('id_scaling_weight'), yo = val('id_yield_override');
+    var y = yo || (sw ? Math.floor(dough*(1-loss)/sw + 1e-9) : null);
+    var sum = 0;
+    data.forEach(function(d){
+      var cell = d.tr.querySelector('.cost');
+      if (d.del || !d.info || isNaN(d.q)) { cell.textContent = d.info === undefined && d.tr.querySelector('input[name$="-ingredient"]').value ? 'not on list' : '–'; return; }
+      var qty = d.mode === 'per_unit' ? d.q*(y||0) : (d.mode === 'per_kg' ? d.q*dough : d.q);
+      if (d.info.cost === null || d.info.cost === undefined) { cell.textContent = ''; return; }
+      var c = qty*d.info.cost; sum += c; cell.textContent = money(c);
+    });
+    document.getElementById('live-total').textContent = money(sum);
+    document.getElementById('live-yield').textContent = 'dough ' + dough.toFixed(2) + ' kg' + (y ? ' · yield ' + y + ' · ' + money(sum/y) + ' each' : '');
+  }
+  function hook(){ document.querySelectorAll('#recipe-form input, #recipe-form select').forEach(function(el){ el.oninput = recalc; el.onchange = recalc; }); }
+  hook(); recalc();
+})();
+</script>
+{% endblock %}

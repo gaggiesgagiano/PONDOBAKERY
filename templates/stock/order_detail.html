@@ -1,0 +1,32 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}{{ o.number }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'stock:orders' %}">Orders</a> › {{ o.number }}</div>
+  <h1>{{ o.number }} · {{ o.supplier }}</h1>
+  <div class="chips"><span class="chip on">{{ o.get_status_display }}</span><span class="chip">Ordered {{ o.date|date:"d M Y" }}</span>{% if o.delivery_date %}<span class="chip">Expected {{ o.delivery_date|date:"d M Y" }}</span>{% endif %}<span class="chip">By {{ o.ordered_by|default:"–" }}</span></div></div>
+  <div class="actions">
+    <a class="btn" href="{% url 'stock:order_print' o.pk %}" target="_blank">Print order</a>{% if can.stock_edit and o.status != 'cancelled' %}<a class="btn" href="{% url 'core:email' 'po' o.pk %}">✉ E-mail to supplier</a><a class="btn wa" href="{% url 'stock:order_whatsapp' o.pk %}">WhatsApp order</a>{% endif %}
+    {% if can.stock_edit %}
+      {% if o.status == "draft" %}<form method="post" action="{% url 'stock:order_status' o.pk %}">{% csrf_token %}<button class="btn" name="status" value="sent">Mark as sent</button></form>{% endif %}
+      {% if o.status == "draft" or o.status == "sent" %}<a class="btn quiet" href="{% url 'stock:order_edit' o.pk %}">Edit</a>
+        <a class="btn primary" href="{% url 'stock:grv_new' %}?order={{ o.pk }}">Receive this order</a>{% endif %}
+    {% endif %}
+  </div></div>
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>Item</th><th>Code</th><th>Pack</th><th class="r">Packs</th>{% if can.costs %}<th class="r">Price / pack</th><th class="r">Total</th>{% endif %}</tr></thead>
+  <tbody>{% for ln in lines %}<tr><td>{{ ln.ingredient.name }}</td><td class="small">{{ ln.ingredient.code }}</td><td class="small">{{ ln.ingredient.pack_size|num }} {{ ln.ingredient.unit }}</td><td class="r"><b>{{ ln.packs|num:2 }}</b></td>
+    {% if can.costs %}<td class="r">{{ ln.pack_price|money }}</td><td class="r">{{ ln.line_total|money }}</td>{% endif %}</tr>{% endfor %}
+  {% if can.costs %}<tr class="total"><td colspan="5">Total</td><td class="r">{{ o.total|money }}</td></tr>{% endif %}</tbody></table></div></section>
+<section class="card stack"><h2>Sent to supplier</h2>
+  {% with sends=o.sends.all %}{% if sends %}<div class="tablebox"><table class="t">
+    <thead><tr><th>Date</th><th>Time</th><th>How</th><th>Sent to</th><th>By</th><th>Details</th></tr></thead>
+    <tbody>{% for s in sends %}<tr><td>{{ s.when|date:"d M Y" }}</td><td>{{ s.when|date:"H:i" }}</td>
+      <td><span class="chip {% if s.how == 'whatsapp' %}wa{% endif %}">{% if s.how == 'email' %}✉ {% endif %}{{ s.get_how_display }}</span>{% if not s.ok %} <b style="color:#b3261e">failed</b>{% endif %}</td>
+      <td>{{ s.to }}</td><td>{{ s.by|default:"–" }}</td><td class="small muted">{{ s.details }}</td></tr>{% endfor %}</tbody></table></div>
+  {% else %}<p class="muted" style="margin:0">Not sent yet. Use <b>E-mail to supplier</b> or <b>WhatsApp order</b> above – every send is written down here.</p>{% endif %}{% endwith %}
+</section>
+<style>.btn.wa,.chip.wa{background:#1f8f4e;border-color:#1f8f4e;color:#fff}.btn.wa:hover{background:#17773f}</style>
+{% if o.grvs.exists %}<section class="card stack"><h2>Received</h2>{% for g in o.grvs.all %}<a href="{% url 'stock:grv' g.pk %}">{{ g.number }} – {{ g.date|date:"d M Y" }}</a>{% endfor %}</section>{% endif %}
+{% if o.notes %}<section class="card"><h3>Notes</h3><p style="white-space:pre-line;margin:6px 0 0">{{ o.notes }}</p></section>{% endif %}
+{% if can.stock_edit and o.status != "received" and o.status != "cancelled" %}<form method="post" action="{% url 'stock:order_status' o.pk %}">{% csrf_token %}<button class="btn small quiet danger" name="status" value="cancelled">Cancel this order</button></form>{% endif %}
+{% endblock %}

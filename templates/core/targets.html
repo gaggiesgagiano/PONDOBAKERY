@@ -1,0 +1,38 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Costs &amp; targets{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'core:settings' %}">Settings</a> › Costs &amp; targets</div>
+  <h1>Costs &amp; targets</h1>
+  <div class="small muted">What it costs to run Pondo each month, and the profit you want. The dashboard works out break-even from this.</div></div></div>
+<form method="post" class="cols">{% csrf_token %}
+  <div class="main">
+    <section class="card stack"><h2>Your targets</h2>
+      <div class="grid-form">{% include "_field.html" with f=form.profit_target %}{% include "_field.html" with f=form.trading_days %}{% include "_field.html" with f=form.waste_percent %}{% include "_field.html" with f=form.gp_percent %}</div>
+    </section>
+    <section class="card stack"><h2>Monthly overheads</h2>
+      <p class="small muted" style="margin:0">Everything you pay every month that is not stock or wages: rent, ZESA, gas … Empty the name and tick Remove to take a line away.</p>
+      {{ fs.management_form }}
+      {% if fs.non_form_errors %}<div class="msg error">{{ fs.non_form_errors }}</div>{% endif %}
+      <div class="tablebox"><table class="t lines" style="min-width:420px"><thead><tr><th>Item</th><th>Per month ($)</th><th>Remove</th></tr></thead><tbody>
+      {% for f in fs %}<tr{% if f.errors %} class="has-error"{% endif %}>{{ f.id }}<td class="ing">{{ f.name }}</td><td class="qty amt">{{ f.monthly_cost }}</td><td style="text-align:center">{{ f.DELETE }}</td></tr>{% endfor %}
+      <tr class="total"><td>Total overheads</td><td class="r">{{ t.overheads|money }}</td><td></td></tr></tbody></table></div>
+    </section>
+    <div class="actions"><button class="btn primary" type="submit">Save</button><a class="btn quiet" href="{% url 'core:dashboard' %}">Back to the dashboard</a></div>
+  </div>
+  <aside class="aside">
+    <section class="card stack"><h2>Wages</h2>
+      <div class="big">{{ t.wages|money }}</div>
+      <div class="small muted">per month for the {{ t.staff_count }} people working here, from <a href="{% url 'staff:people' %}">Staff</a>. Add, change or mark people as left there.</div>
+    </section>
+    <section class="card peach stack"><h2>What you need to sell</h2>
+      <div class="small">With a GP of <b>{{ t.gp|pct }}</b>{% if t.gp_from == 'products' %} (average of your products){% endif %}:</div>
+      <div class="tablebox"><table class="t"><thead><tr><th></th><th class="r">Per day</th><th class="r">Per month</th></tr></thead><tbody>
+        <tr><td>Costs</td><td class="r">{{ t.costs_day|money:0 }}</td><td class="r">{{ t.costs_month|money:0 }}</td></tr>
+        <tr><td>Break-even sales</td><td class="r"><b>{{ t.be_day|money:0 }}</b></td><td class="r"><b>{{ t.be_month|money:0 }}</b></td></tr>
+        <tr><td>Break-even + profit</td><td class="r"><b>{{ t.bep_day|money:0 }}</b></td><td class="r"><b>{{ t.bep_month|money:0 }}</b></td></tr>
+      </tbody></table></div>
+      <div class="small muted">Sales excl. VAT. Updates when you save.</div>
+    </section>
+  </aside>
+</form>
+{% endblock %}

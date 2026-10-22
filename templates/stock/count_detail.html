@@ -1,0 +1,29 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}{{ c }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'stock:counts' %}">Stock take</a> › {{ c.number }}</div>
+  <h1>Stock take {{ c.date|date:"D d M Y" }}</h1>
+  <div class="chips"><span class="chip on">Final</span><span class="chip">Counted by {{ c.counted_by|default:"–" }}</span>{% if c.checked_by %}<span class="chip">Checked by {{ c.checked_by }}</span>{% endif %}</div></div>
+  <div class="actions"><a class="btn" href="{% url 'stock:count_variance' c.pk %}">Variance report</a><button class="btn" type="button" onclick="window.print()">Print</button>{% if can.owner %}<a class="btn quiet" href="{% url 'stock:count_edit' c.pk %}">Correct counts</a>{% endif %}</div></div>
+{% if can.costs %}
+<div class="stats">
+  <div class="card stat dark"><div class="lbl">Total stock value</div><div class="val">{{ total|money }}</div><div class="sub">excl. VAT</div></div>
+  <div class="card stat"><div class="lbl">Ingredients</div><div class="val">{{ groups.bought|money }}</div></div>
+  <div class="card stat"><div class="lbl">Packaging</div><div class="val">{{ groups.packaging|money }}</div></div>
+  <div class="card stat"><div class="lbl">Prepared items</div><div class="val">{{ groups.subrecipe|money }}</div></div>
+  <div class="card stat"><div class="lbl">Shop floor</div><div class="val">{{ groups.product|money }}</div></div>
+</div>
+{% endif %}
+{% if diffs %}<section class="card stack"><h2>Biggest differences against expected stock</h2>
+  <p class="small muted" style="margin:0">Expected = previous count + goods received − what finished plans used. Big differences can mean wastage, theft, or plans not marked Done.</p>
+  <div class="tablebox"><table class="t"><thead><tr><th>Item</th><th class="r">Expected</th><th class="r">Counted</th><th class="r">Difference</th>{% if can.costs %}<th class="r">Value</th>{% endif %}</tr></thead><tbody>
+  {% for ln in diffs %}<tr><td>{{ ln.ingredient.name }}</td><td class="r">{{ ln.expected|num:2 }}</td><td class="r">{{ ln.qty|num:2 }}</td>
+    <td class="r"><span class="pill {% if ln.qty < ln.expected %}gp-low{% else %}gp-mid{% endif %}">{{ ln.qty|sub:ln.expected|num:2 }} {{ ln.ingredient.unit }}</span></td>
+    {% if can.costs %}<td class="r">{{ ln.qty|sub:ln.expected|mul:ln.unit_cost|money }}</td>{% endif %}</tr>{% endfor %}
+  </tbody></table></div></section>{% endif %}
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>Item</th><th class="r">Counted</th><th>Unit</th>{% if can.costs %}<th class="r">Cost / unit</th><th class="r">Value</th>{% endif %}</tr></thead>
+  <tbody>{% for ln in lines %}{% if ln.qty %}<tr><td>{% if ln.ingredient %}{{ ln.ingredient.name }}{% else %}{{ ln.recipe.name }} <span class="tag">shop floor</span>{% endif %}</td>
+    <td class="r">{{ ln.qty|num:3 }}</td><td>{% if ln.ingredient %}{{ ln.ingredient.unit }}{% else %}{{ ln.recipe.unit }}{% endif %}</td>
+    {% if can.costs %}<td class="r">{{ ln.unit_cost|money:3 }}</td><td class="r">{{ ln.value|money }}</td>{% endif %}</tr>{% endif %}{% endfor %}</tbody></table></div></section>
+{% endblock %}

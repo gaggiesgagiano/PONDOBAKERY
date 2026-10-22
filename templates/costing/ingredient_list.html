@@ -1,0 +1,29 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Ingredients{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Recipes &amp; Costing</div><h1>Ingredients</h1></div>
+  <div class="actions">{% if can.ingredients_edit %}<button class="btn" type="button" data-pick title="Choose an ingredient to change">Edit</button>{% endif %}<a class="btn xl" href="{% url 'core:excel_file' 'ingredients' %}" title="Download this list as an Excel file">Excel</a>{% if can.ingredients_edit %}<a class="btn primary" href="{% url 'costing:ingredient_new' %}">+ New ingredient</a>{% endif %}</div></div>
+<form class="filters" method="get">
+  <label class="visually-hidden" for="q">Search</label><input id="q" type="search" name="q" value="{{ q }}" placeholder="Search name or product code">
+  <label class="visually-hidden" for="sup">Supplier</label>
+  <select id="sup" name="sup" onchange="this.form.submit()"><option value="">All suppliers / groups</option>{% for s in suppliers %}<option value="{{ s.pk }}" {% if sup == s.pk|stringformat:'s' %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select>
+  <label class="visually-hidden" for="kind">Type</label>
+  <select id="kind" name="kind" onchange="this.form.submit()"><option value="">All types</option>{% for k, l in kinds %}<option value="{{ k }}" {% if kind == k %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+  <button class="btn quiet" type="submit">Search</button>{% if q or sup or kind %}<a class="small" href="?">Clear</a>{% endif %}
+  <a class="small" href="?show=archived" style="margin-left:auto">Archived</a>
+</form>
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>Ingredient</th><th>Supplier / group</th><th>Code</th>{% if can.costs %}<th class="r">Pack price</th>{% endif %}<th class="r">Pack size</th>{% if can.costs %}<th class="r">Cost per unit</th>{% endif %}<th class="r">Used in</th></tr></thead>
+  <tbody>
+  {% for i, uc in rows %}
+    <tr class="link" data-href="{% url 'costing:ingredient' i.pk %}"{% if can.ingredients_edit %} data-edit="{% url 'costing:ingredient_edit' i.pk %}"{% endif %}>
+      <td><a class="rowlink" href="{% url 'costing:ingredient' i.pk %}">{{ i.name }}</a>{% if i.kind == 'subrecipe' %} <span class="tag">mother recipe</span>{% elif i.kind == 'packaging' %} <span class="tag">packaging</span>{% endif %}</td>
+      <td class="small">{{ i.supplier|default:"" }}</td><td class="small muted">{{ i.code }}</td>
+      {% if can.costs %}<td class="r">{% if i.kind == 'subrecipe' %}<span class="small muted">from recipe</span>{% else %}{{ i.pack_price|money }}{% endif %}</td>{% endif %}
+      <td class="r">{% if i.kind != 'subrecipe' %}{{ i.pack_size|num:3 }} {{ i.unit }}{% endif %}</td>
+      {% if can.costs %}<td class="r">{% if uc is None %}<span class="pill gp-low">no price</span>{% else %}<b>{{ uc|money:3 }}</b><span class="small muted">/{{ i.unit }}</span>{% endif %}</td>{% endif %}
+      <td class="r">{{ i.n_used }}</td>
+    </tr>
+  {% empty %}<tr class="emptyrow"><td colspan="7" class="muted">No ingredients found.</td></tr>{% endfor %}
+  </tbody></table></div></section>
+{% endblock %}

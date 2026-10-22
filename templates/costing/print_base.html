@@ -1,0 +1,26 @@
+{% load static %}<!doctype html>
+<html lang="en" data-font="{{ look.biz_font }}"><head><meta charset="utf-8"><title>{% block title %}{% endblock %}</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=29">{% include "_brand_font.html" %}
+<style>
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A4;margin:12mm}
+  body{background:#fff;font-size:13px}
+  .sheet{max-width:186mm;margin:0 auto;padding:10px 0;display:flex;flex-direction:column;gap:12px}
+  .ph{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #e56026;padding-bottom:8px}
+  .ph img{width:165px}
+  .ph .sh{text-align:right;font-size:11.5px;color:var(--muted)}
+  h1{font-size:30px}
+  .facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+  .facts div{border:1px solid var(--line2);border-radius:10px;padding:6px 10px}
+  .facts b{display:block;font-family:Nunito;font-weight:900;font-size:20px;color:var(--maroon)}
+  table.t td,table.t th{padding:5px 8px}
+  .bar{position:fixed;top:14px;right:14px;display:flex;gap:10px;z-index:5}
+  @media print{.bar{display:none}}
+  .sign{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:20px;font-size:12px}
+  .sign div{border-top:1px solid #999;padding-top:4px}
+</style></head>
+<body><div class="sheet">
+  <div class="bar"><button class="btn primary" onclick="window.print()">Print</button><button class="btn quiet" onclick="window.close()">Close</button></div>
+  <div class="ph"><img src="{% static 'brand/logo/primary_orange.svg' %}" alt="Pondo Bakery"><div class="sh">{% block kind %}{% endblock %}<br>Printed {% now "d M Y H:i" %}</div></div>
+  {% block body %}{% endblock %}
+</div></body></html>

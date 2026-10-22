@@ -1,0 +1,24 @@
+{% extends "costing/print_base.html" %}{% load pondo %}
+{% block title %}Recipe cards {{ plan }}{% endblock %}
+{% block kind %}RECIPE CARDS · {{ plan.number }}{% endblock %}
+{% block body %}
+<style>.card-page{page-break-after:always;display:flex;flex-direction:column;gap:10px;padding-bottom:16px;border-bottom:2px dashed #ddd}.card-page:last-child{page-break-after:auto;border:0}</style>
+<p class="small muted" style="margin:0">{{ plan.get_shift_display }} · {{ plan.date|date:"l d F Y" }} – one card per page, quantities already scaled.</p>
+{% for c in cards %}
+<div class="card-page">
+  <h1>{{ c.r.name }}{% if c.mother %} <span class="tag">mother recipe – prepare first</span>{% endif %}</h1>
+  <div class="facts">
+    <div>Make<b>{% if c.mother %}{{ c.make_qty|num:2 }} {{ c.unit }}{% else %}{{ c.make }}{% endif %}</b></div>
+    <div>Batches<b>{{ c.batches|num:2 }}</b></div>
+    <div>Scaling weight<b>{% if c.r.scaling_weight %}{{ c.r.scaling_weight|num:3 }} kg{% else %}–{% endif %}</b></div>
+    <div>Bake<b>{{ c.r.bake_temp|default:"–" }} {% if c.r.bake_time %}· {{ c.r.bake_time }}{% endif %}</b></div>
+  </div>
+  <table class="t"><thead><tr><th>Ingredient</th><th class="r">Quantity</th><th>Unit</th><th>✓</th></tr></thead><tbody>
+  {% for sec in c.sections %}<tr class="sec"><td colspan="4">{{ sec.label }}</td></tr>
+    {% for it in sec.items %}<tr><td>{{ it.ln.ingredient.name }}</td><td class="r"><b>{{ it.qty|num:3 }}</b></td><td>{{ it.ln.ingredient.unit }}</td><td>☐</td></tr>{% endfor %}{% endfor %}
+  </tbody></table>
+  {% if c.method_lines %}<h3>Method</h3><ol style="margin:0;padding-left:20px">{% for m in c.method_lines %}<li>{{ m }}</li>{% endfor %}</ol>{% endif %}
+  {% if c.r.allergens %}<p class="small" style="margin:0"><b>Allergens:</b> {{ c.r.allergens }}</p>{% endif %}
+</div>
+{% empty %}<p>No products with a batch yield in this plan.</p>{% endfor %}
+{% endblock %}

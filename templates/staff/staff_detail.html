@@ -1,0 +1,122 @@
+{% extends "base.html" %}{% load pondo static %}
+{% block title %}{{ e.name }}{% endblock %}
+{% block scripts %}
+<script src="{% static 'js/photo.js' %}?v=1"></script>
+<script>
+// Papers: show which files were chosen, and light up when files are dragged over.
+(function(){
+  var d = document.getElementById('drop'); if (!d) return;
+  var inp = d.querySelector('input'), out = document.getElementById('picked');
+  inp.addEventListener('change', function(){ out.textContent = Array.prototype.map.call(inp.files, function(f){ return f.name; }).join(' · '); });
+  ['dragenter', 'dragover'].forEach(function(t){ d.addEventListener(t, function(){ d.classList.add('over'); }); });
+  ['dragleave', 'drop'].forEach(function(t){ d.addEventListener(t, function(){ d.classList.remove('over'); }); });
+  document.getElementById('paper-form').addEventListener('submit', function(){ document.getElementById('paper-busy').hidden = false; });
+})();
+</script>
+{% endblock %}
+{% block content %}
+<div class="head"><div class="title-row">{% include "staff/_ava.html" with big=1 %}<div class="title"><div class="crumbs"><a href="{% url 'staff:people' %}">Staff</a> › {{ e.name }}</div>
+  <h1>{{ e.name }}</h1>{% if e.full_name != e.name %}<div class="small muted" style="margin:-2px 0 4px">{{ e.full_name }}</div>{% endif %}
+  <div class="chips">{% if e.code %}<span class="staffno">{{ e.code }}</span>{% endif %}<span class="chip">{{ e.job_title|default:"No job title" }}</span><span class="chip">{{ e.get_department_display }}</span>{% if not e.active %}<span class="chip on">Left {{ e.end_date|date:"d M Y" }}</span>{% endif %}</div></div></div>
+  <div class="actions"><a class="btn" href="{% url 'staff:file_print' e.pk %}" target="_blank">Print file sheet</a><a class="btn" href="{% url 'staff:card_print' e.pk %}" target="_blank">Print staff card</a>{% if can.staff_edit %}<a class="btn primary" href="{% url 'staff:person_edit' e.pk %}">Edit</a>{% endif %}</div></div>
+<div class="stats">
+  <div class="card stat dark"><div class="lbl">Pay</div><div class="val">{{ e.rate|money }}</div><div class="sub">{{ e.get_pay_type_display }}{% if e.allowances %} + {{ e.allowances|money }} allowances{% endif %}</div></div>
+  <div class="card stat"><div class="lbl">Annual leave left</div><div class="val">{{ balance|num:1 }} days</div><div class="sub">earned this year so far, minus taken</div></div>
+  <div class="card stat"><div class="lbl">Advances to pay back</div><div class="val">{{ open_adv|money }}</div><div class="sub">comes off the next pay run</div></div>
+  <div class="card stat"><div class="lbl">Staff file</div><div class="val">{{ file_done }} of {{ file_need }}</div><div class="sub"><a href="#papers">on the laptop and in the paper file</a></div></div>
+</div>
+<div class="cols">
+  <div class="main">
+    <section class="card stack"><h2>Details</h2>
+      <div class="tablebox"><table class="t"><tbody>
+        <tr><td class="muted">Staff no.</td><td>{% if e.code %}<b>{{ e.code }}</b>{% else %}–{% endif %}</td><td class="muted">Gender</td><td>{{ e.get_gender_display|default:"–" }}</td></tr>
+        <tr><td class="muted">ID no.</td><td>{{ e.id_number|default:"–" }}</td><td class="muted">Born</td><td>{{ e.date_of_birth|date:"d M Y"|default:"–" }}</td></tr>
+        <tr><td class="muted">Cell</td><td>{{ e.phone|default:"–" }}</td><td class="muted">Next of kin</td><td>{{ e.next_of_kin|default:"–" }}</td></tr>
+        <tr><td class="muted">Address</td><td colspan="3">{{ e.address|default:"–" }}</td></tr>
+        <tr><td class="muted">Started</td><td>{{ e.start_date|date:"d M Y" }}</td><td class="muted">Paid by</td><td>{{ e.get_paid_by_display }}{% if e.bank_details %} · {{ e.bank_details }}{% endif %}</td></tr>
+        <tr><td class="muted">NSSA no.</td><td>{{ e.nssa_no|default:"–" }}{% if not e.pays_nssa %} <span class="pill gp-mid">no NSSA</span>{% endif %}</td><td class="muted">Tax no.</td><td>{{ e.tax_no|default:"–" }}{% if not e.pays_paye %} <span class="pill gp-mid">no PAYE</span>{% endif %}</td></tr>
+      </tbody></table></div>
+      {% if e.notes %}<p class="small" style="white-space:pre-line;margin:0">{{ e.notes }}</p>{% endif %}
+    </section>
+    <section class="card stack" id="papers">
+      <div class="row" style="justify-content:space-between;align-items:baseline"><h2>Staff file</h2><span class="small muted">{{ file_done }} of {{ file_need }} complete</span></div>
+      <p class="small muted" style="margin:0">Scans and photos of {{ e.short }}'s papers – only people with staff rights can open them. <b>On laptop</b> = the scan is saved here. <b>In file</b> = the paper copy is in {{ e.short }}'s staff file.</p>
+      <div class="fcheck">{% for i in checklist %}
+        <div class="fck {% if i.exp == 'expired' %}expired{% else %}{{ i.state }}{% endif %}{% if not i.required %} extra{% endif %}">
+          <b>{{ i.label }}</b>
+          <span class="marks"><span class="m">{% if i.soft %}✓{% else %}✗{% endif %} On laptop</span><span class="m">{% if i.hard %}✓{% else %}✗{% endif %} In file</span></span>
+          {% if i.expires %}<span class="small">{% if i.exp == 'expired' %}Ran out{% else %}Runs out{% endif %} {{ i.expires|date:"d M Y" }}</span>{% endif %}
+        </div>{% endfor %}</div>
+      <div class="papers">
+      {% for p in papers %}
+        <div class="paper">
+          {% if p.file %}<a class="ficon {{ p.ext }}" href="{% url 'staff:paper' p.pk %}" target="_blank" title="Open">{% if p.is_image %}<img src="{% url 'staff:paper' p.pk %}" alt="" loading="lazy">{% else %}{{ p.ext }}{% endif %}</a>
+          {% else %}<span class="ficon none" title="Only the paper copy">paper</span>{% endif %}
+          <div><div class="pname">{{ p.get_kind_display }}{% if p.title %} – {{ p.title }}{% endif %}</div>
+            <div class="pmeta">{% if p.file %}{{ p.original_name }} · {{ p.size|filesizeformat }}{% else %}No scan on the laptop yet{% endif %} · added {{ p.added_at|date:"d M Y" }}{% if p.added_by %} by {{ p.added_by }}{% endif %}{% if p.expires %} · <span class="exp {{ p.state }}">{% if p.state == 'expired' %}ran out{% else %}runs out{% endif %} {{ p.expires|date:"d M Y" }}</span>{% endif %}{% if p.notes %} · {{ p.notes }}{% endif %}</div></div>
+          <div class="pact">
+            {% if can.staff_edit %}<form method="post" action="{% url 'staff:paper_hard' p.pk %}">{% csrf_token %}<button class="tick{% if p.hard_copy %} on{% endif %}" type="submit" title="Tick when the paper copy is in the staff file" aria-pressed="{% if p.hard_copy %}true{% else %}false{% endif %}"><span class="bx">{% if p.hard_copy %}✓{% endif %}</span>In the file</button></form>
+            {% else %}<span class="tick{% if p.hard_copy %} on{% endif %}"><span class="bx">{% if p.hard_copy %}✓{% endif %}</span>{% if p.hard_copy %}In the file{% else %}Not in the file{% endif %}</span>{% endif %}
+            {% if p.file %}<a class="btn small" href="{% url 'staff:paper' p.pk %}" target="_blank">Open</a><a class="btn small quiet" href="{% url 'staff:paper' p.pk %}?download=1">Save a copy</a>{% endif %}
+            {% if p.form %}<button class="btn small quiet" type="button" onclick="this.closest('.paper').querySelector('details').toggleAttribute('open')">Change</button>{% endif %}
+          </div>
+          {% if p.form %}<details><summary>Change</summary>
+            <form method="post" action="{% url 'staff:paper_edit' p.pk %}" class="stack">{% csrf_token %}<div class="grid-form">{% for f in p.form %}{% include "_field.html" %}{% endfor %}</div>
+              <div class="row"><button class="btn primary small" type="submit">Save</button></div></form>
+            <form method="post" action="{% url 'staff:paper_delete' p.pk %}" onsubmit="return confirm('Delete this from the laptop? The paper copy in the file is not touched.')" style="margin-top:10px">{% csrf_token %}<button class="btn small danger" type="submit">Delete from the laptop</button></form>
+          </details>{% endif %}
+        </div>
+      {% empty %}<p class="muted small" style="margin:0">Nothing in {{ e.short }}'s file yet.</p>{% endfor %}
+      </div>
+      {% if can.staff_edit %}
+      <details class="addpaper"{% if not papers %} open{% endif %}><summary class="btn primary">+ Add papers</summary>
+        <form method="post" action="{% url 'staff:paper_add' e.pk %}" enctype="multipart/form-data" class="stack" id="paper-form">{% csrf_token %}
+          <h3>Add papers to {{ e.short }}'s file</h3>
+          <div class="drop" id="drop">Click here to choose the scan or photo – or drag the files onto this box<br><span class="small">PDF, photos (JPG / PNG) or Word files. Choose more than one if the paper has more pages, like an ID front and back.</span>
+            <input type="file" name="files" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.heic,.tif,.tiff,.bmp,.doc,.docx,.odt,.rtf,.txt,.xls,.xlsx" aria-label="Choose the files">
+            <div class="picked" id="picked"></div></div>
+          <div class="grid-form">{% for f in paper_form %}{% include "_field.html" %}{% endfor %}</div>
+          <p class="small muted" style="margin:0">No scan yet? Leave the files empty and tick that the paper copy is in the file – you can add the scan later.</p>
+          <div class="row"><button class="btn primary" type="submit">Save papers</button><span class="small muted" id="paper-busy" hidden>Saving …</span></div>
+        </form></details>{% endif %}
+    </section>
+    <section class="card stack"><h2>Pay history</h2>
+      <div class="tablebox"><table class="t"><thead><tr><th>Month</th><th class="r">Gross</th><th class="r">PAYE + AIDS</th><th class="r">NSSA</th><th class="r">Advances</th><th class="r">Net</th><th></th></tr></thead><tbody>
+      {% for ln in lines %}<tr><td><a href="{% url 'staff:payrun' ln.run.pk %}">{{ ln.run.period|date:"F Y" }}</a>{% if ln.run.status == 'draft' %} <span class="pill gp-none">draft</span>{% endif %}</td><td class="r">{{ ln.gross|money }}</td><td class="r">{{ ln.tax|money }}</td><td class="r">{{ ln.nssa|money }}</td><td class="r">{{ ln.advances|money }}</td><td class="r"><b>{{ ln.net|money }}</b></td>
+        <td><a class="small" href="{% url 'staff:payslip' ln.run.pk e.pk %}" target="_blank">Payslip</a></td></tr>
+      {% empty %}<tr class="emptyrow"><td colspan="7" class="muted">Not paid through the program yet.</td></tr>{% endfor %}</tbody></table></div>
+    </section>
+  </div>
+  <aside class="aside">
+    <section class="card stack photo-widget" id="photo" data-shape="portrait"><h2>Photo</h2>
+      <div class="sphoto">{% if e.photo %}<img src="{% url 'staff:photo' e.pk %}?v={{ e.photo_v }}" alt="Photo of {{ e.name }}">{% else %}{% include "staff/_ava.html" %}{% endif %}</div>
+      {% if can.staff_edit %}
+      <form method="post" action="{% url 'staff:photo_change' e.pk %}" enctype="multipart/form-data" class="photo-actions" id="photo-form">{% csrf_token %}
+        <label class="btn small primary pick" style="cursor:pointer">{% if e.photo %}Change photo{% else %}Add photo{% endif %}<input type="file" name="photo" accept="image/*" class="visually-hidden" id="photo-input"></label>
+        <button class="btn small cam-start" type="button" id="cam-start">Take photo</button>
+        <button class="btn small primary cam-snap" type="button" id="cam-snap" hidden>Snap</button>
+        <button class="btn small quiet cam-stop" type="button" id="cam-stop" hidden>Cancel</button>
+        {% if e.photo %}<button class="btn small quiet remove" type="submit" name="remove" value="1" onclick="return confirm('Remove this photo?')">Remove</button>{% endif %}
+      </form>
+      <p class="small muted photo-msg" style="margin:0;text-align:center">Use a photo from a phone, or <b>Take photo</b> with the laptop camera. A plain wall behind {{ e.short }} looks best.</p>
+      <p class="small muted photo-busy" style="margin:0;text-align:center" hidden>Saving the photo …</p>
+      {% elif not e.photo %}<p class="small muted" style="margin:0;text-align:center">No photo yet.</p>{% endif %}
+    </section>
+    <section class="card stack"><h2>Advances</h2>
+      {% for a in advances %}<div class="row" style="justify-content:space-between"><span>{{ a.date|date:"d M Y" }} · <b>{{ a.amount|money }}</b><br><span class="small muted">{{ a.reason }}{% if a.recovered_in %} · paid back {{ a.recovered_in.run.period|date:"M Y" }}{% else %} · <b style="color:var(--mid)">open</b>{% endif %}</span></span>
+        {% if can.staff_edit and not a.recovered_in %}<form method="post" action="{% url 'staff:advance_delete' a.pk %}" onsubmit="return confirm('Delete this advance?')">{% csrf_token %}<button class="btn small quiet" type="submit">Delete</button></form>{% endif %}</div>
+      {% empty %}<p class="muted small" style="margin:0">No advances.</p>{% endfor %}
+      {% if can.staff_edit and e.active %}<form method="post" action="{% url 'staff:advance_add' e.pk %}" class="stack" style="border-top:1px solid var(--line);padding-top:12px">{% csrf_token %}<h3>Give an advance</h3>
+        {% for f in adv_form %}{% include "_field.html" %}{% endfor %}<button class="btn" type="submit">Save advance</button></form>{% endif %}
+    </section>
+    <section class="card stack"><h2>Leave</h2>
+      {% for lv in leave %}<div class="row" style="justify-content:space-between"><span><b>{{ lv.get_kind_display }}</b> · {{ lv.days|num:1 }} day{{ lv.days|pluralize }}<br><span class="small muted">{{ lv.start|date:"d M" }} – {{ lv.end|date:"d M Y" }}{% if lv.notes %} · {{ lv.notes }}{% endif %}</span></span>
+        {% if can.staff_edit %}<form method="post" action="{% url 'staff:leave_delete' lv.pk %}" onsubmit="return confirm('Delete this leave?')">{% csrf_token %}<button class="btn small quiet" type="submit">Delete</button></form>{% endif %}</div>
+      {% empty %}<p class="muted small" style="margin:0">No leave taken.</p>{% endfor %}
+      {% if can.staff_edit %}<form method="post" action="{% url 'staff:leave_add' e.pk %}" class="stack" style="border-top:1px solid var(--line);padding-top:12px">{% csrf_token %}<h3>Add leave</h3>
+        {% for f in leave_form %}{% include "_field.html" %}{% endfor %}<button class="btn" type="submit">Save leave</button>
+        <p class="small muted" style="margin:0">Unpaid leave and absent days are not taken off pay by themselves – type them as "unpaid days" on the pay run.</p></form>{% endif %}
+    </section>
+  </aside>
+</div>
+{% endblock %}

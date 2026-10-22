@@ -1,0 +1,20 @@
+{% extends "forms/_base.html" %}
+{% block css %}{% include "forms/_check_css.html" %}
+  table.tl td{height:5.6mm;font-size:8pt}
+  table.tl th{font-size:7.4pt;padding:.8mm}
+  table.tl th.u{background:#218d80}
+{% endblock %}
+{% block letterhead %}{% include "forms/_slimhead.html" %}{% endblock %}
+{% block subtitle %}<div class="sub">Twice a day: opening (AM) and closing (PM).<br>Fridges 0 – 5 °C · freezers −18 °C or colder.</div>{% endblock %}
+{% block content %}
+<div class="g g3"><div class="f"><span>Month</span><i></i></div><div class="f"><span>Year</span><i></i></div><div class="f"><span>Area</span><i></i></div></div>
+<table class="ck tl">
+  <colgroup><col style="width:10mm">{% for i in "12345678" %}<col>{% endfor %}<col style="width:14mm"><col style="width:42mm"></colgroup>
+  <thead>
+  <tr><th rowspan="2">Day</th>{% for i in "1234" %}<th colspan="2" class="u">Unit {{ i }}: ______________</th>{% endfor %}<th rowspan="2">Initials</th><th rowspan="2" class="l">Action if out of range</th></tr>
+  <tr>{% for i in "1234" %}<th>AM</th><th>PM</th>{% endfor %}</tr></thead>
+  <tbody>{% for d in days %}<tr><td class="c"><b>{{ d }}</b></td>{% for i in "12345678" %}<td></td>{% endfor %}<td></td><td></td></tr>{% endfor %}</tbody>
+</table>
+<p class="legend">Write the unit's name at the top (e.g. Dairy fridge, Freezer 1, Display fridge). Out of range: check the door, check again after 30 minutes, then move the food and tell the Manager. Food too warm for more than 2 hours is thrown away and logged as waste.</p>
+<div class="g g2 signrow"><div class="f"><span>Checked by Manager</span><i></i></div><div class="f"><span>Date</span><i></i></div></div>
+{% endblock %}

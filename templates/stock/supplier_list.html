@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Suppliers{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Stock</div><h1>Suppliers</h1></div>
+  <div class="actions"><a class="btn xl" href="{% url 'core:excel_file' 'suppliers' %}" title="Download this list as an Excel file">Excel</a>{% if can.stock_edit %}<a class="btn primary" href="{% url 'stock:supplier_new' %}">+ New supplier</a>{% endif %}</div></div>
+{% include "stock/_tabs.html" %}
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>Supplier</th><th>Company</th><th>Contact</th><th>Phone</th><th>Email</th><th>Account no.</th><th class="r">Items</th></tr></thead>
+  <tbody>{% for s in suppliers %}<tr {% if can.stock_edit %}class="link" data-href="{% url 'stock:supplier_edit' s.pk %}"{% endif %}>
+    <td><b>{% if can.stock_edit %}<a class="rowlink" href="{% url 'stock:supplier_edit' s.pk %}">{{ s.name }}</a>{% else %}{{ s.name }}{% endif %}</b>{% if not s.active %} <span class="tag">inactive</span>{% endif %}</td>
+    <td>{{ s.company_name }}</td><td>{{ s.contact }}</td><td>{{ s.phone }}</td><td class="small">{{ s.email }}</td><td class="small">{{ s.account_no }}</td><td class="r">{{ s.ingredients.count }}</td></tr>
+  {% endfor %}</tbody></table></div></section>
+{% endblock %}

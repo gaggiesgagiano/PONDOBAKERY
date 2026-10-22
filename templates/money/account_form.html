@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}{% if acc %}{{ acc.name }}{% else %}New account{% endif %}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'money:accounts' %}">Accounts set-up</a></div><h1>{% if acc %}{{ acc.name }}{% else %}New account{% endif %}</h1></div></div>
+<form class="card stack" method="post" style="max-width:640px">{% csrf_token %}
+  {% for f in form %}<div class="field">{% if f.field.widget.input_type == "checkbox" %}<label class="remember">{{ f }} <span>{{ f.label }}</span></label>{% else %}<label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% endif %}
+    {% if f.help_text %}<div class="small muted">{{ f.help_text }}</div>{% endif %}{% for e in f.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>{% endfor %}
+  <div class="small muted">Tip: on opening day start the safe with what is really in it (the floats), the bank with the balance on the bank statement that morning, and EcoCash with the wallet balance.</div>
+  <div class="row"><button class="btn primary" type="submit">Save</button><a class="btn quiet" href="{% url 'money:accounts' %}">Cancel</a></div>
+</form>
+{% endblock %}

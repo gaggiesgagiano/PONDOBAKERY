@@ -1,0 +1,42 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Variance – {{ c.number }}{% endblock %}
+{% block head %}<style>
+  .vt td.r,.vt th.r{text-align:right;white-space:nowrap}
+  .vt textarea{width:100%;min-height:38px;font:inherit;padding:6px 8px;border:1.5px solid var(--line2,#ecd3ad);border-radius:8px}
+  .vt tr.need td{background:#fff1ee}
+  .neg{color:#b3261e;font-weight:800}.pos{color:#1d6b40;font-weight:800}
+  @media print{.no-print,.actions,.msgs{display:none!important}.vt textarea{border:0;padding:0;min-height:0}}
+</style>{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'stock:counts' %}">Stock take</a> › {{ c.number }}</div>
+  <h1>Variance report</h1>
+  <div class="small muted">Stock take {{ c.date|date:"D d M Y" }} · stock as at {{ c.as_at|default:c.created_at|date:"d M Y H:i" }} · expected = last final count + goods received − {% if mode == "production" %}production plans marked Done{% else %}till sales and waste{% endif %} since.</div>
+  <div class="chips" style="margin-top:6px">{% if draft %}<span class="chip draft">Busy – not final yet</span>{% else %}<span class="chip ok">Final{% if c.finalized_by %} · by {{ c.finalized_by.first_name|default:c.finalized_by.username }}{% endif %} · {{ c.finalized_at|date:"d M H:i" }}</span>{% endif %}</div></div>
+  <div class="actions"><button class="btn" type="button" onclick="window.print()">Print</button>
+    {% if draft and can.stock_edit %}<a class="btn" href="{% url 'stock:count_edit' c.pk %}?diff=1">Recount the differences</a><a class="btn quiet" href="{% url 'stock:count_edit' c.pk %}">All counts</a>{% endif %}
+    {% if not draft %}<a class="btn quiet" href="{% url 'stock:count' c.pk %}">Stock values</a>{% endif %}</div></div>
+<div class="stats">
+  <div class="card stat"><div class="lbl">Short</div><div class="val neg">{{ short|money }}</div></div>
+  <div class="card stat"><div class="lbl">Over</div><div class="val pos">{{ over|money }}</div></div>
+  <div class="card stat dark"><div class="lbl">Net difference</div><div class="val">{{ net|money }}</div><div class="sub">at cost, excl. VAT</div></div>
+  <div class="card stat"><div class="lbl">Still to do</div><div class="val">{{ n_missing }}</div><div class="sub">not counted · {{ n_reason }} need a reason</div></div>
+</div>
+{% if draft %}<p class="small muted no-print">Recount every item with a difference until you are happy. Every difference of <b>{{ limit|money }}</b> or more needs an explanation. Only a manager can finalise.</p>{% endif %}
+<form method="post">{% csrf_token %}
+<section class="card"><div class="tablebox"><table class="t vt">
+  <thead><tr><th>Item</th><th>Unit</th><th class="r">Expected</th><th class="r">Counted</th><th class="r">Difference</th><th class="r">Value</th><th style="width:30%">Why short / over</th></tr></thead>
+  <tbody>{% for r in rows %}<tr class="{% if r.big and r.counted is not None and not r.reason %}need{% endif %}">
+    <td><b>{{ r.i.name }}</b><div class="small muted">{{ r.i.supplier|default:"" }}</div></td><td>{{ r.i.unit }}</td>
+    <td class="r">{{ r.exp|num:2 }}</td>
+    <td class="r">{% if r.counted is None %}<span class="chip due">not counted</span>{% else %}{{ r.counted|num:2 }}{% endif %}</td>
+    <td class="r">{% if r.counted is not None %}<span class="{% if r.diff < 0 %}neg{% elif r.diff > 0 %}pos{% endif %}">{{ r.diff|num:2 }}</span>{% endif %}</td>
+    <td class="r">{% if r.counted is not None %}<span class="{% if r.value < 0 %}neg{% elif r.value > 0 %}pos{% endif %}">{{ r.value|money }}</span>{% endif %}</td>
+    <td>{% if draft and r.line and r.diff %}<textarea name="r_{{ r.i.pk }}" rows="1" placeholder="{% if r.big %}Needed – e.g. spilt, wrong GRV, not logged as waste{% else %}Optional{% endif %}">{{ r.reason }}</textarea>{% else %}{{ r.reason }}{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="7" class="muted">Nothing expected and nothing counted.</td></tr>{% endfor %}</tbody>
+</table></div></section>
+{% if draft and can.stock_edit %}<div class="actions no-print" style="position:sticky;bottom:0;background:var(--cream);padding:12px 0">
+  <button class="btn" type="submit">Save reasons</button>
+  {% if manager %}<button class="btn primary" type="submit" name="finalise" value="1" onclick="return confirm('Finalise this stock take? Stock levels will start from these counts and it can no longer be changed.');">Finalise stock take</button>
+  {% else %}<span class="small muted">Only a manager can finalise.</span>{% endif %}</div>{% endif %}
+</form>
+{% endblock %}

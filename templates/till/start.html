@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Till{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Every day</div><h1>Till</h1>
+  <div class="small muted">Open your till at the start of the day, sell, and close it at the end – closing makes the cash-up for you.</div>
+  <div class="chips" style="margin-top:6px">{% if fiscal_mode == "live" %}<a class="chip on" href="{% url 'fiscal:home' %}">ZIMRA LIVE – every slip is a fiscal tax invoice</a>{% elif fiscal_mode == "test" %}<a class="chip" href="{% url 'fiscal:home' %}">ZIMRA TEST server – practice fiscal slips</a>{% else %}<span class="chip draft">Practice mode – receipts are not tax invoices until ZIMRA is connected</span>{% endif %}</div></div></div>
+{% if mine %}<section class="card stack"><h2 style="margin:0">You have {{ mine.till }} open</h2>
+  <div class="row"><a class="btn primary" href="{% url 'till:screen' mine.pk %}">Go to {{ mine.till }}</a></div></section>{% endif %}
+<section class="card stack"><h2 style="margin:0">Tills today · {{ today|date:"l j F" }}</h2>
+  <div class="tablebox"><table class="t"><thead><tr><th>Till</th><th>Now</th><th>Shifts closed today</th><th></th></tr></thead><tbody>
+  {% for r in rows %}<tr><td><b>{{ r.till }}</b></td>
+    <td>{% if r.open %}<span class="chip ok">Open · {{ r.open.cashier_name }} · since {{ r.open.opened_at|time:"H:i" }}</span>{% else %}<span class="chip">Free – can be opened</span>{% endif %}</td>
+    <td class="small">{% for s in r.done %}{% if s.cashup %}<a href="{% url 'sales:cashup' s.cashup.pk %}">{{ s.label }} · {{ s.cashier_name }}</a>{% else %}{{ s.label }}{% endif %}{% if not forloop.last %}<br>{% endif %}{% empty %}–{% endfor %}</td>
+    <td style="text-align:right">{% if r.open and r.open.cashier_id == user.id %}<a class="btn small" href="{% url 'till:screen' r.open.pk %}">Open screen</a>{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
+  <p class="small muted" style="margin:0">Each shift works on its own till. When a shift closes, the next shift re-opens the till with a fresh float from the safe – every shift gets its own cash-up.</p></section>
+{% if not mine %}
+<form class="card stack" method="post" style="max-width:560px">{% csrf_token %}
+  <h2 style="margin:0">Open a till</h2>
+  <p class="small muted" style="margin:0">The manager gives you a fresh float from the safe. Count it together, note for note and coin for coin (SOP 2.01).</p>
+  <div class="field"><label for="till">Till</label><select id="till" name="till" required>{% for r in rows %}{% if not r.open %}<option value="{{ r.till.pk }}">{{ r.till }}{% if r.done %} – shift {{ r.done|length|add:1 }}{% endif %}</option>{% endif %}{% endfor %}</select></div>
+  <div class="field"><label for="float">Float counted (US$)</label><input id="float" name="float" inputmode="decimal" value="{{ float }}" required></div>
+  <div class="field"><label for="checked_by">Counted with (manager)</label><input id="checked_by" name="checked_by" placeholder="Name of the manager who counted with you"></div>
+  <div class="small">{% if zig_rate %}ZWG rate: <b>ZWG {{ zig_rate|floatformat:2 }} = US$1</b>{% else %}<b style="color:#b3261e">No ZWG rate set</b> – the till can only take USD.{% endif %}
+    {% if user.is_superuser %}<a href="{% url 'core:settings' %}">Change it in Settings</a>{% else %}The Manager sets it in Settings.{% endif %}</div>
+  <button class="btn primary" type="submit">Open the till</button>
+</form>{% endif %}
+{% if recent %}<section class="card stack"><h2 style="margin:0">Recent tills</h2>
+  <div class="tablebox"><table class="t"><thead><tr><th>Date</th><th>Till</th><th>Cashier</th><th>Status</th><th></th></tr></thead><tbody>
+  {% for s in recent %}<tr><td>{{ s.date|date:"D j M" }}</td><td>{{ s.label }}</td><td>{{ s.cashier_name }}</td><td>{% if s.is_open %}Open{% else %}Closed{% endif %}</td>
+    <td style="text-align:right">{% if s.cashup %}<a class="small" href="{% url 'sales:cashup' s.cashup.pk %}">Cash-up</a>{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div></section>{% endif %}
+{% endblock %}

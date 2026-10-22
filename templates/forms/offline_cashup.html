@@ -1,0 +1,30 @@
+{% extends "forms/_base.html" %}
+{% block css %}{% include "forms/_check_css.html" %}
+  table.ck td{height:7.2mm}
+{% endblock %}
+{% block letterhead %}{% load static %}<div class="slim"><img src="{% static 'brand/logo/primary_orange.svg' %}" alt=""><span><b>{{ current_shop.name|default:company.company_name|default:"Pondo Bakery" }}</b></span><span class="file">Use only when <b>Pondo can't be used</b> · one sheet per till</span></div>{% endblock %}
+{% block subtitle %}<div class="sub">Type it into Pondo as soon as Pondo works again,<br>then write “typed” and initial at the bottom.</div>{% endblock %}
+{% block content %}
+<div class="g g3"><div class="f"><span>Date</span><i></i></div><div class="f"><span>Till</span><i></i></div><div class="f"><span>Cashier</span><i></i></div></div>
+<div class="sec"><div class="sh"><span class="n">1</span><h2>What the till says (Z report)</h2></div>
+<table class="ck"><colgroup><col style="width:60mm"><col><col></colgroup>
+  <thead><tr><th class="l">Payment type</th><th>Till says $</th><th>Really received $</th></tr></thead>
+  <tbody>
+  <tr><td>Cash US$</td><td></td><td></td></tr><tr><td>EcoCash</td><td></td><td></td></tr><tr><td>Swipe / card</td><td></td><td></td></tr>
+  <tr><td>Bank transfer</td><td></td><td></td></tr><tr><td>Other: ____________</td><td></td><td></td></tr>
+  <tr class="sign"><td>Total sales</td><td></td><td></td></tr></tbody></table></div>
+<div class="sec"><div class="sh"><span class="n">2</span><h2>Paid out of the till</h2></div>
+<table class="ck"><colgroup><col><col style="width:40mm"><col style="width:22mm"><col style="width:24mm"></colgroup>
+  <thead><tr><th class="l">What for</th><th class="l">Paid to</th><th>Amount $</th><th>Slip no.</th></tr></thead>
+  <tbody>{% for i in "1234" %}<tr><td></td><td></td><td></td><td></td></tr>{% endfor %}</tbody></table></div>
+<div class="sec"><div class="sh"><span class="n">3</span><h2>Count the cash</h2></div>
+<div class="g g2">
+  <div class="f"><span>Float at the start $</span><i></i></div><div class="f"><span>Cash counted (float included) $</span><i></i></div>
+  <div class="f"><span>ZiG notes counted</span><i></i></div><div class="f"><span>ZiG rate of the day</span><i></i></div>
+  <div class="f"><span>Float left for tomorrow $</span><i></i></div><div class="f"><span>Cash to the safe $</span><i></i></div>
+  <div class="f"><span>Over $</span><i></i></div><div class="f"><span>Short $</span><i></i></div>
+  <div class="f all"><span>What happened (if over or short)</span><i></i></div>
+</div></div>
+<div class="g g2 signrow"><div class="f"><span>Cashier signature</span><i></i></div><div class="f"><span>Supervisor signature</span><i></i></div></div>
+<div class="g g2 signrow"><div class="f"><span>Typed into Pondo on</span><i></i></div><div class="f"><span>by (initials)</span><i></i></div></div>
+{% endblock %}

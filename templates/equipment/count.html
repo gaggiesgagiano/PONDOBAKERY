@@ -1,0 +1,35 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Equipment count {{ month|date:"M Y" }}{% endblock %}
+{% block head %}<style>
+  .cnt input{width:80px;min-height:40px;border-radius:10px;border:2px solid var(--line2);padding:2px 8px}
+  tr.short td{background:var(--low-bg)}
+  @media print{.cnt input{border:1px solid #999} .noprint-col{display:none}}
+</style>{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'equipment:register' %}">Equipment</a> › Monthly count</div>
+  <h1>Equipment count – {{ month|date:"F Y" }}</h1>
+  <div class="small muted">Walk around with this page (or print it), count each item and type the number. Fewer than bought turns red.</div></div>
+  <div class="actions"><a class="btn quiet" href="?month={{ prev|date:'Y-m' }}">← {{ prev|date:"M" }}</a>{% if next %}<a class="btn quiet" href="?month={{ next|date:'Y-m' }}">{{ next|date:"M" }} →</a>{% endif %}<button class="btn" type="button" onclick="window.print()">Print count sheet</button></div></div>
+{% include "equipment/_tabs.html" %}
+<div class="stats">
+  <div class="card stat"><div class="lbl">Should be on site</div><div class="val">{{ s.should }}</div><div class="sub">items</div></div>
+  <div class="card stat"><div class="lbl">Counted</div><div class="val">{{ s.counted }}</div><div class="sub">{{ s.not_counted }} still to count</div></div>
+  <div class="card stat {% if s.missing %}dark{% endif %}"><div class="lbl">Pieces missing</div><div class="val">{{ s.missing_pieces }}</div>{% if can.costs %}<div class="sub">worth {{ s.missing_value|money }}</div>{% endif %}</div>
+</div>
+<form method="post" class="stack">{% csrf_token %}
+  <section class="card stack"><div class="grid-form">
+    <div class="field"><label for="counted_by">Counted by</label><input id="counted_by" name="counted_by" value="{{ c.counted_by|default:user.first_name }}"></div>
+    <div class="field"><label for="date">Count date</label><input id="date" type="date" name="date" value="{% if c %}{{ c.date|date:'Y-m-d' }}{% else %}{% now 'Y-m-d' %}{% endif %}"></div>
+    <div class="field wide"><label for="notes">Notes</label><textarea id="notes" name="notes" rows="2">{{ c.notes }}</textarea></div></div></section>
+  {% for place, rows in groups %}
+  <section class="card stack"><h2>{{ place }}</h2>
+    <div class="tablebox"><table class="t cnt"><thead><tr><th>Asset no.</th><th>Item</th><th class="r">Should be</th><th>Counted</th><th class="noprint-col">Status</th></tr></thead><tbody>
+    {% for r in rows %}<tr{% if r.short %} class="short"{% endif %}><td class="small"><b>{{ r.i.asset_no }}</b></td><td>{{ r.i.description }}<div class="small muted">{{ r.i.serial }}</div></td><td class="r"><b>{{ r.exp }}</b></td>
+      <td><input type="number" min="0" name="i{{ r.i.pk }}" value="{% if r.got is not None %}{{ r.got }}{% endif %}" aria-label="Counted {{ r.i.description }}" {% if not can.equipment_edit %}disabled{% endif %}></td>
+      <td class="noprint-col small">{% if r.got is None %}<span class="pill gp-mid">not counted</span>{% elif r.short %}<span class="pill gp-low">{{ r.short }} missing</span>{% else %}<span class="pill gp-ok">all here</span>{% endif %}</td></tr>{% endfor %}
+    </tbody></table></div></section>
+  {% empty %}<section class="card"><p class="muted" style="margin:0">No equipment yet.</p></section>{% endfor %}
+  {% if can.equipment_edit and groups %}<div class="actions"><button class="btn primary" type="submit">Save count</button></div>{% endif %}
+</form>
+{% if s.missing %}<p class="small muted">Something really gone (broken, sold, stolen and reported)? Open the item and fill in "Sold / scrapped / written off on".</p>{% endif %}
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "costing/print_base.html" %}{% load pondo %}
+{% block title %}Order {{ o.number }}{% endblock %}
+{% block kind %}PURCHASE ORDER · {{ o.number }}{% endblock %}
+{% block body %}
+<div class="cols" style="gap:20px">
+  <div style="flex:1"><h3>From</h3><div class="small"><b>{{ current_shop.name }}</b><br>{{ current_shop.address_line1 }}<br>{{ current_shop.address_line2 }}<br>{{ current_shop.phone }}<br>{{ current_shop.email }}{% if current_shop.tin %}<br>TIN: {{ current_shop.tin }}{% endif %}</div></div>
+  <div style="flex:1"><h3>To</h3><div class="small"><b>{{ o.supplier.company_name|default:o.supplier.name }}</b>{% if o.supplier.contact %}<br>Attn: {{ o.supplier.contact }}{% endif %}{% if o.supplier.phone %}<br>{{ o.supplier.phone }}{% endif %}{% if o.supplier.email %}<br>{{ o.supplier.email }}{% endif %}{% if o.supplier.address %}<br>{{ o.supplier.address }}{% endif %}{% if o.supplier.account_no %}<br>Our account: {{ o.supplier.account_no }}{% endif %}</div></div>
+</div>
+<div class="facts"><div>Order no.<b>{{ o.number }}</b></div><div>Order date<b>{{ o.date|date:"d M Y" }}</b></div><div>Expected on<b>{{ o.delivery_date|date:"d M Y"|default:"asap" }}</b></div><div>Ordered by<b>{{ o.ordered_by.first_name|default:o.ordered_by|default:"" }}</b></div></div>
+<table class="t">
+  <thead><tr><th>#</th><th>Item</th><th>Code</th><th>Pack</th><th class="r">Qty (packs)</th><th class="r">Price / pack</th><th class="r">Total</th></tr></thead>
+  <tbody>{% for ln in lines %}<tr><td>{{ forloop.counter }}</td><td>{{ ln.ingredient.name }}</td><td>{{ ln.ingredient.code }}</td><td>{{ ln.ingredient.pack_size|num }} {{ ln.ingredient.unit }}</td><td class="r"><b>{{ ln.packs|num:2 }}</b></td><td class="r">{{ ln.pack_price|money }}</td><td class="r">{{ ln.line_total|money }}</td></tr>{% endfor %}
+  <tr class="total"><td colspan="6">Total</td><td class="r">{{ o.total|money }}</td></tr></tbody>
+</table>
+{% if o.notes %}<p style="white-space:pre-line"><b>Notes:</b> {{ o.notes }}</p>{% endif %}
+<div class="sign"><div>Authorised by</div><div>Date</div></div>
+{% endblock %}

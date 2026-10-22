@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Payment &amp; expense types{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Sales &amp; Cash-Up</div><h1>Payment &amp; expense types</h1></div></div>
+{% include "sales/_tabs.html" %}
+<div class="cols">
+  <section class="card main stack"><div class="row" style="justify-content:space-between"><h2>How customers pay</h2><a class="btn small primary" href="{% url 'sales:setup_new' 'method' %}">+ Add</a></div>
+    <div class="tablebox"><table class="t"><thead><tr><th>Name</th><th>Cash in the drawer?</th><th>In use</th></tr></thead><tbody>
+    {% for m in methods %}<tr class="link" data-href="{% url 'sales:setup_edit' 'method' m.pk %}"><td><a class="rowlink" href="{% url 'sales:setup_edit' 'method' m.pk %}">{{ m.name }}</a></td><td>{{ m.is_cash|yesno:"Yes,No" }}</td><td>{{ m.active|yesno:"Yes,No" }}</td></tr>{% endfor %}
+    </tbody></table></div>
+    <p class="small muted" style="margin:0">Everything is in US$. If you take ZiG, add e.g. "ZiG (US$ value)" and type the dollar value.</p>
+  </section>
+  <section class="card aside stack"><div class="row" style="justify-content:space-between"><h2>Expense types</h2><a class="btn small primary" href="{% url 'sales:setup_new' 'category' %}">+ Add</a></div>
+    {% for c in cats %}<a href="{% url 'sales:setup_edit' 'category' c.pk %}" {% if not c.active %}class="muted"{% endif %}>{{ c.name }}{% if not c.active %} (not used){% endif %}</a>{% endfor %}
+  </section>
+</div>
+{% endblock %}

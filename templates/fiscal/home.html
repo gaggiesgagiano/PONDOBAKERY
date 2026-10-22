@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Fiscal (ZIMRA){% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Every day</div><h1>Fiscal (ZIMRA)</h1>
+  <div class="small muted">Every till slip becomes a ZIMRA fiscal receipt with a QR code. Open the fiscal day in the morning (Pondo does it by itself at the first sale) and close it at night with the Z report.</div>
+  <div class="chips" style="margin-top:6px">
+    {% if demo %}<span class="chip">DEMO copy – never fiscalises</span>
+    {% elif s.mode == "live" %}<span class="chip on">LIVE – real tax invoices</span>
+    {% elif s.mode == "test" %}<span class="chip">ZIMRA TEST server – practice</span>
+    {% else %}<span class="chip">Off – practice slips only</span>{% endif %}
+    {% if owner %}<a class="chip" href="{% url 'fiscal:setup' %}">Setup</a><a class="chip" href="{% url 'fiscal:journal' %}">Engine journal</a>{% endif %}
+  </div></div></div>
+
+{% if not s.active or demo %}
+<section class="card stack"><h2 style="margin:0">Fiscalisation is off</h2>
+  <p style="margin:0">Till slips are practice slips (“PRACTICE – NOT A TAX INVOICE”).{% if owner %} Switch it on under <a href="{% url 'fiscal:setup' %}">Setup</a> – start with the ZIMRA TEST server.{% else %} The Manager switches it on.{% endif %}</p></section>
+{% else %}
+<div class="stats">
+  <div class="card stat"><div class="lbl">Fiscal day</div>
+    <div class="val">{% if info.status %}{{ info.status.LastFiscalDayNo|default:"–" }}{% else %}?{% endif %}</div>
+    <div class="sub">{% if info.status %}{{ info.status.FiscalDayStatus|default:"" }}{% if info.status.zimraReachable %} · ZIMRA online{% else %} · ZIMRA offline – local only{% endif %}{% else %}{{ info.status_message }}{% endif %}</div></div>
+  <div class="card stat"><div class="lbl">Sent to ZIMRA</div><div class="val">{{ counts.submitted }}</div><div class="sub">slips accepted</div></div>
+  <div class="card stat"><div class="lbl">Waiting to send</div><div class="val">{{ counts.pending }}</div><div class="sub">made while ZIMRA was not reachable</div></div>
+  <div class="card stat"><div class="lbl">Need attention</div><div class="val">{{ counts.failed|add:counts.flagged }}</div><div class="sub">{{ counts.failed }} not signed · {{ counts.flagged }} flagged red by ZIMRA</div></div>
+</div>
+
+<section class="card stack">
+  <h2 style="margin:0">Licence &amp; device</h2>
+  <div class="small">
+    {% if info.license.allowed %}<span class="chip on">Licence OK</span>{% if info.license.inGrace %} <b style="color:#b3261e">LICENCE GRACE: this till stops fiscalising in {{ info.license.graceDaysLeft }} day(s). Renew now.</b>{% endif %}
+    {% else %}<b style="color:#b3261e">No valid licence:</b> {{ info.license.message }}{% endif %}
+  </div>
+  {% if info.device %}<div class="small muted">Device {{ info.device.DeviceID|default:"–" }}{% if info.device.SerialNumber %} · serial {{ info.device.SerialNumber }}{% endif %}{% if info.device.CompanyName %} · {{ info.device.CompanyName }}{% endif %} · {{ info.device.Status }}{% if info.device.Note %} · {{ info.device.Note }}{% endif %}</div>
+  {% else %}<div class="small muted">{{ info.device_message }}</div>{% endif %}
+</section>
+
+{% if boss %}
+<section class="card stack"><h2 style="margin:0">Day buttons</h2>
+  <form method="post" action="{% url 'fiscal:act' %}" class="row" style="flex-wrap:wrap;gap:10px">{% csrf_token %}
+    <button class="btn" name="do" value="open">Open fiscal day</button>
+    <button class="btn" name="do" value="sync">Send waiting receipts</button>
+    {% if counts.failed %}<button class="btn" name="do" value="retry">Try refused slips again</button>{% endif %}
+    <button class="btn primary" name="do" value="close" onclick="return confirm('Close the fiscal day with the Z report?\n\nDo this once, at the end of the day, after the last till is closed. Waiting receipts are sent first. This can take up to 2 minutes.')">Close fiscal day (Z report)</button>
+  </form>
+  <p class="small muted" style="margin:0">Close the fiscal day once at night, after all tills are closed. ZIMRA allows a fiscal day of at most 24 hours. If the internet is down, keep selling – slips are signed on this computer and sent when you press “Send waiting receipts”.</p>
+</section>
+{% endif %}
+{% endif %}
+
+{% if problems %}
+<section class="card stack"><h2 style="margin:0">Slips that are not with ZIMRA yet</h2>
+  <div class="tablebox"><table class="t"><thead><tr><th>Slip</th><th>When</th><th>Total</th><th>Status</th><th>Why</th><th></th></tr></thead><tbody>
+  {% for p in problems %}<tr><td><a href="{% url 'till:receipt' p.pk %}">{{ p.number }}</a>{% if p.is_refund %} (refund){% endif %}</td>
+    <td>{{ p.created_at|date:"d M H:i" }}</td><td>{{ p.total|floatformat:2 }}</td>
+    <td>{% if p.fiscal_status == "failed" %}<b style="color:#b3261e">Not signed</b>{% elif p.fiscal_status == "flagged" %}<b style="color:#b3261e">Signed · ZIMRA flagged red</b>{% else %}Waiting{% endif %}</td>
+    <td class="small" style="max-width:420px">{{ p.fiscal_message|truncatechars:240 }}</td>
+    <td>{% if p.fiscal_status == "failed" and boss %}<form method="post" action="{% url 'fiscal:retry' p.pk %}">{% csrf_token %}<button class="btn small">Try again</button></form>{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div></section>
+{% endif %}
+
+{% if recent %}
+<section class="card stack"><h2 style="margin:0">Last calls to the engine</h2>
+  <div class="tablebox"><table class="t"><thead><tr><th>When</th><th>What</th><th></th><th>Answer</th></tr></thead><tbody>
+  {% for c in recent %}<tr><td class="small">{{ c.at|date:"d M H:i:s" }}</td><td><a href="{% url 'fiscal:call' c.pk %}">{{ c.method }}</a>{% if c.sale %} · {{ c.sale.number }}{% endif %}</td>
+    <td>{% if c.ok %}✔{% else %}<b style="color:#b3261e">✖</b>{% endif %}</td><td class="small">{{ c.message|truncatechars:160 }}</td></tr>{% endfor %}
+  </tbody></table></div></section>
+{% endif %}
+{% endblock %}

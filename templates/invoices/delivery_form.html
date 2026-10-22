@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}{% if dl %}{{ dl.number }}{% else %}New delivery{% endif %}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'invoices:deliveries' %}">Deliveries</a> › {% if dl %}{{ dl.number }}{% else %}New{% endif %}</div>
+  <h1>{% if dl %}Change {{ dl.number }}{% else %}New delivery{% endif %}</h1>
+  {% if src %}<div class="small muted">Products and customer taken from {{ src.get_kind_display|lower }} {{ src.number }}.</div>{% endif %}</div></div>
+<form method="post" class="stack" id="dl-form">{% csrf_token %}
+  {% if cform.errors or dform.errors %}<div class="msg error">Please fix the boxes marked in red.</div>{% endif %}
+  <div class="cols">
+    <section class="card main stack"><h2>1 · Customer &amp; where to</h2>
+      <div class="grid-form">{% include "_field.html" with f=cform.customer %}{% include "_field.html" with f=cform.name %}{% include "_field.html" with f=cform.phone %}{% include "_field.html" with f=cform.company %}
+        {% include "_field.html" with f=cform.address1 %}{% include "_field.html" with f=cform.address2 %}{% include "_field.html" with f=dform.directions %}{% include "_field.html" with f=cform.your_ref %}</div>
+      {% if not dl %}<div id="save-cust">{% include "_field.html" with f=cform.save_customer %}</div>{% endif %}
+    </section>
+    <section class="card aside stack"><h2>2 · Driver &amp; car</h2>
+      {% include "_field.html" with f=dform.driver %}
+      {% include "_field.html" with f=dform.driver_name %}{% include "_field.html" with f=dform.driver_phone %}
+      <div class="grid-form" style="grid-template-columns:1fr 1fr">{% include "_field.html" with f=dform.car_reg %}{% include "_field.html" with f=dform.car_colour %}</div>
+      {% include "_field.html" with f=dform.car_make %}
+      <p class="small muted" style="margin:0">Pick him from the list, or type a new driver from the inDrive app – he goes on the <a href="{% url 'invoices:drivers' %}" target="_blank">drivers list</a> by himself. Check the car and number plate before the order leaves.</p>
+      {% include "_field.html" with f=dform.date %}
+    </section>
+  </div>
+  <section class="card stack">
+    <div class="row" style="justify-content:space-between"><h2>3 · Products</h2><div class="small muted">Goods incl. VAT: <b id="tot" style="color:var(--maroon);font-size:18px">$0.00</b></div></div>
+    {{ fs.management_form }}
+    <datalist id="product-names">{% for n in names %}<option value="{{ n }}">{% endfor %}</datalist>
+    <div class="tablebox"><table class="t lines" style="min-width:720px">
+      <thead><tr><th>Product</th><th>Qty</th><th>Price each incl. VAT ($)</th><th>Discount %</th><th class="r">Line total</th><th>Remove</th></tr></thead>
+      <tbody id="line-body">{% for f in fs %}<tr class="line{% if f.errors %} has-error{% endif %}"><td class="ing">{{ f.product }}</td><td class="qty">{{ f.qty }}</td><td class="qty">{{ f.price }}</td><td class="qty">{{ f.discount }}</td><td class="cost val">–</td><td style="text-align:center">{{ f.DELETE }}</td></tr>
+        {% if f.errors %}<tr><td colspan="6" style="color:var(--low);font-weight:700">{{ f.non_field_errors|join:" " }}</td></tr>{% endif %}{% endfor %}</tbody>
+    </table></div>
+    <template id="line-template"><tr class="line"><td class="ing">{{ fs.empty_form.product }}</td><td class="qty">{{ fs.empty_form.qty }}</td><td class="qty">{{ fs.empty_form.price }}</td><td class="qty">{{ fs.empty_form.discount }}</td><td class="cost val">–</td><td style="text-align:center">{{ fs.empty_form.DELETE }}</td></tr></template>
+    <div class="row"><button class="btn quiet small" type="button" id="add-line">+ Add line</button><button class="btn quiet small" type="button" id="add-5">+ Add 5</button></div>
+  </section>
+  <section class="card stack"><h2>4 · Delivery fee – cash only</h2>
+    <div class="cols" style="align-items:start">
+      <div class="main stack">
+        <div class="grid-form">{% include "_field.html" with f=dform.fee %}</div>
+        <div class="cashonly"><b>Cash only</b><span>The customer pays the driver cash for the goods and the delivery fee. The driver keeps the fee and brings back the money for the goods.</span></div>
+      </div>
+      <div class="aside">
+        <div class="moneyflow" id="flow">
+          <div><span>Goods</span><b id="f-goods">$0.00</b></div>
+          <div><span>+ Delivery fee (for the driver)</span><b id="f-fee">$0.00</b></div>
+          <div class="sum"><span>Customer pays</span><b id="f-total">$0.00</b></div>
+          <div class="drv"><span>Driver keeps the fee and brings back</span><b id="f-back">$0.00</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="card stack"><div class="grid-form">{% include "_field.html" with f=dform.notes wide=1 %}</div></section>
+  <div class="actions"><button class="btn primary" type="submit">{% if dl %}Save{% else %}Save &amp; make the invoice{% endif %}</button><a class="btn quiet" href="{% if dl %}{% url 'invoices:delivery' dl.pk %}{% else %}{% url 'invoices:deliveries' %}{% endif %}">Cancel</a></div>
+</form>
+{{ prices|json_script:"prices" }}{{ customers|json_script:"customers" }}{{ drivers|json_script:"driver-data" }}
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  var P = {}, p = JSON.parse(document.getElementById('prices').textContent); Object.keys(p).forEach(function(k){ P[k.toLowerCase()] = p[k]; });
+  var C = JSON.parse(document.getElementById('customers').textContent), D = JSON.parse(document.getElementById('driver-data').textContent);
+  var body = document.getElementById('line-body'), total = document.getElementById('id_ln-TOTAL_FORMS');
+  function money(v){ return '$' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function add(){ body.insertAdjacentHTML('beforeend', document.getElementById('line-template').innerHTML.replace(/__prefix__/g, total.value)); total.value = +total.value + 1; }
+  document.getElementById('add-line').onclick = add; document.getElementById('add-5').onclick = function(){ for (var i=0;i<5;i++) add(); };
+  var fee = document.getElementById('id_d-fee');
+  function calc(){
+    var t = 0;
+    body.querySelectorAll('tr.line').forEach(function(tr){
+      var name = (tr.querySelector('input[name$="-product"]').value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+      var pr = tr.querySelector('input[name$="-price"]'), q = parseFloat(tr.querySelector('input[name$="-qty"]').value);
+      var d = parseFloat(tr.querySelector('input[name$="-discount"]').value) || 0, del = tr.querySelector('input[name$="-DELETE"]');
+      if (pr.value === '' && P[name] !== undefined) pr.placeholder = P[name].toFixed(2); else if (pr.value === '') pr.placeholder = '';
+      var price = pr.value === '' ? P[name] : parseFloat(pr.value);
+      var v = (!isNaN(q) && price !== undefined && !isNaN(price) && !(del && del.checked)) ? q * price * (1 - d / 100) : null;
+      tr.querySelector('.val').textContent = v === null ? '–' : money(v);
+      if (v) t += Math.round(v * 100) / 100;
+    });
+    var f = parseFloat(fee.value) || 0;
+    document.getElementById('tot').textContent = money(t);
+    document.getElementById('f-goods').textContent = money(t);
+    document.getElementById('f-fee').textContent = money(f);
+    document.getElementById('f-total').textContent = money(t + f);
+    document.getElementById('f-back').textContent = money(t);
+  }
+  document.getElementById('dl-form').addEventListener('input', calc); document.getElementById('dl-form').addEventListener('change', calc); calc();
+  var sel = document.getElementById('id_c-customer');
+  if (sel) sel.addEventListener('change', function(){
+    var c = C[sel.value], box = document.getElementById('save-cust');
+    ['name','company','address1','address2','phone'].forEach(function(f){ var el = document.getElementById('id_c-' + f); if (el) el.value = c ? (c[f] || '') : ''; });
+    if (box) box.hidden = !!c;
+  });
+  var ds = document.getElementById('id_d-driver');
+  if (ds) ds.addEventListener('change', function(){
+    var d = D[ds.value] || {};
+    [['driver_name','name'],['driver_phone','phone'],['car_reg','car_reg'],['car_make','car_make'],['car_colour','car_colour']].forEach(function(x){
+      var el = document.getElementById('id_d-' + x[0]); if (el) el.value = d[x[1]] || '';
+    });
+  });
+})();
+</script>
+{% endblock %}

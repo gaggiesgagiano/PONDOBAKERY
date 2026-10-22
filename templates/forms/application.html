@@ -1,0 +1,74 @@
+{% extends "forms/_base.html" %}
+{% block css %}
+  .photo{width:30mm;height:38mm;border:.4mm dashed #b9977f;border-radius:2mm;display:flex;align-items:center;justify-content:center;text-align:center;font-size:8pt;color:#9a7a68;flex:none;padding:2mm}
+  .pos{display:flex;gap:5mm;align-items:stretch}
+  .pos .g{flex:1}
+  .docs{grid-template-columns:1fr 1fr}
+{% endblock %}
+{% block subtitle %}<div class="sub">Fill in everything and hand it in<br>with all the papers listed in section 5.</div>{% endblock %}
+{% block content %}
+<div class="sec"><div class="sh"><span class="n" style="background:#218d80">✓</span><h2>Position applied for</h2></div>
+  <div class="pos"><div class="g g2" style="align-content:start">
+    <div class="f span2"><span>Position</span><i></i></div>
+    <div class="f"><span>Department</span><i></i></div>
+    <div class="f"><span>Can start on</span><i></i></div>
+    <div class="f span2"><span>Gross salary expected <small>(US$ / month)</small></span><i></i></div>
+  </div><div class="photo">Stick a passport photo here</div></div></div>
+
+<div class="sec"><div class="sh"><span class="n">1</span><h2>Personal details</h2></div>
+  <div class="g g2">
+    <div class="f"><span>Surname</span><i></i></div>
+    <div class="f"><span>First name(s)</span><i></i></div>
+    <div class="f"><span>Date of birth</span><i></i></div>
+    <div class="f"><span>National ID no.</span><i></i></div>
+    <div class="f"><span>Gender</span><i></i></div>
+    <div class="f"><span>Marital status</span><i></i></div>
+    <div class="f span2"><span>Home address</span><i></i></div>
+    <div class="f"><span>Cell number</span><i></i></div>
+    <div class="f"><span>Email</span><i></i></div>
+    <div class="f span2"><span>Next of kin <small>(name &amp; relationship)</small></span><i></i></div>
+    <div class="f"><span>Next of kin cell</span><i></i></div>
+    <div class="f"><span>Next of kin address</span><i></i></div>
+  </div></div>
+
+<div class="sec"><div class="sh"><span class="n">2</span><h2>Education &amp; qualifications</h2></div>
+  <div class="g g2">
+    <div class="f"><span>Highest qualification</span><i></i></div>
+    <div class="f"><span>School / college</span><i></i></div>
+    <div class="f span2"><span>Certificates / trade tests <small>(e.g. food handling, baking)</small></span><i></i></div>
+  </div></div>
+
+<div class="sec"><div class="sh"><span class="n">3</span><h2>Last job</h2></div>
+  <div class="g g2">
+    <div class="f"><span>Employer</span><i></i></div>
+    <div class="f"><span>Position</span><i></i></div>
+    <div class="f"><span>From <small>(month / year)</small></span><i></i></div>
+    <div class="f"><span>To <small>(month / year)</small></span><i></i></div>
+    <div class="f"><span>Reason for leaving</span><i></i></div>
+    <div class="f"><span>Last gross salary <small>(US$ / month)</small></span><i></i></div>
+  </div></div>
+
+<div class="sec"><div class="sh"><span class="n">4</span><h2>Bank details</h2><span class="hint">for your salary, if employed</span></div>
+  <div class="g g3"><div class="f"><span>Bank / EcoCash</span><i></i></div><div class="f"><span>Account no.</span><i></i></div><div class="f"><span>Branch</span><i></i></div></div></div>
+
+<div class="sec"><div class="sh"><span class="n">5</span><h2>Papers to hand in with this form</h2></div>
+  <p class="note">Applications without all the papers are not processed. Copies of the ID and certificates must be certified by a Commissioner of Oaths.</p>
+  <div class="ticks docs">
+    <span class="tk">Up-to-date CV</span>
+    <span class="tk">Certified copy of national ID / passport</span>
+    <span class="tk">Passport photo (plain background, no glasses, no hat)</span>
+    <span class="tk">Copies of all certificates</span>
+    <span class="tk">Police clearance (not older than 6 months)</span>
+    <span class="tk">Bank account details</span>
+  </div></div>
+
+<div class="sec"><div class="sh"><span class="n">6</span><h2>Declaration</h2></div>
+  <p class="decl">I declare that the information in this application and the papers attached are true and correct. I understand that false information can disqualify me, or lead to dismissal if I am already employed.</p>
+  <div class="sig"><div class="f"><span>Applicant's signature</span><i></i></div><div class="f"><span>Date</span><i></i></div></div></div>
+
+<div class="office stack" style="gap:1mm"><div class="sh" style="margin:0"><span class="n" style="background:#7a1315">✓</span><h2>Office use only</h2></div>
+  <div class="g g4">
+    <div class="f"><span>Received by</span><i></i></div><div class="f"><span>Date</span><i></i></div>
+    <div class="tk">Papers checked</div><div class="tk">Shortlisted</div>
+  </div></div>
+{% endblock %}

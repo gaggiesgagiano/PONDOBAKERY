@@ -1,0 +1,388 @@
+{% load static %}<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>{{ shift.label }} · Pondo till</title>
+<link rel="icon" type="image/svg+xml" href="{% static 'brand/logo/mark_orange.svg' %}">
+{% include "_brand_font.html" %}
+<style>
+@font-face{font-family:Nunito;font-weight:400;src:url({% static 'fonts/nunito-latin-400-normal.woff2' %})}
+@font-face{font-family:Nunito;font-weight:700;src:url({% static 'fonts/nunito-latin-700-normal.woff2' %})}
+@font-face{font-family:Nunito;font-weight:800;src:url({% static 'fonts/nunito-latin-800-normal.woff2' %})}
+:root{--or:#e56026;--bu:#7a1315;--te:#218d80;--wa:#f89b47;--cr:#fff3d7;--ink:#3a1a12;--line:#ecd3ad}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{font-family:Nunito,Arial,sans-serif;background:var(--cr);color:var(--ink);display:flex;flex-direction:column;overflow:hidden;user-select:none}
+.brand{font-family:"Pondo Brand",Nunito,sans-serif;text-transform:uppercase;letter-spacing:.02em}
+header{height:62px;background:var(--bu);color:var(--cr);display:flex;align-items:center;gap:14px;padding:0 14px;flex:none}
+header img{height:40px}
+header .t{font-size:22px}
+header .who{font-size:14px;opacity:.9}
+header .sp{flex:1}
+header{gap:8px}
+header a,header button{color:var(--cr);background:rgba(255,255,255,.12);border:0;border-radius:10px;padding:9px 11px;font:800 14px Nunito,sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap}
+header a.move{background:rgba(248,155,71,.28)}
+header .who{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+@media (max-width:1250px){#clock{display:none}header a,header button{padding:8px 9px;font-size:13px}}
+@media (max-width:1000px){header .prac{display:none}}
+header .prac{background:var(--wa);color:var(--bu);border-radius:20px;padding:4px 10px;font-weight:800;font-size:12px}
+main{flex:1;display:flex;min-height:0}
+.left{flex:1;display:flex;min-width:0}
+.rail{width:178px;flex:none;overflow-y:auto;background:#fff;border-right:2px solid var(--line);padding:8px 8px 14px;display:flex;flex-direction:column;gap:6px;scrollbar-width:thin}
+.mainp{flex:1;display:flex;flex-direction:column;min-width:0;padding:10px 10px 0}
+.rail button{display:flex;justify-content:space-between;align-items:center;gap:6px;width:100%;text-align:left;border:0;border-left:6px solid var(--c,var(--or));background:#fbf3e4;border-radius:10px;padding:11px 10px;font:800 14.5px Nunito,sans-serif;line-height:1.15;color:var(--bu);cursor:pointer}
+.rail button small{font-weight:700;font-size:12px;color:#9a7a68}
+.rail button.on{background:var(--c,var(--or));color:#fff}
+.rail button.on small{color:#fff}
+.find{display:flex;gap:8px;flex:none;margin-bottom:8px}
+.find input{flex:1;font:700 17px Nunito,sans-serif;padding:11px 14px;border:2px solid var(--line);border-radius:12px;background:#fff}
+.grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;align-content:start;padding-bottom:12px}
+.p{background:#fff;border:2px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;min-height:132px;text-align:left;padding:0;font-family:inherit;color:inherit}
+.p:active{transform:scale(.97);border-color:var(--or)}
+.p .ph{height:70px;background:#f6e6c8 center/cover no-repeat}
+.p .nm{padding:6px 9px 0;font-weight:800;font-size:14px;line-height:1.2;flex:1}
+.p .pr{padding:2px 9px 8px;font-weight:800;color:var(--or);font-size:16px}
+.p .pr small{color:#9a7a68;font-weight:700;font-size:11px}
+.right{width:380px;background:#fff;border-left:2px solid var(--line);display:flex;flex-direction:column;flex:none}
+.cart{flex:1;overflow-y:auto}
+.ln{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #f1e3cc}
+.ln .n{flex:1;font-weight:800;font-size:15px;line-height:1.2}
+.ln .n small{display:block;color:#9a7a68;font-weight:700;font-size:12px}
+.ln .q{display:flex;align-items:center;gap:4px}
+.ln .q button{width:40px;height:40px;border-radius:10px;border:2px solid var(--line);background:#fff;font:800 20px Nunito,sans-serif;color:var(--bu);cursor:pointer}
+.ln .q span{min-width:34px;text-align:center;font-weight:800;font-size:16px}
+.ln .v{width:70px;text-align:right;font-weight:800}
+.ln .x{border:0;background:none;color:#c0392b;font-size:22px;cursor:pointer;padding:4px}
+.empty{padding:40px 20px;text-align:center;color:#b39b86;font-weight:700}
+.tot{border-top:2px solid var(--line);padding:12px 14px;flex:none}
+.tot .row{display:flex;justify-content:space-between;font-weight:700;color:#7c5a4a}
+.tot .big{font-size:30px;color:var(--bu);font-weight:800;margin:4px 0 10px}
+.tot .btns{display:flex;gap:10px}
+.btn{border:0;border-radius:14px;font:800 20px Nunito,sans-serif;padding:16px;cursor:pointer}
+.pay{flex:1;background:var(--te);color:#fff}
+.pay:disabled{opacity:.4}
+.clr{background:#f4e4c9;color:var(--bu);font-size:16px}
+.ov{position:fixed;inset:0;background:rgba(58,26,18,.55);display:none;align-items:center;justify-content:center;z-index:10}
+.ov.on{display:flex}
+.box{background:var(--cr);border-radius:18px;width:min(880px,96vw);max-height:96vh;overflow:auto;padding:clamp(8px,1.6vh,14px);display:flex;gap:14px}
+.box h2{margin:0 0 2px;color:var(--bu);font-size:clamp(16px,2.6vh,22px)}
+.col{flex:1;min-width:0}
+.due{font-size:14px;font-weight:800;color:#7c5a4a}
+.due b{display:block;font-size:clamp(22px,4.6vh,34px);color:var(--bu);line-height:1.15}
+.meths{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0 0 6px}
+.curs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:0 0 6px}
+.curs button{border:2px solid var(--line);background:#fff;border-radius:10px;padding:clamp(7px,1.9vh,14px) 4px;font:800 18px Nunito,sans-serif;color:var(--te);cursor:pointer}
+.curs button.on{background:var(--te);color:#fff;border-color:var(--te)}
+.curs button:disabled{opacity:.35;cursor:not-allowed}
+.custb{width:100%;border:2px dashed var(--line);background:#fff;border-radius:10px;padding:8px 10px;font:800 14px Nunito,sans-serif;color:var(--bu);cursor:pointer;text-align:left;margin:0 0 6px}
+.custb.set{border-style:solid;border-color:var(--te);color:var(--te)}
+.cform{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cform label{display:flex;flex-direction:column;font-weight:800;font-size:13px;color:#7c5a4a;gap:3px}
+.cform label.w{grid-column:1/-1}
+.cform input{font:700 16px Nunito,sans-serif;padding:8px 10px;border:2px solid var(--line);border-radius:10px;background:#fff;user-select:text}
+.rate{font-size:12px;font-weight:700;color:#7c5a4a;margin:-2px 0 6px}
+.meths button{border:2px solid var(--line);background:#fff;border-radius:10px;padding:clamp(7px,1.9vh,14px) 4px;font:800 15px Nunito,sans-serif;color:var(--bu);cursor:pointer}
+.meths button.on{background:var(--bu);color:var(--cr);border-color:var(--bu)}
+.amt{background:#fff;border:2px solid var(--line);border-radius:10px;padding:4px 12px;font-size:clamp(20px,4.2vh,30px);font-weight:800;text-align:right}
+.amt small{display:block;font-size:11px;color:#9a7a68;text-align:left}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+.keys button,.notes button{border:2px solid var(--line);background:#fff;border-radius:10px;padding:clamp(6px,1.9vh,15px) 0;font:800 clamp(17px,3.2vh,24px) Nunito,sans-serif;color:var(--ink);cursor:pointer}
+.notes{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-top:5px}
+.notes button{font-size:14px;padding:clamp(6px,1.6vh,12px) 0;color:var(--te)}
+.ref{width:100%;margin-top:5px;font:700 15px Nunito,sans-serif;padding:6px 10px;border:2px solid var(--line);border-radius:10px}
+.plist{background:#fff;border-radius:10px;padding:6px 10px;margin:6px 0;min-height:36px;max-height:22vh;overflow:auto;font-size:14px}
+.plist div{display:flex;justify-content:space-between;font-weight:700;padding:3px 0}
+.plist button{border:0;background:none;color:#c0392b;font-weight:800;cursor:pointer}
+.slipt{display:flex;align-items:center;gap:10px;font-weight:800;font-size:15px;color:var(--bu);margin:4px 0 8px;cursor:pointer}
+.slipt input{width:26px;height:26px;accent-color:var(--te)}
+.err{color:#b00020;font-weight:800;min-height:18px;margin:4px 0;font-size:14px}
+.done{text-align:center;padding:30px 40px;display:block}
+.done .chg{font-size:64px;color:var(--te);font-weight:800}
+.dropwarn{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:#b3261e;color:#fff;padding:12px 20px;border-radius:14px;font-weight:800;text-decoration:none;display:none;z-index:9;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.msg{position:fixed;left:50%;top:76px;transform:translateX(-50%);background:var(--bu);color:var(--cr);padding:10px 18px;border-radius:12px;font-weight:800;display:none;z-index:20}
+@media (max-width:900px){.rail{width:140px}.rail button{font-size:13px;padding:9px 8px}.right{width:310px}.grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}}
+@media (max-width:640px){.box{flex-direction:column}}
+</style></head>
+<body>
+<header>
+  <img src="{% static 'brand/logo/mark_cream.svg' %}" alt="">
+  <div><div class="t brand">{{ shift.label }}</div><div class="who">{{ shift.cashier_name }} · {{ shift.date|date:"D j M" }}{% if zig_rate %} · ZWG {{ zig_rate|floatformat:2 }}/$1{% endif %}</div></div>
+  {% if fiscal_mode == "live" %}{% elif fiscal_mode == "test" %}<span class="prac">ZIMRA TEST</span>{% else %}<span class="prac">PRACTICE</span>{% endif %}
+  <div class="sp"></div>
+  <span class="who" id="clock"></span>
+  <a class="move" href="{% url 'till:move' shift.pk 'drop' %}" id="dropbtn">Cash drop</a>
+  <a class="move" href="{% url 'till:move' shift.pk 'payout' %}">Pay-out</a>
+  <a class="move" href="{% url 'till:move' shift.pk 'nosale' %}">No sale</a>
+  <a href="{% url 'till:sales' shift.pk %}">Sales / refunds</a>
+  <a href="{% url 'till:close' shift.pk %}">Close till</a>
+  <a href="{% url 'core:dashboard' %}">Exit</a>
+  <form method="post" action="{% url 'logout' %}" style="display:contents">{% csrf_token %}<button type="submit" title="Next cashier: log out, then scan your card">Log out</button></form>
+</header>
+<main>
+  <section class="left">
+    <nav class="rail" id="cats" aria-label="Categories"></nav>
+    <div class="mainp">
+      <div class="find"><input id="find" placeholder="Search a product, or scan / type the PLU number and press Enter" autocomplete="off"></div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+  <aside class="right">
+    <div class="cart" id="cart"></div>
+    <div class="tot">
+      <div class="row"><span id="nitems">0 items</span><span>incl. VAT <span id="vat">0.00</span></span></div>
+      <div class="big brand">$<span id="total">0.00</span></div>
+      <div class="btns"><button class="btn clr" id="clear">Clear</button><button class="btn pay" id="pay" disabled>PAY</button></div>
+    </div>
+  </aside>
+</main>
+
+<div class="ov" id="payov"><div class="box">
+  <div class="col">
+    <h2 class="brand">Payment</h2>
+    <div class="due">Total <b id="pdue">$0.00</b></div>
+    <div class="due">Still to pay <b id="pleft">$0.00</b></div>
+    <div class="plist" id="plist"></div>
+    <button class="custb" id="custb" type="button">+ Customer details on the slip (only if the customer asks)</button>
+    <div class="err" id="perr"></div>
+    <div style="display:flex;gap:8px"><button class="btn clr" id="pcancel" style="flex:1;padding:clamp(10px,2.4vh,18px)">Back</button><button class="btn pay" id="pdone" style="flex:2;padding:clamp(10px,2.4vh,18px)" disabled>Complete sale</button></div>
+  </div>
+  <div class="col">
+    <div class="curs" id="curs"><button data-c="USD">USD</button><button data-c="ZWG" {% if not zig_rate %}disabled title="The Manager sets the ZWG rate under Settings"{% endif %}>ZWG</button></div>
+    <div class="rate" id="rate"></div>
+    <div class="meths" id="meths"></div>
+    <div class="amt" id="amt"><small id="amtlbl">Amount</small><span id="amtv">0.00</span></div>
+    <input class="ref" id="ref" placeholder="EcoCash / card reference" style="display:none" autocomplete="off">
+    <div class="notes" id="notes"></div>
+    <div class="keys" id="keys"></div>
+    <button class="btn pay" id="padd" style="width:100%;margin-top:6px;font-size:17px;padding:clamp(8px,2vh,15px)">Add this payment</button>
+  </div>
+</div></div>
+
+<div class="ov" id="custov"><div class="box" style="width:min(640px,96vw);display:block">
+  <h2 class="brand">Customer details</h2>
+  <p style="margin:2px 0 10px;font-weight:700;color:#7c5a4a;font-size:13px">Only what the customer asks for. Printed on the slip and sent to ZIMRA – ZIMRA records the customer when there is a name and a TIN.</p>
+  <div class="cform">
+    <label class="w">Name &amp; surname or business name<input id="c_name" list="c_list" autocomplete="off" placeholder="Start typing – saved customers show up"></label>
+    <label>TIN no. (10 digits)<input id="c_tin" inputmode="numeric" maxlength="10" autocomplete="off"></label>
+    <label>VAT no. (9 digits)<input id="c_vat" inputmode="numeric" maxlength="9" autocomplete="off"></label>
+    <label class="w">Address<input id="c_address" autocomplete="off"></label>
+    <label>E-mail<input id="c_email" type="email" autocomplete="off"></label>
+    <label>Phone<input id="c_phone" inputmode="tel" autocomplete="off"></label>
+    <label class="w" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="c_save" style="width:22px;height:22px"> Save as a customer for next time</label>
+  </div>
+  <datalist id="c_list"></datalist>
+  <div class="err" id="cerr"></div>
+  <div style="display:flex;gap:10px;margin-top:6px"><button class="btn clr" id="cclear" style="flex:1">No details</button><button class="btn pay" id="cok" style="flex:2">Use these details</button></div>
+</div></div>
+
+<div class="ov" id="kgov"><div class="box" style="width:min(420px,96vw);display:block">
+  <h2 class="brand" id="kgname">Weight</h2>
+  <div class="amt"><small>Weight in kg</small><span id="kgv">0</span></div>
+  <div class="keys" id="kgkeys"></div>
+  <div style="display:flex;gap:10px;margin-top:10px"><button class="btn clr" id="kgcancel" style="flex:1">Cancel</button><button class="btn pay" id="kgok" style="flex:1">Add</button></div>
+</div></div>
+
+<div class="ov" id="doneov"><div class="box done">
+  <div class="brand" style="font-size:26px;color:var(--bu)">Sale done · <span id="dnum"></span></div>
+  <div style="font-weight:800;color:#7c5a4a;margin-top:12px">CHANGE</div>
+  <div class="chg"><span id="dcur">$</span><span id="dchg">0.00</span></div>
+  <button class="btn pay" id="dprint" style="margin:16px auto 10px;display:block;padding:16px 40px">Print slip</button>
+  <div style="color:#7c5a4a;font-weight:700" id="dmsg">Only if the customer wants a slip. Tap anywhere else for the next sale.</div>
+</div></div>
+<div class="msg" id="msg"></div>
+<a class="dropwarn" id="dropwarn" href="{% url 'till:move' shift.pk 'drop' %}">Over ${{ drop_at|floatformat:0 }} cash in the drawer – call the manager for a cash drop</a>
+<iframe id="pf" style="position:absolute;width:0;height:0;border:0" title="receipt"></iframe>
+
+{{ products_json|json_script:"pdata" }}{{ methods_json|json_script:"mdata" }}{{ customers_json|json_script:"cdata" }}
+<script>
+(function(){
+const P = JSON.parse(JSON.parse(document.getElementById('pdata').textContent));
+const M = JSON.parse(JSON.parse(document.getElementById('mdata').textContent));
+const CU = JSON.parse(JSON.parse(document.getElementById('cdata').textContent));
+const ZIG = parseFloat("{{ zig_rate }}") || 0;
+const CSRF = "{{ csrf_token }}", SELL = "{% url 'till:sell' shift.pk %}";
+const DROP_AT = {{ drop_at }};
+function dropCheck(v){ document.getElementById('dropwarn').style.display = parseFloat(v) > DROP_AT ? 'block' : 'none'; }
+dropCheck("{{ drawer }}");
+const $ = id => document.getElementById(id);
+const cents = v => Math.round(parseFloat(v) * 100);
+const money = c => (c / 100).toFixed(2);
+let cat = "", cart = [], pays = [], cur = null, entry = "";
+
+function flash(t){ const m = $('msg'); m.textContent = t; m.style.display = 'block'; clearTimeout(m._t); m._t = setTimeout(() => m.style.display = 'none', 2200); }
+function clock(){ const d = new Date(); $('clock').textContent = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }
+setInterval(clock, 15000); clock();
+
+// ---------------- products
+function drawGrid(){
+  const q = $('find').value.trim().toLowerCase();
+  const list = P.filter(p => (!cat || p.cat === cat) && (!q || p.name.toLowerCase().includes(q) || p.plu === q));
+  $('grid').innerHTML = list.map(p => `<button class="p" data-id="${p.id}"><div class="ph" style="${p.photo ? `background-image:url('${p.photo}')` : ''}"></div><div class="nm">${esc(p.name)}</div><div class="pr">$${parseFloat(p.price).toFixed(2)}${p.kg ? ' <small>per kg</small>' : ''}</div></button>`).join('')
+    || '<div class="empty" style="grid-column:1/-1">No product found.</div>';
+}
+function esc(s){ return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+const COLS = ['#e56026', '#218d80', '#7a1315', '#f89b47'];
+const CATS = [...new Set(P.map(p => p.cat))];
+$('cats').innerHTML = `<button class="on" data-c="" style="--c:#3a1a12">All products <small>${P.length}</small></button>` +
+  CATS.map((c, i) => `<button data-c="${esc(c)}" style="--c:${COLS[i % 4]}">${esc(c)} <small>${P.filter(p => p.cat === c).length}</small></button>`).join('');
+$('cats').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return;
+  cat = b.dataset.c; $('find').value = ''; document.querySelectorAll('#cats button').forEach(x => x.classList.toggle('on', x === b)); drawGrid(); $('grid').scrollTop = 0; });
+$('find').addEventListener('input', drawGrid);
+$('find').addEventListener('keydown', e => { if (e.key !== 'Enter') return;
+  const v = $('find').value.trim(); const p = P.find(p => p.plu && p.plu === v) || (P.filter(p => p.name.toLowerCase().includes(v.toLowerCase())).length === 1 ? P.find(p => p.name.toLowerCase().includes(v.toLowerCase())) : null);
+  if (p) { add(p); $('find').value = ''; drawGrid(); } else flash('No product with that number'); });
+$('grid').addEventListener('click', e => { const b = e.target.closest('.p'); if (b) add(P.find(p => p.id == b.dataset.id)); });
+
+// barcode scanner: fast digits + Enter anywhere on the screen
+let scan = "", scanT = 0;
+document.addEventListener('keydown', e => {
+  if (document.activeElement && ['INPUT'].includes(document.activeElement.tagName)) return;
+  if ($('payov').classList.contains('on') || $('kgov').classList.contains('on') || $('custov').classList.contains('on')) return;
+  const now = Date.now(); if (now - scanT > 80) scan = ""; scanT = now;
+  if (e.key === 'Enter' && scan.length >= 3) { const p = P.find(p => p.plu === scan); p ? add(p) : flash('Unknown code ' + scan); scan = ""; e.preventDefault(); }
+  else if (/^\d$/.test(e.key)) scan += e.key;
+});
+
+// ---------------- cart
+let kgFor = null, kgEntry = "";
+function add(p){
+  if (p.kg) { kgFor = p; kgEntry = ""; $('kgname').textContent = p.name; $('kgv').textContent = '0'; $('kgov').classList.add('on'); return; }
+  const l = cart.find(l => l.p.id === p.id && !l.p.kg);
+  l ? l.q++ : cart.push({p, q: 1}); drawCart();
+}
+function drawCart(){
+  if (!cart.length) { $('cart').innerHTML = '<div class="empty">Tap a product to start a sale.</div>'; }
+  else $('cart').innerHTML = cart.map((l, i) => `<div class="ln"><div class="n">${esc(l.p.name)}<small>$${parseFloat(l.p.price).toFixed(2)}${l.p.kg ? ' per kg' : ' each'}</small></div>
+    <div class="q">${l.p.kg ? `<span>${l.q} kg</span>` : `<button data-a="-" data-i="${i}">−</button><span>${l.q}</span><button data-a="+" data-i="${i}">+</button>`}</div>
+    <div class="v">${money(lineC(l))}</div><button class="x" data-a="x" data-i="${i}" aria-label="Remove">✕</button></div>`).join('');
+  const t = totalC(); $('total').textContent = money(t);
+  $('vat').textContent = money(cart.reduce((s, l) => s + Math.round(lineC(l) - lineC(l) / (1 + parseFloat(l.p.vat || 0))), 0));
+  $('nitems').textContent = cart.reduce((s, l) => s + (l.p.kg ? 1 : l.q), 0) + ' items';
+  $('pay').disabled = !cart.length;
+}
+const lineC = l => Math.round(cents(l.p.price) * l.q);
+const totalC = () => cart.reduce((s, l) => s + lineC(l), 0);
+$('cart').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const i = +b.dataset.i;
+  if (b.dataset.a === '+') cart[i].q++; else if (b.dataset.a === '-') { cart[i].q--; if (cart[i].q <= 0) cart.splice(i, 1); } else cart.splice(i, 1);
+  drawCart(); });
+$('clear').addEventListener('click', () => { if (cart.length && confirmClear()) { cart = []; drawCart(); } });
+function confirmClear(){ const b = $('clear'); if (b.dataset.sure) { delete b.dataset.sure; b.textContent = 'Clear'; return true; }
+  b.dataset.sure = 1; b.textContent = 'Sure?'; setTimeout(() => { delete b.dataset.sure; b.textContent = 'Clear'; }, 2500); return false; }
+
+// weight keypad
+const KEYS = ['7','8','9','4','5','6','1','2','3','.','0','⌫'];
+$('kgkeys').innerHTML = KEYS.map(k => `<button data-k="${k}">${k}</button>`).join('');
+$('kgkeys').addEventListener('click', e => { const k = e.target.dataset.k; if (!k) return; kgEntry = keyed(kgEntry, k, 3); $('kgv').textContent = kgEntry || '0'; });
+$('kgcancel').addEventListener('click', () => $('kgov').classList.remove('on'));
+$('kgok').addEventListener('click', () => { const w = parseFloat(kgEntry); if (!(w > 0)) return flash('Type the weight');
+  cart.push({p: kgFor, q: Math.round(w * 1000) / 1000}); $('kgov').classList.remove('on'); drawCart(); });
+function keyed(s, k, dec){ if (k === '⌫') return s.slice(0, -1); if (k === '.') return s.includes('.') ? s : (s || '0') + '.';
+  if (s.includes('.') && s.split('.')[1].length >= dec) return s; if (s.length > 8) return s; return (s === '0' ? '' : s) + k; }
+
+// ---------------- customer details (optional – only when the customer asks)
+let customer = null, custId = null;
+const CF = ['name', 'tin', 'vat', 'address', 'email', 'phone'];
+$('c_list').innerHTML = CU.map(c => `<option value="${esc(c.name)}">${c.tin ? 'TIN ' + esc(c.tin) : ''}</option>`).join('');
+$('c_name').addEventListener('input', () => { const c = CU.find(c => c.name === $('c_name').value);
+  custId = c ? c.id : null; if (c) CF.slice(1).forEach(f => $('c_' + f).value = c[f] || ''); $('c_save').checked = false; $('c_save').disabled = !!c; });
+function custShow(){ const b = $('custb'); b.classList.toggle('set', !!customer);
+  b.textContent = customer ? 'For: ' + customer.name + (customer.tin ? ' · TIN ' + customer.tin : '') + '  (change)' : '+ Customer details on the slip (only if the customer asks)'; }
+function custOpen(msg){ CF.forEach(f => $('c_' + f).value = customer ? (customer[f] || '') : ''); $('c_save').checked = !!(customer && customer.save);
+  $('c_save').disabled = !!custId; $('cerr').textContent = msg || ''; $('custov').classList.add('on'); setTimeout(() => $('c_name').focus(), 50); }
+$('custb').addEventListener('click', () => custOpen());
+$('cclear').addEventListener('click', () => { customer = null; custId = null; $('custov').classList.remove('on'); custShow(); });
+$('cok').addEventListener('click', () => {
+  const c = {}; CF.forEach(f => c[f] = $('c_' + f).value.trim()); c.tin = c.tin.replace(/\s/g, ''); c.vat = c.vat.replace(/\s/g, '');
+  if (!CF.some(f => c[f])) { customer = null; custId = null; $('custov').classList.remove('on'); custShow(); return; }
+  if (!c.name) return $('cerr').textContent = 'Type the name & surname or the business name.';
+  if (c.tin && !/^\d{10}$/.test(c.tin)) return $('cerr').textContent = 'A TIN number has 10 digits.';
+  if (c.vat && !/^\d{9}$/.test(c.vat)) return $('cerr').textContent = 'A VAT number has 9 digits.';
+  if (c.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c.email)) return $('cerr').textContent = 'Check the e-mail address.';
+  c.id = custId; c.save = $('c_save').checked && !custId; customer = c; $('custov').classList.remove('on'); custShow(); });
+
+// ---------------- payment: first the currency (USD / ZWG), then how (cash, card, EcoCash, bank)
+let RATE = ZIG;                      // ZWG per US$1 from Settings
+let curC = 'USD';                    // the currency picked
+const ZNOTES = ['10','20','50','100','200'];
+const UNOTES = ['1','2','5','10','20','50','100'];
+$('meths').innerHTML = M.map((m, i) => `<button data-i="${i}">${esc(m.name)}</button>`).join('');
+$('keys').innerHTML = KEYS.map(k => `<button data-k="${k}">${k}</button>`).join('');
+function paidC(){ return pays.reduce((s, p) => s + p.usd, 0); }
+function leftC(){ return totalC() - paidC(); }
+const toZ = c => (Math.ceil(c / 100 * RATE * 100) / 100).toFixed(2);      // US$ cents -> ZWG (rounded up)
+// paid all in ZWG: the slip is in ZWG – each price changed at the rate and rounded, exactly like Pondo and ZIMRA do
+const zLine = l => Math.round(Math.round(cents(l.p.price) * RATE) * l.q);
+const zTotal = () => cart.reduce((s, l) => s + zLine(l), 0);
+const allZ = () => pays.every(p => p.zig);
+const leftZc = () => zTotal() - pays.reduce((s, p) => s + Math.round(parseFloat(p.zig) * 100), 0);
+const zLeftText = () => allZ() ? (Math.max(leftZc(), 0) / 100).toFixed(2) : toZ(Math.max(leftC(), 0));
+function showRate(){ $('rate').textContent = curC === 'ZWG' ? `ZWG ${RATE.toFixed(2)} = US$1 · still to pay ZWG ${zLeftText()}` : ''; }
+function pickCur(c){ if (c === 'ZWG' && !RATE) return; curC = c;
+  document.querySelectorAll('#curs button').forEach(b => b.classList.toggle('on', b.dataset.c === c));
+  if (cur) pick(M.indexOf(cur)); else showRate(); }
+function pick(i){ cur = M[i]; entry = ""; document.querySelectorAll('#meths button').forEach((b, j) => b.classList.toggle('on', j === i));
+  const z = curC === 'ZWG';
+  $('ref').style.display = cur.cash ? 'none' : 'block'; $('ref').value = '';
+  $('ref').placeholder = cur.ref ? 'EcoCash reference (required)' : 'Card slip / reference (optional)';
+  $('amtlbl').textContent = (cur.cash ? 'Cash received' : esc(cur.name)) + (z ? ' (ZWG)' : ' (US$)');
+  const notes = cur.cash ? (z ? ZNOTES : UNOTES) : [];
+  $('notes').innerHTML = notes.map(n => `<button data-n="${n}">${z ? '' : '$'}${n}</button>`).join('') + '<button data-n="exact">Exact</button>';
+  if (!cur.cash) entry = z ? zLeftText() : money(Math.max(leftC(), 0));
+  showAmt(); showRate(); }
+function showAmt(){ $('amtv').textContent = entry || '0.00';
+  if (curC === 'ZWG' && entry && RATE) $('amtv').textContent = 'ZWG ' + entry + '  ≈ $' + (parseFloat(entry) / RATE).toFixed(2); }
+$('curs').addEventListener('click', e => { const b = e.target.closest('button'); if (b && !b.disabled) pickCur(b.dataset.c); });
+$('meths').addEventListener('click', e => { const b = e.target.closest('button'); if (b) pick(+b.dataset.i); });
+$('keys').addEventListener('click', e => { const k = e.target.dataset.k; if (!k || !cur) return; entry = keyed(entry, k, 2); showAmt(); });
+$('notes').addEventListener('click', e => { const n = e.target.dataset.n; if (!n || !cur) return;
+  const left = Math.max(leftC(), 0);
+  entry = n === 'exact' ? (curC === 'ZWG' ? zLeftText() : money(left)) : money(cents(entry || 0) + cents(n)); showAmt(); });
+$('padd').addEventListener('click', () => {
+  if (!cur) return err('Choose how the customer pays');
+  const v = parseFloat(entry); if (!(v > 0)) return err('Type the amount');
+  const z = curC === 'ZWG';
+  const usd = z ? Math.min(Math.round(v / RATE * 100), cur.cash ? Infinity : Math.max(leftC(), 0)) : cents(v);
+  if (!cur.cash && !z && usd > leftC()) return err('Card / EcoCash / bank can\'t be more than what is still to pay');
+  if (!cur.cash && z && Math.round(v / RATE * 100) > leftC() + 1) return err('Card / EcoCash / bank can\'t be more than what is still to pay');
+  if (cur.ref && !$('ref').value.trim()) return err('Type the EcoCash reference from the confirmation message');
+  pays.push({method: cur.id, name: (z ? 'ZWG ' : 'USD ') + cur.name, cash: cur.cash, usd, amount: z ? null : money(usd), zig: z ? entry : null, ref: $('ref').value.trim()});
+  entry = ""; cur = null; document.querySelectorAll('#meths button').forEach(b => b.classList.remove('on')); $('ref').style.display = 'none'; $('notes').innerHTML = '';
+  $('amtlbl').textContent = 'Amount'; showAmt(); drawPays(); showRate(); });
+function err(t){ $('perr').textContent = t; }
+function drawPays(){ err('');
+  $('plist').innerHTML = pays.map((p, i) => `<div><span>${esc(p.name)}</span><span>${p.zig ? 'ZWG ' + parseFloat(p.zig).toFixed(2) : '$' + money(p.usd)} <button data-i="${i}">✕</button></span></div>`).join('') || '<div style="color:#b39b86">No payment yet – choose USD or ZWG, then how.</div>';
+  const left = leftC();
+  if (pays.length && allZ()) {            // all in ZWG so far: count in ZWG, the slip will be in ZWG
+    const lz = leftZc(), cashZ = pays.filter(p => p.cash).reduce((s, p) => s + Math.round(parseFloat(p.zig) * 100), 0);
+    $('pleft').textContent = lz > 0 ? 'ZWG ' + money(lz) : (lz < 0 ? 'Change ZWG ' + money(-lz) : 'ZWG 0.00');
+    $('pdone').disabled = !(lz <= 1 && -lz <= cashZ);
+    return; }
+  $('pleft').textContent = left > 0 ? '$' + money(left) + (RATE ? ' · ZWG ' + toZ(left) : '') : (left < 0 ? 'Change $' + money(-left) : '$0.00');
+  if (!pays.length && RATE) $('pleft').textContent = '$' + money(left) + ' · ZWG ' + money(zTotal());
+  const cashC = pays.filter(p => p.cash).reduce((s, p) => s + p.usd, 0);
+  $('pdone').disabled = !(left <= 0 && -left <= cashC); }
+$('plist').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { pays.splice(+b.dataset.i, 1); drawPays(); showRate(); } });
+$('pay').addEventListener('click', () => { if (!cart.length) return; pays = []; $('pdue').textContent = '$' + money(totalC()) + (RATE ? ' · ZWG ' + money(zTotal()) : '');
+  $('payov').classList.add('on'); drawPays(); pickCur('USD'); pick(0); });
+$('pcancel').addEventListener('click', () => $('payov').classList.remove('on'));
+$('pdone').addEventListener('click', async () => {
+  $('pdone').disabled = true; err('Saving…');
+  try {
+    const r = await fetch(SELL, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
+      body: JSON.stringify({rate: RATE ? String(RATE) : null, customer: customer, items: cart.map(l => ({id: l.p.id, qty: l.q})), payments: pays.map(p => ({method: p.method, amount: p.amount, zig: p.zig, ref: p.ref}))})});
+    const d = await r.json();
+    if (!d.ok) { if (d.rate) { RATE = parseFloat(d.rate); showRate(); } err(d.error || 'Not saved'); $('pdone').disabled = false;
+      if (d.customer_error) custOpen(d.error); return; }
+    $('payov').classList.remove('on'); $('dnum').textContent = d.number; const zc = d.currency === 'ZWG'; $('dcur').textContent = zc ? 'ZWG ' : '$';
+    $('dchg').textContent = parseFloat(zc ? (d.change_fx || 0) : d.change).toFixed(2);
+    lastReceipt = d.receipt; $('dprint').style.display = 'block';
+    $('dmsg').textContent = d.fiscal_note || 'Only if the customer wants a slip. Tap anywhere else for the next sale.';
+    $('dmsg').style.color = d.fiscal === 'failed' ? '#b3261e' : '#7c5a4a';
+    $('doneov').classList.add('on'); cart = []; pays = []; customer = null; custId = null; custShow(); drawCart(); dropCheck(d.drawer);
+    setTimeout(() => $('doneov').classList.remove('on'), 12000);
+  } catch (x) { err('Pondo did not answer – check that Pondo is running, then press Complete again.'); $('pdone').disabled = false; }
+});
+let lastReceipt = null;
+$('doneov').addEventListener('click', e => { if (e.target.id === 'dprint') { location.href = lastReceipt + '&back=' + encodeURIComponent(location.pathname); return; } $('doneov').classList.remove('on'); });
+drawGrid(); drawCart();
+})();
+</script>
+</body></html>

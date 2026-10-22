@@ -1,0 +1,15 @@
+{% load static %}  .lt-head{display:flex;justify-content:space-between;align-items:center;gap:5mm;background:#fff3d7;border-radius:2.5mm;padding:2.2mm 4mm;position:relative;overflow:hidden;isolation:isolate}
+  .lt-head::before{content:"";position:absolute;inset:0;background:url({% static 'brand/art/pattern_orange.svg' %}) 0 0/46mm;opacity:.09;z-index:-1;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0 70mm,#000 95mm);mask-image:linear-gradient(90deg,transparent 0 70mm,#000 95mm)}
+  .lt-head .logo{width:30mm;display:block}
+  .lt-contact{text-align:right;font-size:7.8pt;line-height:1.45;color:#3b1d14}
+  .lt-contact b{color:#c24f1f;font-weight:800}
+  .lt-contact .dot{color:#e56026;padding:0 1.2mm}
+  .lt-contact small{color:#7c5a4a;font-size:7pt;font-weight:600}
+  .lt-rule{height:.8mm;background:#e56026;border-radius:1mm;margin:2mm 0 0}
+  .lt-body{flex:1;padding:9mm 4mm 6mm;font-size:11pt;line-height:1.55;color:#3b1d14}
+  .lt-foot{background:#7a1315;color:#fff3d7;border-radius:4mm;padding:3.5mm 6mm;display:flex;align-items:center;justify-content:space-between;gap:6mm;font-size:8.4pt;line-height:1.35}
+  .lt-foot b{font-family:var(--head);text-transform:var(--head-case);font-weight:var(--head-weight);color:#f89b47;font-size:12pt;letter-spacing:.02em}
+  .lt-foot .mid{text-align:center;flex:1}
+  .lt-foot .mid span{color:#ffd2b0}
+  .lt-foot img{width:11mm;display:block}

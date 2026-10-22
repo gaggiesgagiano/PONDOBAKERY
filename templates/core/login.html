@@ -1,0 +1,36 @@
+{% load static %}<!doctype html>
+<html lang="en" data-font="{{ look.font }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Log in · Pondo Bakery</title>
+<link rel="icon" type="image/svg+xml" href="{% static 'brand/logo/mark_orange.svg' %}">
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=29">{% include "_brand_font.html" %}
+<style>.cardlogin{margin-top:14px;padding:16px 22px!important}.cardlogin label{display:block;margin-bottom:8px}.cardlogin label small{display:block;font-weight:400;color:var(--muted,#7c5a4a)}
+.cardlogin input{width:100%;font-size:20px;padding:12px;border-radius:12px;border:2px dashed #e56026;text-align:center;letter-spacing:.2em}</style></head>
+<body>
+<div class="login">
+  <div class="hero">
+    <div class="small">PONDO BAKERY · FRESH SINCE ’26</div>
+    <img class="mark" src="{% static 'brand/logo/mark_cream.svg' %}" alt="">
+    <div class="say">{{ company.tagline|default:"Easy to enjoy" }}</div>
+  </div>
+  <div class="side-form">
+    <form class="box" method="post">{% csrf_token %}
+      <img class="logo" src="{% static 'brand/logo/primary_orange.svg' %}" alt="Pondo Bakery">
+      <h1 style="font-size:28px;text-align:center">Welcome back</h1>
+      {% if locked %}<div class="msg error">Too many wrong passwords for this name. Wait 15 minutes, or ask the Manager to set a new password.</div>
+      {% elif form.errors %}<div class="msg error">That username and password don't match. Try again.</div>{% endif %}
+      {% if request.GET.card == "bad" %}<div class="msg error">That card is not known or no longer works. Log in with your name and password, or ask the Manager for a new card.</div>{% elif request.GET.card == "nologin" %}<div class="msg error">This staff card has no Pondo login. Ask the Manager to join it to your login under Settings → Staff cards.</div>{% endif %}
+      <div class="field"><label for="id_username">Username</label><input id="id_username" name="username" autocomplete="username" required value="{{ form.username.value|default:'' }}"></div>
+      <div class="field"><label for="id_password">Password</label><input id="id_password" name="password" type="password" autocomplete="current-password" required></div>
+      <label class="remember"><input type="checkbox" name="remember" value="1"><span>Keep me logged in on this laptop<small>for 30 days, or until you press Log out</small></span></label>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button class="btn primary" type="submit">Log in</button>
+    </form>
+    <form class="box cardlogin" method="post" action="{% url 'card_login' %}" autocomplete="off">{% csrf_token %}
+      <label for="id_card"><b>Or scan your staff card</b><small>Click here, then scan – the scanner presses Enter by itself</small></label>
+      <input id="id_card" name="card" type="password" autofocus inputmode="none" placeholder="▮▮▮ scan card ▮▮▮">
+      <input type="hidden" name="next" value="{{ next }}">
+    </form>
+    <div class="devby-login proba-login"><img src="{% static 'brand/proba_logo.png' %}" alt="ProBa – Professional Bakery Assistant"><p><b>ProBa</b> · Professional Bakery Assistant · developed by <b>Gaggies Gagiano</b><br>+263 78 048 9777 · jurie@pondobakery.co.zw</p></div>
+  </div>
+</div>
+</body></html>

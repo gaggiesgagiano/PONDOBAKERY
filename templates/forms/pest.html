@@ -1,0 +1,19 @@
+{% extends "forms/_base.html" %}
+{% block css %}{% include "forms/_check_css.html" %}
+  table.ck td{height:9mm}
+{% endblock %}
+{% block letterhead %}{% include "forms/_slimhead.html" %}{% endblock %}
+{% block subtitle %}<div class="sub">Monthly service by the contracted company,<br>and every pest seen by staff.</div>{% endblock %}
+{% block content %}
+<div class="g g2"><div class="f"><span>Year</span><i></i></div><div class="f"><span>Contracted company</span><i></i></div></div>
+<div class="sec"><div class="sh"><span class="n">1</span><h2>Monthly service visits</h2><span class="hint">staple the company's service report behind this page</span></div>
+<table class="ck">
+  <colgroup><col style="width:17mm"><col style="width:28mm"><col><col style="width:36mm"><col style="width:16mm"><col style="width:17mm"><col style="width:20mm"></colgroup>
+  <thead><tr><th>Date</th><th class="l">Technician</th><th class="l">Areas treated</th><th class="l">What was found</th><th>Bait stations ✓</th><th>Next visit</th><th>Supervisor</th></tr></thead>
+  <tbody>{% for i in "123456789012" %}<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>{% endfor %}</tbody></table></div>
+<div class="sec"><div class="sh"><span class="n">2</span><h2>Pest sightings</h2><span class="hint">report to the Supervisor the same day</span></div>
+<table class="ck">
+  <colgroup><col style="width:22mm"><col style="width:30mm"><col style="width:34mm"><col style="width:26mm"><col><col style="width:20mm"></colgroup>
+  <thead><tr><th>Date &amp; time</th><th class="l">Where</th><th class="l">What was seen</th><th class="l">Reported by</th><th class="l">Action taken</th><th>Supervisor</th></tr></thead>
+  <tbody>{% for i in "12345678" %}<tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

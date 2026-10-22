@@ -1,0 +1,29 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Cash-ups{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Sales &amp; Cash-Up</div><h1>Cash-ups</h1></div>
+  <div class="actions">{% if can.sales_edit %}<button class="btn" type="button" data-pick title="Choose a cash-up to change">Edit</button>{% endif %}<a class="btn xl" href="{% url 'core:excel_file' 'cashups' %}" title="Download this list as an Excel file">Excel</a>{% if can.sales_edit %}<a class="btn" href="{% url 'sales:expense_new' %}">+ Expense</a>{% endif %}</div></div>
+{% include "sales/_tabs.html" %}
+{% if waiting and can.costs %}<div class="banner"><span>{{ waiting }} cash-up{{ waiting|pluralize }} not signed off yet.</span></div>{% endif %}
+<div class="cols">
+  <section class="card main stack"><h2>Every till, every day</h2>
+    <div class="tablebox"><table class="t">
+      <thead><tr><th>No.</th><th>Date</th><th>Till</th><th>Cashier</th><th class="r">Sales</th><th class="r">Over / short</th><th>Signed off</th></tr></thead>
+      <tbody>{% for c in cus %}<tr class="link" data-href="{% url 'sales:cashup' c.pk %}"{% if can.sales_edit %} data-edit="{% url 'sales:cashup_edit' c.pk %}"{% endif %}>
+        <td class="small muted">{{ c.number }}</td><td><a class="rowlink" href="{% url 'sales:cashup' c.pk %}">{{ c.date|date:"D d M Y" }}</a></td><td>{{ c.till }}</td><td class="small">{{ c.cashier }}</td>
+        <td class="r"><b>{{ c.total_sales|money }}</b></td>
+        <td class="r">{% if c.total_variance < 0 %}<span class="pill gp-low">short {{ c.total_variance|money }}</span>{% elif c.total_variance > 0 %}<span class="pill gp-mid">over {{ c.total_variance|money }}</span>{% else %}<span class="pill gp-ok">balances</span>{% endif %}</td>
+        <td>{% if c.signed_off_by %}<span class="pill gp-ok">{{ c.signed_off_by }}</span>{% else %}<span class="pill gp-none">Not yet</span>{% endif %}</td></tr>
+      {% empty %}<tr class="emptyrow"><td colspan="7" class="muted">No cash-ups yet.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+  {% if can.sales_edit %}
+  <aside class="aside"><form class="card stack" method="post" action="{% url 'sales:cashup_new' %}">{% csrf_token %}<h2>Cash up a till</h2>
+    {% if form.non_field_errors %}<div class="msg error">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+    {% for f in form %}{% include "_field.html" %}{% endfor %}
+    <button class="btn primary" type="submit">Start cash-up</button>
+    <p class="small muted" style="margin:0">Have the till's end-of-day (Z) report, the card machine slip and the EcoCash statement ready. Count the drawer before you start.</p>
+  </form></aside>
+  {% endif %}
+</div>
+{% endblock %}

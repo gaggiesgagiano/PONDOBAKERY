@@ -1,0 +1,121 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}{% if gp_range or show == "low" %}GP check{% else %}Recipes & Prices{% endif %}{% endblock %}
+{% block content %}{% if gp_range or show == 'low' %}{% firstof '1' as gpview %}{% endif %}
+<div class="head"><div class="title">{% if gpview %}<div class="crumbs">Bakery &amp; Stock › <a href="{% url 'costing:recipes' %}">Recipes &amp; Prices</a></div><h1>GP check</h1>{% else %}<div class="crumbs">Bakery &amp; Stock</div><h1>Recipes &amp; Prices</h1>{% endif %}
+  <div class="small muted">Recipe numbers {{ numbers.first }}–{{ numbers.last }}: room for <b>{{ numbers.total }}</b> recipes · <b>{{ numbers.used }}</b> used · <b>{{ numbers.free }}</b> free{% if numbers.gaps %} ({{ numbers.gaps }} in between, shown as empty lines){% endif %}{% if can.costs and avg is not None %} · average GP <b>{{ avg|pct }}</b>, target {{ company.target_gp|pct:0 }}{% endif %}</div></div>
+  <div class="actions">{% if can.recipes_edit %}<button class="btn" type="button" data-pick title="Choose a recipe to change">Edit</button>{% endif %}{% if can.recipes_edit %}<a class="btn primary" href="{% url 'costing:recipe_new' %}">+ New recipe</a>{% endif %}
+    {% if can.prices_view %}<a class="btn" href="{% url 'costing:cards' %}">Price cards &amp; posters</a>{% endif %}
+    <button class="btn" type="button" onclick="window.print()">Print</button>
+    <a class="btn xl" href="{% url 'core:excel_file' 'recipes' %}" title="Download this list as an Excel file">Excel</a></div></div>
+
+<form class="filters no-print" method="get">
+  <label class="visually-hidden" for="q">Search</label>
+  <input id="q" type="search" name="q" value="{{ q }}" placeholder="Search name, number or ingredient">
+  <input type="hidden" name="show" value="{{ show }}">{% if cat %}<input type="hidden" name="cat" value="{{ cat }}">{% endif %}
+  <button class="btn quiet" type="submit">Search</button>
+  {% if q or cat %}<a class="small" href="?show={{ show }}">Clear</a>{% endif %}
+</form>
+{% if can.costs and gpview %}<form class="gpbox no-print" method="get" id="gp">
+  <b>GP check:</b>
+  <label for="gp_min">from</label><input id="gp_min" name="gp_min" class="text" inputmode="decimal" value="{{ gp_min }}" placeholder="0">%
+  <label for="gp_max">to</label><input id="gp_max" name="gp_max" class="text" inputmode="decimal" value="{{ gp_max }}" placeholder="100">%
+  {% if cat %}<input type="hidden" name="cat" value="{{ cat }}">{% endif %}
+  <button class="btn small" type="submit">Show</button>
+  <span class="quick"><a href="?gp_max=34.99">Under 35%</a><a href="?gp_max=49.99">Under 50%</a><a href="?gp_min=50&amp;gp_max=59.99">50 – 60%</a><a href="?gp_min=60">60% and up</a></span>
+  {% if gp_range %}<span class="found"><b>{{ found }}</b> product{{ found|pluralize }} with GP {% if gp_min %}from {{ gp_min }}% {% endif %}{% if gp_max %}up to {{ gp_max }}%{% endif %} – change the prices below · <a href="?">Show everything</a></span>{% endif %}
+</form>{% endif %}
+<div class="chips no-print">
+  <a class="chip {% if show == 'all' %}on{% endif %}" href="?show=all{% if q %}&q={{ q|urlencode }}{% endif %}">All {{ total }}</a>
+  <a class="chip {% if show == 'products' %}on{% endif %}" href="?show=products{% if q %}&q={{ q|urlencode }}{% endif %}">Products</a>
+  <a class="chip {% if show == 'mother' %}on{% endif %}" href="?show=mother{% if q %}&q={{ q|urlencode }}{% endif %}">Mother recipes</a>
+  {% if can.costs and gpview %}<a class="chip {% if show == 'low' %}on{% endif %}" href="?show=low{% if cat %}&cat={{ cat }}{% endif %}">Below target</a>{% endif %}
+  {% if can.prices_view %}<a class="chip {% if show == 'noprice' %}on{% endif %}" href="?show=noprice{% if cat %}&cat={{ cat }}{% endif %}">No price</a>{% endif %}
+  <a class="chip {% if show == 'archived' %}on{% endif %}" href="?show=archived">Archived</a>
+  <span class="muted small" style="align-self:center;margin-left:6px">Category:</span>
+  {% for c in cats %}<a class="chip {% if cat == c.pk|stringformat:'s' %}on{% endif %}" href="?show={% if show == 'all' %}all{% else %}{{ show }}{% endif %}&cat={{ c.pk }}{% if q %}&q={{ q|urlencode }}{% endif %}">{{ c.name }} <span style="opacity:.7">{{ c.n }}</span></a>{% endfor %}
+</div>
+
+<form method="post" id="price-form">{% csrf_token %}<input type="hidden" name="at" id="at">
+<section class="card">
+  <div class="tablebox"><table class="t rp">
+    <thead><tr><th>No.</th><th>Recipe</th><th>Category</th><th class="r">Yield</th>
+      {% if can.costs %}<th class="r">Batch cost</th><th class="r">Cost / unit</th>{% endif %}
+      {% if can.prices_view %}<th class="r">Selling price<br>incl. VAT</th><th class="r">Excl. VAT</th>{% endif %}
+      {% if can.costs %}<th class="r">GP $</th><th class="r">GP %</th><th class="r">Price for {{ company.target_gp|pct:0 }}</th>{% endif %}</tr></thead>
+    <tbody>
+    {% for it in items %}{% if it.free %}
+      <tr class="freerow"><td class="small">{{ it.number }}</td>
+        <td colspan="10">{% if can.recipes_edit %}<a class="addnew no-print" href="{% url 'costing:recipe_new' %}?number={{ it.number }}">+ new recipe</a>{% endif %}</td></tr>
+    {% else %}{% with r=it.r s=it.s %}
+      <tr class="link{% if r.just_saved %} just-saved{% endif %}" data-href="{% url 'costing:recipe' r.pk %}"{% if can.recipes_edit %} data-edit="{% url 'costing:recipe_edit' r.pk %}"{% endif %}{% if s %} data-cost="{{ s.cpu|default_if_none:'' }}" data-vat="{{ s.vat|default_if_none:'0' }}"{% endif %}>
+        <td class="small muted">{{ r.number }}</td>
+        <td>{% if r.photo %}<img class="thumb" src="{{ r.photo.url }}" alt="" loading="lazy">{% endif %}<a class="rowlink" href="{% url 'costing:recipe' r.pk %}">{{ r.name }}</a>{% if r.is_subrecipe %} <span class="tag">mother</span>{% endif %}</td>
+        <td class="small">{{ r.category|default:"" }}</td>
+        {% if s %}
+        <td class="r">{% if s.yield %}{{ s.yield|num:0 }}{% elif r.is_subrecipe %}{{ s.finished|num:2 }} kg{% else %}–{% endif %}</td>
+        {% if can.costs %}<td class="r">{{ s.batch_cost|money }}</td>
+        <td class="r">{{ s.cpu|money:3 }}{% if r.is_subrecipe and not s.yield %}<span class="small muted">/kg</span>{% endif %}</td>{% endif %}
+        {% if can.prices_view %}{% if r.is_subrecipe %}<td></td><td></td>{% else %}
+        <td class="r">{% if editing %}<label class="visually-hidden" for="p{{ r.pk }}">Price for {{ r.name }}</label><input id="p{{ r.pk }}" name="p{{ r.pk }}" class="text pin" style="width:96px;min-height:36px;text-align:right" value="{{ r.sell_price|default_if_none:'' }}" data-old="{{ r.sell_price|default_if_none:'' }}" inputmode="decimal" autocomplete="off">{% else %}<b>{{ r.sell_price|money }}</b>{% endif %}{% if r.just_saved %}<span class="savedtick">✓ saved</span>{% endif %}</td>
+        <td class="r c-excl">{{ s.sell_excl|money }}</td>{% endif %}{% endif %}
+        {% if can.costs %}{% if r.is_subrecipe %}<td></td><td></td><td></td>{% else %}<td class="r c-gp">{{ s.gp_amount|money }}</td>
+        <td class="r"><span class="pill c-gpp {{ s.gp|gpclass:company }}">{{ s.gp|pct }}</span></td>
+        <td class="r small muted">{{ s.target_price|money }}</td>{% endif %}{% endif %}
+        {% else %}<td colspan="8" class="small" style="color:var(--low)">Recipe uses itself – open it to fix</td>{% endif %}
+      </tr>{% endwith %}{% endif %}
+    {% empty %}<tr class="emptyrow"><td colspan="11" class="muted">No recipes found.</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% if editing %}<div class="savebar no-print"><span id="chg">Click a teal price, type the new price (incl. VAT) – the GP works itself out</span>
+  <span class="row"><button class="btn quiet" type="button" id="undo">Undo changes</button><button class="btn primary" type="submit">Save prices</button></span></div>{% endif %}
+</form>
+<style>
+  .gpbox{display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:var(--card);border:2px solid #f89b47;border-radius:14px;padding:10px 14px;margin:6px 0 4px}
+  .gpbox input.text{width:72px;min-height:38px;text-align:right;padding:4px 8px}
+  .gpbox .quick{display:flex;flex-wrap:wrap;gap:6px;margin-left:6px}
+  .gpbox .quick a{background:var(--orange-soft);color:var(--maroon);border-radius:999px;padding:4px 11px;font-size:13px;font-weight:700;text-decoration:none}
+  .gpbox .quick a:hover{background:#f89b47;color:#7a1315}
+  .gpbox .found{flex-basis:100%;font-size:13.5px}
+  tr.freerow td{background:repeating-linear-gradient(-45deg,transparent 0 8px,rgba(33,141,128,.05) 8px 16px);color:var(--muted);padding-top:5px;padding-bottom:5px}
+  tr.freerow a.addnew{font-size:12px;color:#13695f;opacity:0;text-decoration:none;font-weight:700}
+  tr.freerow:hover a.addnew,tr.freerow a.addnew:focus{opacity:1}
+  @media print{input.pin{border:0!important;background:none!important;padding:0!important;font-weight:700}tr.freerow{display:none}}
+</style>
+{% endblock %}
+{% block scripts %}{% if editing %}
+<script>
+(function(){
+  var form = document.getElementById('price-form'), saving = false;
+  var low = {{ company.gp_low|default:"0.35" }}, target = {{ company.target_gp|default:"0.6" }};
+  function money(v){ return '$' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function update(inp){
+    var tr = inp.closest('tr'), raw = inp.value.replace('$', '').replace(',', '.').trim(), p = parseFloat(raw);
+    inp.classList.toggle('changed', raw !== inp.dataset.old && !(raw && inp.dataset.old && parseFloat(raw) === parseFloat(inp.dataset.old)));
+    var vat = parseFloat(tr.dataset.vat) || 0, cost = parseFloat(tr.dataset.cost), ex = tr.querySelector('.c-excl'),
+        gp = tr.querySelector('.c-gp'), gpp = tr.querySelector('.c-gpp');
+    if (isNaN(p)) { if (ex) ex.textContent = '–'; if (gp) gp.textContent = '–'; if (gpp) { gpp.textContent = '–'; gpp.className = 'pill c-gpp gp-none'; } return; }
+    var e = p / (1 + vat); if (ex) ex.textContent = money(e);
+    if (gp && !isNaN(cost)) {
+      var g = e - cost, pc = e ? g / e : 0;
+      gp.textContent = money(g);
+      gpp.textContent = (pc * 100).toFixed(1) + '%';
+      gpp.className = 'pill c-gpp ' + (pc < low ? 'gp-low gp-red' : pc < target ? 'gp-mid' : 'gp-ok');
+    }
+  }
+  function count(){
+    var n = form.querySelectorAll('input.pin.changed').length;
+    document.getElementById('chg').innerHTML = n ? '<b>' + n + '</b> price' + (n === 1 ? '' : 's') + ' changed – press Save prices' : 'Click a teal price, type the new price (incl. VAT) – the GP works itself out';
+  }
+  form.addEventListener('input', function(e){ if (e.target.classList.contains('pin')) { update(e.target); count(); } });
+  document.getElementById('undo').addEventListener('click', function(){
+    form.querySelectorAll('input.pin.changed').forEach(function(i){ i.value = i.dataset.old; update(i); }); count();
+  });
+  form.addEventListener('focusin', function(e){ if (e.target.classList.contains('pin')) document.getElementById('at').value = e.target.id; });
+  // after saving: back on the same line
+  var atId = '{{ at|escapejs }}', back = (atId && document.getElementById(atId)) || form.querySelector('tr.just-saved');
+  if (back) { (back.closest('tr') || back).scrollIntoView({block: 'center'}); }
+  form.addEventListener('submit', function(){ saving = true; });
+  window.addEventListener('beforeunload', function(e){ if (!saving && form.querySelector('input.pin.changed')) { e.preventDefault(); e.returnValue = ''; } });
+})();
+</script>{% endif %}{% endblock %}

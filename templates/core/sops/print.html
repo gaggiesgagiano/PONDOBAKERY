@@ -1,0 +1,79 @@
+{% load static %}<!doctype html>
+<html lang="en" data-font="{{ look.biz_font }}"><head><meta charset="utf-8">
+<title>{% if one %}{{ sops.0.code }} {{ sops.0.title }}{% else %}{{ current_shop.name|default:"Pondo Bakery" }} – SOP file{% endif %}</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=29">{% include "_brand_font.html" %}
+<style>
+  @page{size:A4 portrait;margin:14mm 15mm 16mm;
+    @bottom-left{content:"{{ current_shop.name|default:'Pondo Bakery' }} · SOP file · printed {{ today|date:'d M Y' }} – check Pondo for the latest version";font:7.5pt Nunito,Arial,sans-serif;color:#9a7a6a}
+    @bottom-right{content:"page " counter(page);font:8pt Nunito,Arial,sans-serif;color:#9a7a6a}}
+  @page cover{margin:0}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  html,body{background:#ddd;font-family:Nunito,Arial,sans-serif;color:#2e1610}
+  .bar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:9}
+  .page{width:180mm;margin:10mm auto;background:#fff;padding:12mm;box-shadow:0 4px 18px rgba(0,0,0,.15);position:relative}
+  .cover{page:cover;width:210mm;height:297mm;margin:10mm auto;background:#218d80;color:#fff3d7;display:flex;flex-direction:column;align-items:center;
+    justify-content:space-between;padding:24mm 18mm 18mm;text-align:center;box-sizing:border-box;break-after:page;position:relative;overflow:hidden}
+  .cover img{width:110mm}
+  .cover h1{font-family:var(--head);text-transform:var(--head-case);font-weight:var(--head-weight);font-size:46pt;line-height:.95;margin:0;color:#fff3d7}
+  .cover .sub{font-size:13pt;font-weight:600;margin-top:4mm}
+  .cover .meta{font-size:10pt;color:#d6f0eb}
+  .contents{break-after:page}
+  .contents h2{font-family:var(--head);color:#7a1315;font-size:20pt;margin:0 0 2mm}
+  .contents h3{font-size:10pt;color:#218d80;margin:2mm 0 .3mm}
+  .contents table{width:100%;border-collapse:collapse;font-size:9pt}
+  .contents td{padding:.25mm 1mm;border-bottom:1px dotted #e3cdb0}
+  .contents td.c{width:20mm;color:#7c5a4a} .contents td.v{width:32mm;text-align:right;color:#7c5a4a}
+  .sop{break-before:page}
+  .one .sop{break-before:auto}
+  .shead{display:flex;justify-content:space-between;align-items:flex-start;gap:6mm;border-bottom:1.2mm solid #218d80;padding-bottom:3mm;margin-bottom:3mm}
+  .shead .code{font-weight:800;color:#218d80;font-size:10pt;letter-spacing:.05em}
+  .shead h2{font-family:var(--head);text-transform:var(--head-case);font-weight:var(--head-weight);color:#7a1315;font-size:20pt;margin:1mm 0 0;line-height:1}
+  .shead .sec{font-size:9pt;color:#7c5a4a;margin-top:1mm}
+  .shead img{width:22mm}
+  table.ctl{width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:3mm}
+  table.ctl td{border:1px solid #e3cdb0;padding:1.2mm 2mm;vertical-align:top}
+  table.ctl td b{display:block;font-size:7pt;letter-spacing:.05em;text-transform:uppercase;color:#7c5a4a}
+  .purpose{background:#fff3d7;border-radius:2mm;padding:2.5mm 3.5mm;font-size:10pt;margin-bottom:3mm}
+  .sopdoc{font-size:10.3pt;line-height:1.45}
+  .sopdoc h3{font-size:11.5pt;color:#7a1315;margin:3.5mm 0 1mm;break-after:avoid}
+  .sopdoc p{margin:1mm 0}
+  .sopdoc ol,.sopdoc ul{margin:1mm 0 2mm;padding-left:7mm}
+  .sopdoc li{margin:.8mm 0;break-inside:avoid}
+  .sopdoc ol li::marker{font-weight:800;color:#218d80}
+  .sopdoc table{border-collapse:collapse;margin:1mm 0 2mm;font-size:9.5pt;break-inside:avoid}
+  .sopdoc th{background:#7a1315;color:#fff3d7;text-align:left;padding:1mm 2.5mm}
+  .sopdoc td{border-bottom:.3mm solid #e3cdb0;padding:1mm 2.5mm}
+  .signs{display:grid;grid-template-columns:1fr 1fr;gap:12mm;margin-top:20mm;font-size:8.5pt;color:#7c5a4a;break-inside:avoid}
+  .signs div{border-top:1px solid #2e1610;padding-top:1mm}
+  .draft{position:absolute;top:70mm;left:0;right:0;text-align:center;font-size:90pt;font-weight:900;color:rgba(229,96,38,.09);transform:rotate(-24deg);pointer-events:none}
+  @media print{html,body{background:#fff}.bar{display:none}.page{width:auto;margin:0;padding:0;box-shadow:none}.cover{margin:0}}
+</style></head>
+<body class="{% if one %}one{% endif %}">
+<div class="bar"><button class="btn primary" onclick="window.print()">Print / save as PDF</button><button class="btn quiet" onclick="window.close()">Close</button></div>
+{% if not one %}
+<div class="cover">
+  <div style="font-weight:700;letter-spacing:.12em;font-size:10pt">{{ current_shop.name|default:"PONDO BAKERY"|upper }}</div>
+  <img src="{% static 'brand/logo/secondary_cream.svg' %}" alt="">
+  <div><h1>SOP<br>file</h1><div class="sub">Standard operating procedures</div></div>
+  <div class="meta">Written by the Manager · approved by the Owner / Director<br>{{ sops|length }} SOPs · printed {{ today|date:"j F Y" }}</div>
+</div>
+<div class="page contents"><h2>Contents</h2>
+  {% for n, name, rows in sections %}<h3>{{ n }} · {{ name }}</h3><table>{% for s in rows %}<tr><td class="c">{{ s.code }}</td><td>{{ s.title }}</td><td class="v">{% if s.status == 'approved' %}v{{ s.version }} · {{ s.approved_on|date:"d M Y" }}{% else %}draft v{{ s.version }}{% endif %}</td></tr>{% endfor %}</table>{% endfor %}
+</div>
+{% endif %}
+{% for s in sops %}
+<section class="page sop">{% if s.status != 'approved' %}<div class="draft">DRAFT</div>{% endif %}
+  <div class="shead"><div><div class="code">{{ s.code }}</div><h2>{{ s.title }}</h2><div class="sec">Section {{ s.section }} · {{ s.section_name }}</div></div>
+    <img src="{% static 'brand/logo/submark_orange.svg' %}" alt=""></div>
+  <table class="ctl"><tr>
+    <td><b>Version</b>{{ s.version }}{% if s.status != 'approved' %} (draft){% endif %}</td>
+    <td><b>Approved</b>{% if s.approved_on %}{{ s.approved_on|date:"d M Y" }}{% else %}–{% endif %}</td>
+    <td><b>Review by</b>{% if s.review_due %}{{ s.review_due|date:"d M Y" }}{% else %}–{% endif %}</td>
+    <td><b>Written by</b>{{ s.written_by }}</td><td><b>Approved by</b>{{ s.approved_by }}</td></tr>
+    <tr><td colspan="2"><b>Responsible</b>{{ s.responsible|default:"–" }}</td><td colspan="3"><b>Must be read by</b>{{ s.applies_text }}</td></tr></table>
+  <div class="purpose"><b>Purpose:</b> {{ s.purpose }}</div>
+  <div class="sopdoc">{{ s.body|safe }}</div>
+  <div class="signs"><div>Written by – {{ s.written_by }} (signature &amp; date)</div><div>Approved by – {{ s.approved_by }} (signature &amp; date)</div></div>
+</section>
+{% endfor %}
+</body></html>

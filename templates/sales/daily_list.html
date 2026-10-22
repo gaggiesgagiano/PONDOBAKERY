@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Daily sales{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Sales &amp; Cash-Up</div><h1>Daily sales – {{ month|date:"F Y" }}</h1>
+  <div class="small muted">Sales per category from the till report, excl. VAT. This is what the dashboard counts.</div></div>
+  <div class="actions"><a class="btn xl" href="{% url 'core:excel_file' 'daily_sales' %}?month={{ month|date:'Y-m' }}" title="Download this list as an Excel file">Excel</a><a class="btn quiet" href="?month={{ prev|date:'Y-m' }}">← {{ prev|date:"M" }}</a>{% if next %}<a class="btn quiet" href="?month={{ next|date:'Y-m' }}">{{ next|date:"M" }} →</a>{% endif %}
+    {% if can.sales_edit %}<a class="btn primary" href="{% url 'sales:daily_edit' today|date:'Y-m-d' %}">{% if typed_today %}Change today's sales{% else %}Type today's sales{% endif %}</a>{% endif %}</div></div>
+{% include "sales/_tabs.html" %}
+<div class="stats">
+  <div class="card stat dark"><div class="lbl">Sales this month (excl. VAT)</div><div class="val">{{ total|money }}</div><div class="sub">{{ n_days }} day{{ n_days|pluralize }} typed</div></div>
+  {% if can.costs %}<div class="card stat"><div class="lbl">GP this month</div><div class="val">{{ gp|pct }}</div></div>{% endif %}
+</div>
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>Day</th><th class="r">Sales excl. VAT</th>{% if can.costs %}<th class="r">GP %</th>{% endif %}<th class="r">Week so far</th><th class="r">Month so far</th><th class="r">Till (cash-up, incl. VAT)</th><th></th></tr></thead>
+  <tbody>{% for r in rows %}<tr{% if r.today %} style="background:var(--hover)"{% endif %}{% if can.sales_edit %} class="link" data-href="{% url 'sales:daily_edit' r.date|date:'Y-m-d' %}"{% endif %}>
+    <td><b>{{ r.date|date:"D d M" }}</b>{% if r.today %} <span class="pill gp-mid">today</span>{% endif %}</td>
+    <td class="r">{% if r.rec %}<b>{{ r.rec.total|money }}</b>{% else %}<span class="muted small">not typed</span>{% endif %}</td>
+    {% if can.costs %}<td class="r">{% if r.rec %}<span class="pill {{ r.rec.gp_pct|gpclass:company }}">{{ r.rec.gp_pct|pct }}</span>{% endif %}</td>{% endif %}
+    <td class="r small">{{ r.week|money }}</td><td class="r small">{{ r.month|money }}</td>
+    <td class="r small muted">{% if r.till %}{{ r.till|money }}{% endif %}</td>
+    <td>{% if can.sales_edit %}<a class="small" href="{% url 'sales:daily_edit' r.date|date:'Y-m-d' %}">{% if r.rec %}Change{% else %}Type{% endif %}</a>{% endif %}</td></tr>
+  {% endfor %}</tbody></table></div></section>
+{% endblock %}

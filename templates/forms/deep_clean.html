@@ -1,0 +1,46 @@
+{% extends "forms/_base.html" %}
+{% block css %}{% include "forms/_check_css.html" %}{% endblock %}
+{% block letterhead %}{% include "forms/_slimhead.html" %}{% endblock %}
+{% block subtitle %}<div class="sub">Every Saturday, 13:00 – 16:00.<br>One sheet per Saturday.</div>{% endblock %}
+{% block content %}
+<div class="g g3">
+  <div class="f"><span>Saturday, date</span><i></i></div>
+  <div class="f span2"><span>Supervisor</span><i></i></div>
+</div>
+<table class="ck">
+  <colgroup><col style="width:78mm"><col style="width:52mm"><col style="width:16mm"><col></colgroup>
+  <thead><tr><th class="l">Task</th><th class="l">Done by (name)</th><th>Done ✓</th><th>Checked (initials)</th></tr></thead>
+  <tbody>
+  <tr class="grp"><td colspan="4">Bakery</td></tr>
+  <tr><td>Ovens inside &amp; out, racks and doors (cool)</td><td></td><td></td><td></td></tr>
+  <tr><td>Proofers inside, trays and seals</td><td></td><td></td><td></td></tr>
+  <tr><td>Mixers: bowls, hooks, guards – parts taken off</td><td></td><td></td><td></td></tr>
+  <tr><td>Dividers, slicers, scales – fully cleaned</td><td></td><td></td><td></td></tr>
+  <tr><td>Display &amp; under-counter fridges: inside washed, seals</td><td></td><td></td><td></td></tr>
+  <tr><td>Walls, splash areas and doors</td><td></td><td></td><td></td></tr>
+  <tr><td>Under &amp; behind tables and equipment</td><td></td><td></td><td></td></tr>
+  <tr><td>Drains cleared and cleaned</td><td></td><td></td><td></td></tr>
+  <tr><td>Extractor, light fittings, fly screens</td><td></td><td></td><td></td></tr>
+  <tr class="grp"><td colspan="4">Stock areas</td></tr>
+  <tr><td>Stock under tables moved, floor &amp; crates cleaned, back oldest in front</td><td></td><td></td><td></td></tr>
+  <tr><td>Walk-in fridge: shelves, walls, floor, door seal</td><td></td><td></td><td></td></tr>
+  <tr><td>Walk-in deep freezer: floor, shelves, ice build-up, door seal</td><td></td><td></td><td></td></tr>
+  <tr><td>Expired / damaged stock taken out and reported</td><td></td><td></td><td></td></tr>
+  <tr class="grp"><td colspan="4">Shop &amp; staff areas</td></tr>
+  <tr><td>Display cabinets inside, shelves, glass</td><td></td><td></td><td></td></tr>
+  <tr><td>Windows and doors</td><td></td><td></td><td></td></tr>
+  <tr><td>Toilets and staff room – deep clean</td><td></td><td></td><td></td></tr>
+  <tr><td>Bins washed inside and out, outside area swept</td><td></td><td></td><td></td></tr>
+  <tr><td>Mops, buckets, cloths washed; cleaning store tidy</td><td></td><td></td><td></td></tr>
+  <tr class="grp"><td colspan="4">Before locking up at 16:00</td></tr>
+  <tr><td>No food left out; everything closed and stored</td><td></td><td></td><td></td></tr>
+  <tr><td>Fridges &amp; freezers closed and running</td><td></td><td></td><td></td></tr>
+  </tbody></table>
+<div class="sec"><div class="sh"><span class="n">!</span><h2>Chemicals &amp; cleaning materials running low</h2><span class="hint">buy where cheapest</span></div>
+  <div class="ticks g4">
+    <span class="tk">Sanitiser</span><span class="tk">Degreaser</span><span class="tk">Dishwashing liquid</span><span class="tk">Floor cleaner</span>
+    <span class="tk">Oven cleaner</span><span class="tk">Toilet cleaner</span><span class="tk">Hand soap</span><span class="tk">Paper towels</span>
+    <span class="tk">Bin bags</span><span class="tk">Mops / cloths</span><span class="tk wide"><span class="f"><span>Other</span><i></i></span></span>
+  </div></div>
+<div class="g g2 signrow"><div class="f"><span>Supervisor signature</span><i></i></div><div class="f"><span>Checked by Manager</span><i></i></div></div>
+{% endblock %}

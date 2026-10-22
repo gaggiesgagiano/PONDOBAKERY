@@ -1,0 +1,63 @@
+{% extends "forms/_base.html" %}
+{% block css %}
+  .scale{display:flex;gap:2mm;flex-wrap:wrap;font-size:8.6pt}
+  .scale span{background:#d8efea;color:#13574f;border-radius:1.5mm;padding:.8mm 2.2mm;font-weight:700}
+  .scale b{font-family:var(--head);margin-right:1mm}
+  table.ft td.cr{width:62mm}
+  table.ft td{height:7.2mm}
+{% endblock %}
+{% block subtitle %}<div class="sub">Tick one box for each line.</div>{% endblock %}
+{% block content %}
+<div class="scale"><span><b>1</b> Poor</span><span><b>2</b> Below expectation</span><span><b>3</b> Meets expectation</span><span><b>4</b> Good</span><span><b>5</b> Excellent</span></div>
+
+<div class="sec"><div class="sh"><span class="n" style="background:#218d80">✓</span><h2>Employee details</h2></div>
+  <div class="g g2">
+    <div class="f"><span>Employee name</span><i></i></div>
+    <div class="f"><span>Staff no.</span><i></i></div>
+    <div class="f"><span>Position</span><i></i></div>
+    <div class="f"><span>Department</span><i></i></div>
+    <div class="f"><span>Date of assessment</span><i></i></div>
+    <div class="f"><span>Period assessed</span><i></i></div>
+    <div class="f span2"><span>Assessor's name &amp; position</span><i></i></div>
+  </div></div>
+
+<div class="sec"><div class="sh"><span class="n">1</span><h2>Job performance</h2></div>
+  <table class="ft"><thead><tr><th>Criteria</th><th class="c">1</th><th class="c">2</th><th class="c">3</th><th class="c">4</th><th class="c">5</th><th>Comments</th></tr></thead><tbody>
+  <tr><td class="cr">Quality of work / baking output</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td></td></tr>
+  <tr><td class="cr">Speed and efficiency</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td></td></tr>
+  <tr><td class="cr">Consistency and accuracy</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td></td></tr>
+  <tr><td class="cr">Product knowledge</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td></td></tr>
+  <tr><td class="cr">Hygiene and food safety</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td></td></tr>
+  </tbody></table></div>
+
+<div class="sec"><div class="sh"><span class="n">2</span><h2>Work conduct</h2></div>
+  <table class="ft"><thead><tr><th>Criteria</th><th class="c">1</th><th class="c">2</th><th class="c">3</th><th class="c">4</th><th class="c">5</th><th>Comments</th></tr></thead><tbody>
+  <tr><td class="cr">Punctuality and attendance</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td></td></tr>
+  <tr><td class="cr">Uniform &amp; grooming</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td></td></tr>
+  <tr><td class="cr">Teamwork and cooperation</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td></td></tr>
+  <tr><td class="cr">Communication skills</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td></td></tr>
+  <tr><td class="cr">Customer service <small>(where it applies)</small></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td></td></tr>
+  </tbody></table></div>
+
+<div class="sec"><div class="sh"><span class="n">3</span><h2>Attitude &amp; discipline</h2></div>
+  <table class="ft"><thead><tr><th>Criteria</th><th class="c">1</th><th class="c">2</th><th class="c">3</th><th class="c">4</th><th class="c">5</th><th>Comments</th></tr></thead><tbody>
+  <tr><td class="cr">Initiative and willingness to learn</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td></td></tr>
+  <tr><td class="cr">Takes feedback and supervision</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td></td></tr>
+  <tr><td class="cr">Follows company policies</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td></td></tr>
+  <tr><td class="cr">Overall attitude and conduct</td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td class="c"><span class="cb"></span></td><td></td></tr>
+  </tbody></table></div>
+
+<div class="g g2" style="gap:0 6mm">
+  <div class="sec"><div class="sh"><span class="n">4</span><h2>Strengths</h2></div><div class="lines"><i></i><i></i><i></i></div></div>
+  <div class="sec"><div class="sh"><span class="n">5</span><h2>Areas to improve</h2></div><div class="lines"><i></i><i></i><i></i></div></div>
+</div>
+
+<div class="sec"><div class="sh"><span class="n">6</span><h2>Overall rating &amp; recommendation</h2></div>
+  <div class="f" style="max-width:80mm"><span>Overall score (out of 5)</span><i></i></div>
+  <div class="ticks g4"><span class="tk">Confirm</span><span class="tk">Extend probation</span><span class="tk">Retrain</span><span class="tk">Not suitable</span></div>
+  <div class="f"><span>Comments</span><i></i></div></div>
+
+<div class="sec"><div class="sh"><span class="n burg" style="background:#7a1315">7</span><h2>Sign-off</h2></div>
+  <div class="sig"><div class="f"><span>Assessor's signature</span><i></i></div><div class="f"><span>Date</span><i></i></div>
+    <div class="f"><span>Employee's signature <small>(I received this assessment)</small></span><i></i></div><div class="f"><span>Date</span><i></i></div></div></div>
+{% endblock %}

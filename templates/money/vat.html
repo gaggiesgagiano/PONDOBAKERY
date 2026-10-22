@@ -1,0 +1,30 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}VAT – {{ month|date:"F Y" }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'money:home' %}">Money &amp; accounts</a></div><h1>VAT worksheet – {{ month|date:"F Y" }}</h1>
+  <div class="small muted">VAT charged on sales minus VAT paid on purchases and expenses = what we owe ZIMRA. A worksheet for you and your accountant – the return itself is filed on ZIMRA's system.{% if not cs.vat_no %} <b>Pondo has no VAT number yet (Settings) – if the business is not VAT registered, no VAT is charged or claimed.</b>{% endif %}</div></div>
+  <div class="actions no-print"><a class="btn quiet" href="?month={{ prev|date:'Y-m' }}">← {{ prev|date:"M" }}</a>{% if next %}<a class="btn quiet" href="?month={{ next|date:'Y-m' }}">{{ next|date:"M" }} →</a>{% endif %}<button class="btn quiet" onclick="window.print()">Print</button>
+    {% if can.money_edit %}<a class="btn" href="{% url 'money:entry_new' %}?kind=vat">VAT paid to ZIMRA</a>{% endif %}</div></div>
+{% include "money/_tabs.html" %}
+<div class="cols"><section class="card main">
+<div class="tablebox"><table class="t"><tbody>
+<tr><td colspan="2"><b>VAT on sales (output VAT)</b></td></tr>
+<tr><td>Till sales (sales minus refunds)</td><td class="r">{{ v.till_vat|money }}</td></tr>
+<tr><td>Days typed by hand (takings incl. VAT minus sales excl. VAT)</td><td class="r">{{ v.typed_vat|money }}</td></tr>
+<tr><td>Tax invoices to customers, not delivered through the till ({{ v.n_inv }})</td><td class="r">{{ v.inv_vat|money }}</td></tr>
+<tr class="total"><td>Output VAT</td><td class="r">{{ v.output|money }}</td></tr>
+<tr><td colspan="2"><b>VAT on what we bought (input VAT)</b></td></tr>
+<tr><td>Supplier invoices – GRVs ({{ v.n_grv }})</td><td class="r">{{ v.grv_vat|money }}</td></tr>
+<tr><td>Expenses with a VAT receipt ({{ v.n_exp }})</td><td class="r">{{ v.exp_vat|money }}</td></tr>
+<tr class="total"><td>Input VAT</td><td class="r">{{ v.input|money }}</td></tr>
+<tr class="total"><td>{% if v.payable >= 0 %}VAT to pay ZIMRA for {{ month|date:"F" }}{% else %}VAT ZIMRA owes us for {{ month|date:"F" }}{% endif %}</td><td class="r" style="font-size:20px">{{ v.payable|money }}</td></tr>
+<tr><td>VAT paid to ZIMRA in {{ month|date:"F" }}</td><td class="r">{{ v.paid|money }}</td></tr>
+{% if owed is not None %}<tr class="total"><td>VAT not yet paid – all months since {{ bs|date:"d M Y" }}</td><td class="r">{{ owed|money }}</td></tr>{% endif %}
+</tbody></table></div>
+{% if v.missing %}<div class="msg error" style="margin-top:12px">These days have sales but no cash-up, so their VAT can't be worked out: {% for d in v.missing %}{{ d|date:"d M" }}{% if not forloop.last %}, {% endif %}{% endfor %}.</div>{% endif %}
+</section>
+<aside class="aside"><section class="card stack"><h2 style="margin:0">Good to know</h2>
+<p class="small" style="margin:0">Input VAT can only be claimed with a proper tax invoice showing the supplier's VAT number – keep every supplier invoice with its GRV.<br><br>
+GRV VAT is worked out from each ingredient's VAT rate (Ingredients). Basic foods can be zero-rated or exempt – your accountant confirms the rates and the period (monthly or every 2 months) and files the return.<br><br>
+Delivery invoices are left out of the invoice line – their money is rung up on the till and is already in the till VAT.</p></section></aside></div>
+{% endblock %}

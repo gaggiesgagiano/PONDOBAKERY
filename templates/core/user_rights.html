@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Rights for {{ person.username }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'core:settings' %}">Settings</a> › <a href="{% url 'core:users' %}">Users</a> › {{ person.username }}</div>
+  <h1>Rights for {{ person.first_name|default:person.username }}</h1>
+  <div class="small muted">Tick what {{ person.first_name|default:person.username }} may use. "Can change" includes "Can see".</div></div></div>
+
+<section class="card stack"><h2>Quick start</h2>
+  <p class="small muted" style="margin:0">Fill in the ticks from a ready-made role, then add or remove single ticks below.</p>
+  <form method="post" class="row">{% csrf_token %}
+    {% for k, p in presets.items %}<button class="btn {% if acc.role == k %}primary{% else %}quiet{% endif %}" name="preset" value="{{ k }}" type="submit" title="{{ p.help }}">{{ p.label }}</button>{% endfor %}
+  </form>
+</section>
+
+<form method="post" class="stack" id="rights">{% csrf_token %}
+<section class="card stack">
+  <div class="row" style="justify-content:space-between;align-items:center"><h2>What {{ person.first_name|default:person.username }} may use</h2>
+    <div class="row"><button class="btn small quiet" type="button" data-all="1">Tick everything</button><button class="btn small quiet" type="button" data-all="0">Untick everything</button></div></div>
+  <div class="tablebox"><table class="t ticks">
+    <thead><tr><th>Part of the program</th><th class="c">Can see</th><th class="c">Can change</th></tr></thead>
+    <tbody>
+    {% for title, rows in groups %}<tr class="sec"><td colspan="3">{{ title }}</td></tr>
+      {% for key, label, help, cur in rows %}<tr>
+        <td><b>{{ label }}</b><div class="small muted">{{ help }}</div></td>
+        <td class="c"><label class="tick"><input type="checkbox" name="{{ key }}_see" class="see" data-k="{{ key }}" {% if cur >= 1 %}checked{% endif %}><span class="visually-hidden">{{ label }}: can see</span></label></td>
+        <td class="c"><label class="tick"><input type="checkbox" name="{{ key }}_change" class="chg" data-k="{{ key }}" {% if cur >= 2 %}checked{% endif %}><span class="visually-hidden">{{ label }}: can change</span></label></td>
+      </tr>{% endfor %}
+    {% endfor %}
+    <tr class="sec"><td colspan="3">Money &amp; extras</td></tr>
+    <tr><td><b>See costs &amp; profit</b><div class="small muted">Ingredient prices, recipe costs, gross profit, the dashboard figures, Reports and month end. Switch off for bakers and cashiers.</div></td>
+      <td class="c"><label class="tick"><input type="checkbox" name="see_costs" class="extra" {% if acc.see_costs %}checked{% endif %}><span class="visually-hidden">See costs and profit</span></label></td><td></td></tr>
+    <tr><td><b>Make flash drive backups</b><div class="small muted">The "Back up now" page.</div></td>
+      <td class="c"><label class="tick"><input type="checkbox" name="backup" class="extra" {% if acc.backup %}checked{% endif %}><span class="visually-hidden">Make backups</span></label></td><td></td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted" style="margin:0"><b>Everybody</b> can always use the dashboard, Short Cuts, the staff manual, Quick help, Our Brand, their own look and their own password.
+    <b>Only you</b> (the Manager) can open Settings, Users &amp; rights and the change history.</p>
+</section>
+<div class="actions"><button class="btn primary" type="submit">Save rights</button><a class="btn quiet" href="{% url 'core:users' %}">Cancel</a></div>
+</form>
+<style>
+  table.ticks th.c,table.ticks td.c{text-align:center;width:120px}
+  table.ticks label.tick{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;cursor:pointer;border-radius:10px}
+  table.ticks label.tick:hover{background:var(--hover)}
+  table.ticks input[type=checkbox]{width:24px;height:24px;margin:0;accent-color:#218d80;cursor:pointer}
+</style>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  var f = document.getElementById('rights');
+  function pair(k, cls){ return f.querySelector('input.' + cls + '[data-k="' + k + '"]'); }
+  f.addEventListener('change', function(e){
+    var t = e.target, k = t.dataset.k; if (!k) return;
+    if (t.classList.contains('chg') && t.checked) pair(k, 'see').checked = true;     // change needs see
+    if (t.classList.contains('see') && !t.checked) pair(k, 'chg').checked = false;   // no see, no change
+  });
+  f.querySelectorAll('[data-all]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var on = b.dataset.all === '1';
+      f.querySelectorAll('input[type=checkbox]').forEach(function(c){ c.checked = on; });
+    });
+  });
+})();
+</script>
+{% endblock %}

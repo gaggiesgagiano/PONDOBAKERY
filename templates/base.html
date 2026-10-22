@@ -1,0 +1,156 @@
+{% load static %}<!doctype html>
+<html lang="en" data-theme="{{ look.theme }}" data-font="{{ look.font }}" data-size="{{ look.size }}" data-pattern="{{ look.pattern }}" data-hello="{{ look.hello }}"{% if look.pattern == "on" %} style="--side-pattern:url({% static 'brand/art/' %}pattern_{{ look.pattern_file }}.svg);--side-pattern-op:{{ look.pattern_op }}"{% endif %}>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Pondo Bakery{% endblock %} · Pondo</title>
+<link rel="icon" type="image/svg+xml" href="{% static 'brand/logo/mark_orange.svg' %}">
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=29">
+{% include "_brand_font.html" %}
+{% block head %}{% endblock %}
+</head>
+<body class="c-{{ area.colour }}" data-area="{{ area.key }}" style="--art:url({% static 'brand/art/' %}{{ area.art }}_{{ area.ink_name }}.svg)">
+<a class="skip" href="#main">Skip to the page</a>
+<header class="mtop no-print"><a class="home" href="{% url 'core:dashboard' %}" aria-label="Dashboard"><img src="{% static 'brand/logo/mark_orange.svg' %}" alt=""></a>
+  <span class="mtitle">{{ area.label|default:"Pondo" }}</span>
+  <button class="mbtn" type="button" id="mbtn" aria-expanded="false" aria-controls="side-menu"><span class="o">☰ Menu</span><span class="x">✕ Close</span></button></header>
+<div class="app">
+  <nav class="side" id="side-menu" aria-label="Main menu"><div class="side-in" id="side-in">
+    <a class="logo" href="{% url 'core:dashboard' %}"><img src="{% static 'brand/logo/' %}{{ look.logo }}.svg" alt="Pondo Bakery – home"></a>
+    {% for g in menu %}{% if g.title %}<div class="grp">{{ g.title }}</div>{% endif %}
+    {% for it in g.items %}<a class="nav c-{{ it.colour }}{% if it.on %} on{% endif %}" href="{{ it.href }}"{% if it.on %} aria-current="page"{% endif %}><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{ it.icon|safe }}</svg></span>{{ it.label }}{% if it.key == 'backup' and backup_reminder %} <small class="due" title="No flash drive backup in the last 7 days">due</small>{% endif %}</a>
+    {% endfor %}{% endfor %}
+    <div class="grow"></div>
+    <div class="foot">
+      <div><b>{{ user.first_name|default:user.username }}</b> · {{ user_role }}<br>{{ current_shop.name|default:"Pondo Bakery" }}{% if current_shop.address_line1 %} · {{ current_shop.address_line1 }}{% endif %}</div>
+      <div class="row"><a href="{% url 'core:look' %}">My look</a> · <a href="{% url 'core:password' %}">Change password</a>
+        <form method="post" action="{% url 'logout' %}" style="display:inline">{% csrf_token %}<button class="btn small quiet" type="submit">Log out</button></form></div>
+      <div class="devby proba"><img src="{% static 'brand/proba_logo.png' %}" alt="ProBa – Professional Bakery Assistant"><span><b>ProBa</b> · Professional Bakery Assistant<br>Developed by <b>Gaggies Gagiano</b><br>+263 78 048 9777 · jurie@pondobakery.co.zw</span></div>
+    </div>
+  </div></nav>
+  <main class="content" id="main">
+  {% if demo %}<div class="demoband" role="note"><b>DEMO</b> – practice copy with made-up figures. Nothing here touches the real Pondo.</div>{% endif %}
+    {% if messages %}<div class="msgs">{% for m in messages %}<div class="msg {{ m.tags }}" role="status">{{ m }}</div>{% endfor %}</div>{% endif %}
+    {% block content %}{% endblock %}
+    <footer class="pagefoot no-print">
+      <img src="{% static 'brand/logo/submark_orange.svg' %}" alt="Pondo Bakery – fresh since 2026">
+      <div><b>{{ company.tagline|default:"Easy to enjoy" }}</b><br><span>Need help? <a href="{% url 'core:manual' %}#{{ area.chapter }}">Read the manual for this page</a> · <a href="{% url 'core:manual' %}">Staff manual</a> · <a href="{% url 'core:brand' %}">Our Brand</a></span></div>
+    </footer>
+  </main>
+</div>
+<a class="helpfab no-print" href="{% url 'core:manual' %}#{{ area.chapter }}" title="How does this page work?" aria-label="Help – how does this page work?"><span>?</span><em>How does this page work?</em></a>
+<script>
+// Phones: the Menu button at the top opens and closes the menu
+(function(){
+  var b = document.getElementById('mbtn'); if (!b) return;
+  function set(on){ document.body.classList.toggle('menu-open', on); b.setAttribute('aria-expanded', on ? 'true' : 'false'); }
+  b.addEventListener('click', function(){ set(!document.body.classList.contains('menu-open')); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') set(false); });
+  window.addEventListener('pageshow', function(){ set(false); });
+})();
+// Phones: wide lists show "Swipe for more →" until you have swiped to the end
+(function(){
+  function mark(){
+    document.querySelectorAll('.tablebox').forEach(function(t){
+      var more = t.scrollWidth > t.clientWidth + 4, h = t.previousElementSibling;
+      if (more && !(h && h.classList.contains('swipe-hint'))){
+        h = document.createElement('div'); h.className = 'swipe-hint no-print'; h.textContent = 'Swipe for more →';
+        t.parentNode.insertBefore(h, t);
+        t.addEventListener('scroll', function(){ h.classList.toggle('done', t.scrollLeft + t.clientWidth >= t.scrollWidth - 4); }, {passive:true});
+      }
+      t.classList.toggle('scrolls', more);
+      if (!more && h && h.classList.contains('swipe-hint')) h.remove();
+    });
+  }
+  window.addEventListener('load', mark); window.addEventListener('resize', mark);
+})();
+// The menu keeps its own scroll place from page to page, and the open page is always in view
+(function(){
+  var m = document.getElementById('side-in'); if (!m) return;
+  try { var y = sessionStorage.getItem('pondo-menu-y'); if (y) m.scrollTop = +y; } catch (e) {}
+  var on = m.querySelector('.nav.on');
+  if (on) { var r = on.getBoundingClientRect(), b = m.getBoundingClientRect(); if (r.top < b.top || r.bottom > b.bottom) on.scrollIntoView({block: 'center'}); }
+  window.addEventListener('pagehide', function(){ try { sessionStorage.setItem('pondo-menu-y', m.scrollTop); } catch (e) {} });
+})();
+// A form that did not save: say so at the top and list the boxes to fix (they are marked in red)
+(function(){
+  var main = document.getElementById('main'); if (!main) return;
+  var errs = [];
+  main.querySelectorAll('.field .err').forEach(function(e){
+    var f = e.closest('.field'), lab = f.querySelector('label'), box = f.querySelector('input,select,textarea');
+    errs.push({name: lab ? lab.textContent.trim() : 'A box', text: e.textContent.trim(), el: box || f});
+  });
+  main.querySelectorAll('tr.has-error').forEach(function(tr){
+    var nx = tr.nextElementSibling, t = nx && nx.querySelector('.err') ? nx.textContent.trim() : 'see the line marked in red';
+    errs.push({name: 'A line in the table', text: t, el: tr.querySelector('input,select') || tr});
+  });
+  if (!errs.length) return;
+  var box = document.createElement('div'); box.className = 'msg error fixit'; box.setAttribute('role', 'alert');
+  box.innerHTML = '<b>Not saved yet – ' + (errs.length === 1 ? 'one box needs' : errs.length + ' boxes need') + ' fixing</b><ul></ul><span class="small">Fix the box marked in red, then press Save again.</span>';
+  var ul = box.querySelector('ul');
+  errs.forEach(function(x){
+    var li = document.createElement('li'), a = document.createElement('a');
+    a.href = '#'; a.textContent = x.name; a.onclick = function(ev){ ev.preventDefault(); x.el.scrollIntoView({block: 'center'}); if (x.el.focus) x.el.focus(); };
+    li.appendChild(a); li.appendChild(document.createTextNode(': ' + x.text)); ul.appendChild(li);
+  });
+  main.querySelectorAll('.msg.error').forEach(function(m){ if (/^Please fix the boxes marked in red\.?$/.test(m.textContent.trim())) m.remove(); });
+  var head = main.querySelector('.head'); if (head) head.insertAdjacentElement('afterend', box); else main.insertAdjacentElement('afterbegin', box);
+})();
+// Click in any typing box (a price, a percentage, a quantity, a name): what is in it gets selected, so typing replaces it – no backspace.
+// A box can opt out with data-keep (then the cursor goes where you click, as normal).
+(function(){
+  var fresh = null, BOX = 'input:not([type]), input[type=text], input[type=number], input[type=search], input[type=tel], ' +
+                          'input[type=email], input[type=url], input[type=password], input.pin';
+  document.addEventListener('focusin', function(e){
+    var t = e.target;
+    if (t.matches && t.matches(BOX) && !t.matches('[data-keep], [readonly], :disabled')) {
+      try { t.select(); } catch (x) {} fresh = t;
+    }
+  });
+  document.addEventListener('mouseup', function(e){ if (e.target === fresh) e.preventDefault(); fresh = null; });
+})();
+// Frozen column headings: a table that fits the screen lets the page scroll it, so its headings stick to the top
+(function(){
+  function check(){
+    document.querySelectorAll('.tablebox').forEach(function(b){
+      b.classList.remove('fits');
+      var t = b.querySelector('table'); if (!t) return;
+      if (t.scrollWidth <= b.clientWidth + 1) b.classList.add('fits');
+    });
+  }
+  check(); window.addEventListener('load', check);
+  var tm; window.addEventListener('resize', function(){ clearTimeout(tm); tm = setTimeout(check, 150); });
+})();
+// "Edit" button at the top of a list: press it, then click the line to change (Esc or Cancel to stop)
+(function(){
+  var btn = document.querySelector('[data-pick]'); if (!btn) return;
+  var bar = document.createElement('div'); bar.className = 'pickbar no-print'; bar.hidden = true; bar.setAttribute('role', 'status');
+  bar.innerHTML = '<span>&#9998; Click the line you want to edit</span><button type="button" class="btn small">Cancel</button>';
+  document.body.appendChild(bar);
+  function set(on){ document.body.classList.toggle('picking', on); bar.hidden = !on; btn.classList.toggle('on', on); btn.textContent = on ? 'Choose a line…' : 'Edit'; }
+  btn.addEventListener('click', function(e){ e.preventDefault(); set(!document.body.classList.contains('picking')); });
+  bar.querySelector('button').addEventListener('click', function(){ set(false); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') set(false); });
+  document.addEventListener('click', function(e){
+    if (!document.body.classList.contains('picking') || e.target.closest('.pickbar,[data-pick]')) return;
+    var row = e.target.closest('[data-edit]'); if (!row) return;
+    e.preventDefault(); e.stopPropagation(); window.location = row.dataset.edit;
+  }, true);
+})();
+// Click anywhere on a table row with data-href to open it
+document.querySelectorAll('tr[data-href]').forEach(function(tr){
+  tr.addEventListener('click', function(e){ if(e.target.closest('a,button,input,select,label')) return; window.location = tr.dataset.href; });
+});
+</script>
+{% block scripts %}{% endblock %}
+<style>
+body.picking [data-edit]{cursor:pointer}
+body.picking [data-edit]:hover td{background:#ffe3c4!important}
+body.picking [data-edit] td:first-child{box-shadow:inset 4px 0 0 #e56026}
+.pickbar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:14px;
+  background:#7a1315;color:#fff3d7;font-weight:700;padding:10px 12px 10px 20px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.pickbar[hidden]{display:none}
+[data-pick].on{background:#e56026;color:#fff3d7;border-color:#e56026}
+</style>
+</body>
+</html>

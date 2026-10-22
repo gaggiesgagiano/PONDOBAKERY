@@ -1,0 +1,82 @@
+{% extends "forms/_base.html" %}{% load static %}
+{% block fit %}{% endblock %}
+{% block css %}
+  /* no page margin: Chrome then prints no date, title, web address or page number on the sheet */
+  @page{size:A4 portrait;margin:0}
+  .sheets{display:flex;flex-direction:column;align-items:center;gap:8mm;padding:8mm 0 14mm}
+  .sheet{box-sizing:border-box;width:210mm;height:297mm;background:#fff;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,.15)}
+  .sheet.first{padding:10mm 12mm}
+  .sheet.plain{padding:20mm 18mm}
+  .area{flex:1;min-height:0;overflow:hidden;font-family:"Arial Nova",Arial,sans-serif;font-size:11pt;line-height:1.5;color:#2e1610}
+  .sheet.first .area{padding:9mm 6mm 5mm}
+  .area > *{margin:0 0 4.2mm}
+  .area > p{margin:0}
+  .area > p + :not(p){margin-top:4.2mm}
+  .area .when{display:flex;justify-content:space-between;color:#5a3a2c}
+  .area .to{white-space:pre-line}
+  .area .re{font-weight:800;color:#7a1315}
+  .area .sign{margin-top:2mm}
+  .area .sign .space{height:15mm}
+  .area .sign img{display:block;height:17mm;width:auto;margin:1mm 0 1mm -2mm}
+  .area .sign b{display:block;color:#7a1315}
+  @media print{html,body{background:#fff}.sheets{display:block;padding:0}.sheet{box-shadow:none;page-break-after:always;break-after:page}.sheet:last-child{page-break-after:auto;break-after:auto}}
+  .bar2{position:fixed;top:12px;left:12px;display:flex;gap:8px;z-index:9}
+  @media print{.bar2{display:none!important}}
+{% include "forms/_lt_css.html" %}
+{% endblock %}
+{% block pages %}
+<div class="bar2"><a class="btn" href="{% url 'core:letters' %}">‹ Letters</a>{% if can.letters_edit %}<a class="btn quiet" href="{% url 'core:letter_edit' letter.pk %}">Edit</a>{% endif %}</div>
+<div id="src" hidden>
+  <div class="when"><span>{{ letter.date|date:"j F Y" }}</span><span>Our ref: {{ letter.number }}</span></div>
+  {% if letter.to %}<div class="to">{{ letter.to }}</div>{% endif %}
+  {% if letter.subject %}<div class="re">Re: {{ letter.subject }}</div>{% endif %}
+  {{ letter.body_html|safe }}
+  <div class="sign">{% if letter.add_signature %}<img src="{% url 'core:letter_signature' %}" alt="Signature">{% else %}<div class="space"></div>{% endif %}{% if letter.sign_name %}<b>{{ letter.sign_name }}</b>{% endif %}{% if letter.sign_title %}<div>{{ letter.sign_title }}</div>{% endif %}<div>{{ current_shop.name|default:"Pondo Bakery" }}</div></div>
+</div>
+<template id="tpl-first"><div class="sheet first">
+{% include "forms/_lt_head.html" %}  <div class="area"></div>
+{% include "forms/_lt_foot.html" %}</div></template>
+<template id="tpl-plain"><div class="sheet plain"><div class="area"></div></div></template>
+<div class="sheets" id="sheets"></div>
+<script>
+/* Lay the letter out on A4 sheets: sheet 1 on the letterhead, then plain sheets. A paragraph that does not fit
+   is split between sheets at a space (its bold / italics / underline are kept); the signature stays together. */
+(function(){
+  var holder = document.getElementById('sheets'), src = document.getElementById('src');
+  function sheet(first){ var t = document.getElementById(first ? 'tpl-first' : 'tpl-plain');
+    var n = t.content.firstElementChild.cloneNode(true); holder.appendChild(n); return n.querySelector('.area'); }
+  function over(a){ return a.scrollHeight > a.clientHeight + 1; }
+  function texts(el){ var w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), out = [], n; while ((n = w.nextNode())) out.push(n); return out; }
+  function point(el, ts, n){ for (var k = 0; k < ts.length; k++){ if (n <= ts[k].length) return [ts[k], n]; n -= ts[k].length; } return [el, el.childNodes.length]; }
+  function piece(el, ts, from, to){ var r = document.createRange(), a = point(el, ts, from), b = point(el, ts, to);
+    r.setStart(a[0], a[1]); r.setEnd(b[0], b[1]); var c = el.cloneNode(false); c.appendChild(r.cloneContents()); return c; }
+  function split(b, area){  /* returns the part that did not fit, or null */
+    var ts = texts(b), full = ts.map(function(t){ return t.data; }).join(''), lo = 0, hi = full.length, best = 0;
+    while (lo <= hi){ var mid = (lo + hi) >> 1, cut = full.lastIndexOf(' ', mid); if (cut <= 0) cut = 0;
+      var part = piece(b, ts, 0, cut); area.appendChild(part); var ok = !over(area); area.removeChild(part);
+      if (ok){ best = cut; lo = mid + 1; } else hi = mid - 1; }
+    if (best <= 0) return b;
+    area.appendChild(piece(b, ts, 0, best));
+    var rest = piece(b, ts, best, full.length), rt = texts(rest); if (rt.length) rt[0].data = rt[0].data.replace(/^\s+/, '');
+    return rest;
+  }
+  function layout(){
+    holder.innerHTML = '';
+    var area = sheet(true), queue = Array.prototype.map.call(src.children, function(n){ return n.cloneNode(true); });
+    while (queue.length){
+      var b = queue.shift(); area.appendChild(b);
+      if (!over(area)) continue;
+      area.removeChild(b);
+      if (b.tagName === 'P' && b.textContent.trim()){ var rest = split(b, area); if (rest) queue.unshift(rest); }
+      else if (!area.children.length){ area.appendChild(b); }   /* too big for any sheet: show it anyway */
+      else if (b.tagName !== 'P'){ queue.unshift(b); }          /* empty lines at a page break are dropped */
+      area = sheet(false);
+    }
+  }
+  function go(){ layout(); {% if auto_print %}setTimeout(function(){ window.print(); }, 300);{% endif %} }
+  var img = src.querySelector('img');
+  function start(){ if (img && !img.complete){ img.addEventListener('load', go); img.addEventListener('error', go); } else go(); }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(start); else window.addEventListener('load', start);
+})();
+</script>
+{% endblock %}

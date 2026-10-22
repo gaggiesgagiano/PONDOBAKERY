@@ -1,0 +1,1 @@
+{% if d.photo %}<img class="ava{% if big %} big{% endif %}" src="{% url 'invoices:driver_photo' d.pk 'driver' %}?v={{ d.photo_v }}" alt="{% if big %}Photo of {{ d.name }}{% endif %}" loading="lazy">{% else %}<span class="ava c-burgundy{% if big %} big{% endif %}" aria-hidden="true">{{ d.initials }}</span>{% endif %}

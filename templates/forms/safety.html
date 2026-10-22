@@ -1,0 +1,19 @@
+{% extends "forms/_base.html" %}
+{% block css %}{% include "forms/_check_css.html" %}
+  table.ck td{height:7.4mm}
+{% endblock %}
+{% block letterhead %}{% load static %}<div class="slim"><img src="{% static 'brand/logo/primary_orange.svg' %}" alt=""><span><b>{{ current_shop.name|default:company.company_name|default:"Pondo Bakery" }}</b>{% if current_shop.address_line1 %} · {{ current_shop.address_line1 }}{% endif %}</span><span class="file">File in: <b>Health &amp; safety file</b></span></div>{% endblock %}
+{% block subtitle %}<div class="sub">Fire extinguishers serviced every year.<br>First aid kit checked every month.</div>{% endblock %}
+{% block content %}
+<div class="g g2"><div class="f"><span>Year</span><i></i></div><div class="f"><span>Assembly point</span><b style="font-size:9pt;color:#7a1315;padding-bottom:.6mm">In front of the shop</b></div></div>
+<div class="sec"><div class="sh"><span class="n">1</span><h2>Fire extinguishers &amp; fire blanket – yearly service</h2><span class="hint">by the contracted company</span></div>
+<table class="ck">
+  <colgroup><col style="width:12mm"><col style="width:40mm"><col style="width:24mm"><col style="width:22mm"><col><col style="width:22mm"><col style="width:26mm"></colgroup>
+  <thead><tr><th>No.</th><th class="l">Where it hangs</th><th class="l">Type</th><th>Service date</th><th class="l">Serviced by (company &amp; technician)</th><th>Next service</th><th>Manager sign</th></tr></thead>
+  <tbody>{% for i in "12345678" %}<tr><td class="c">{{ forloop.counter }}</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>{% endfor %}</tbody></table></div>
+<div class="sec"><div class="sh"><span class="n">2</span><h2>First aid kit – monthly check</h2><span class="hint">two supervisors are responsible</span></div>
+<table class="ck">
+  <colgroup><col style="width:20mm"><col style="width:32mm"><col style="width:14mm"><col><col style="width:22mm"><col style="width:22mm"><col style="width:22mm"></colgroup>
+  <thead><tr><th class="l">Month</th><th class="l">Checked by (supervisor)</th><th>Complete ✓</th><th class="l">Missing / used items</th><th>List to manager (date)</th><th>Replaced (date)</th><th>Manager sign</th></tr></thead>
+  {% for m in months %}<tr><td><b>{{ m }}</b></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

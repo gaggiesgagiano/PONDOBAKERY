@@ -1,0 +1,25 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Invoices &amp; quotes{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Invoices &amp; Quotes</div><h1>Invoices &amp; quotes</h1>
+  <div class="small muted">Quotations, pro-forma invoices and tax invoices for customers and orders.</div></div>
+  {% if can.invoices_edit %}<div class="actions">{% if can.invoices_edit %}<button class="btn" type="button" data-pick title="Choose an invoice or quote to change">Edit</button>{% endif %}<a class="btn xl" href="{% url 'core:excel_file' 'invoices' %}" title="Download this list as an Excel file">Excel</a><a class="btn" href="{% url 'invoices:new' %}?kind=quote">+ Quotation</a><a class="btn" href="{% url 'invoices:new' %}?kind=proforma">+ Pro-forma</a><a class="btn primary" href="{% url 'invoices:new' %}?kind=invoice">+ Invoice</a></div>{% endif %}</div>
+{% include "invoices/_tabs.html" %}
+<div class="stats">
+  <a class="card stat dark" href="?kind=invoice&status=open" style="text-decoration:none"><div class="lbl">Invoices not paid yet</div><div class="val">{{ unpaid_total|money }}</div><div class="sub">{{ unpaid_n }} invoice{{ unpaid_n|pluralize }}{% if overdue_n %} · <b>{{ overdue_n }} overdue</b>{% endif %}</div></a>
+  <a class="card stat" href="?kind=quote&status=open" style="text-decoration:none;color:inherit"><div class="lbl">Open quotations</div><div class="val">{{ open_quotes }}</div><div class="sub">waiting for the customer</div></a>
+</div>
+<form class="filters" method="get">
+  <label class="visually-hidden" for="q">Search</label><input id="q" type="search" name="q" value="{{ q }}" placeholder="Customer, company, number or ref">
+  <select name="kind" onchange="this.form.submit()" aria-label="Type"><option value="">All types</option>{% for k, l in kinds %}<option value="{{ k }}" {% if kind == k %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+  <select name="status" onchange="this.form.submit()" aria-label="Status"><option value="">Any status</option>{% for k, l in statuses %}<option value="{{ k }}" {% if status == k %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+  <button class="btn small quiet" type="submit">Search</button>
+</form>
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>Number</th><th>Type</th><th>Date</th><th>Customer</th><th>Ref</th><th class="r">Total</th><th>Status</th></tr></thead>
+  <tbody>{% for d in docs %}<tr class="link" data-href="{% url 'invoices:doc' d.pk %}"{% if can.invoices_edit %} data-edit="{% url 'invoices:edit' d.pk %}"{% endif %}>
+    <td><a class="rowlink" href="{% url 'invoices:doc' d.pk %}">{{ d.number }}</a></td><td class="small">{{ d.get_kind_display }}</td><td>{{ d.date|date:"d M Y" }}</td>
+    <td><b>{{ d.name }}</b>{% if d.company %}<div class="small muted">{{ d.company }}</div>{% endif %}</td><td class="small">{{ d.your_ref }}</td><td class="r"><b>{{ d.total|money }}</b></td>
+    <td>{% if d.status == 'paid' %}<span class="pill gp-ok">Paid</span>{% elif d.status == 'cancelled' %}<span class="pill gp-none">Cancelled</span>{% elif d.status == 'accepted' %}<span class="pill gp-ok">Accepted</span>{% elif d.overdue %}<span class="pill gp-low">Overdue</span>{% else %}<span class="pill gp-mid">Open</span>{% endif %}</td></tr>
+  {% empty %}<tr class="emptyrow"><td colspan="7" class="muted">Nothing yet.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

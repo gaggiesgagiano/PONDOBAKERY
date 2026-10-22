@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Orders{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Orders</div><h1>Orders</h1></div>
+  <div class="actions">{% if can.stock_edit %}<button class="btn" type="button" data-pick title="Choose an order to change">Edit</button>{% endif %}{% if can.stock_edit %}<a class="btn primary" href="{% url 'stock:order_new' %}">+ New order</a>{% endif %}</div></div>
+{% include "stock/_tabs.html" %}
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>Order</th><th>Supplier</th><th>Date</th><th>Expected</th><th class="r">Lines</th>{% if can.costs %}<th class="r">Total</th>{% endif %}<th>Status</th></tr></thead>
+  <tbody>{% for o in orders %}<tr class="link" data-href="{% url 'stock:order' o.pk %}"{% if can.stock_edit %} data-edit="{% url 'stock:order_edit' o.pk %}"{% endif %}>
+    <td><a class="rowlink" href="{% url 'stock:order' o.pk %}">{{ o.number }}</a></td><td>{{ o.supplier }}</td><td>{{ o.date|date:"d M Y" }}</td><td>{{ o.delivery_date|date:"d M Y" }}</td>
+    <td class="r">{{ o.lines.all|length }}</td>{% if can.costs %}<td class="r">{{ o.total|money }}</td>{% endif %}
+    <td>{% if o.status == "received" %}<span class="pill gp-ok">Received</span>{% elif o.status == "sent" %}<span class="pill gp-mid">Sent</span>{% elif o.status == "cancelled" %}<span class="pill gp-low">Cancelled</span>{% else %}<span class="pill gp-none">Draft</span>{% endif %}</td></tr>
+  {% empty %}<tr class="emptyrow"><td colspan="7" class="muted">No orders yet.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

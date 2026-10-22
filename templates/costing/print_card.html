@@ -1,0 +1,74 @@
+{% extends "costing/print_base.html" %}{% load static pondo %}
+{% block title %}Recipe card – {{ r.name }}{% endblock %}
+{% block kind %}RECIPE CARD · {{ r.number }}{% endblock %}
+{% block body %}
+<style>
+  /* one A4 page for the recipe file: a wider left margin leaves room for the punch holes */
+  @page{size:A4 portrait;margin:14mm 12mm 14mm 24mm}
+  @media screen{html,body{background:#e9e2d6}
+    .sheet{width:210mm;min-height:297mm;max-width:none;margin:16px auto;padding:14mm 12mm 14mm 24mm;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.15);box-sizing:border-box}}
+  @media print{.sheet{max-width:none;padding:0}}
+  .sheet{gap:10px}
+  table.t{width:100%}
+  table.t tr,ol li{break-inside:avoid;page-break-inside:avoid}
+  h1,h3,tr.sec{break-after:avoid;page-break-after:avoid}
+  .rc-foot{margin-top:auto;padding-top:8px;border-top:1px solid #ecd3ad;display:flex;justify-content:space-between;font-size:10.5px;color:#7c5a4a}
+  /* compact, so most recipes fit on one page */
+  .sheet{font-size:12.5px;gap:8px}
+  .ph img{width:140px}
+  h1{font-size:26px}
+  .facts b{font-size:17px}
+  .facts div{padding:5px 9px}
+  table.t td,table.t th{padding:3px 8px}
+  table.t tr.sec td{padding-top:8px}
+  h3{font-size:15px;margin-top:2px}
+  ol li{margin-bottom:2px!important}
+  @media print{.sheet{zoom:var(--fit,1)}}
+  /* the picture spot: the product photo, or the brand drawing until a photo is added */
+  .rc-top{display:grid;grid-template-columns:minmax(0,1fr) 58mm;gap:5mm;align-items:stretch}
+  .rc-head{display:flex;flex-direction:column;gap:8px;justify-content:center;min-width:0}
+  .rc-head .facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .rc-pic{position:relative;overflow:hidden;isolation:isolate;height:46mm;border-radius:4mm;border:.8mm solid #e56026;background:#fff3d7;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1mm}
+  .rc-pic::before{content:"";position:absolute;inset:-60%;z-index:-1;background:repeating-conic-gradient(from 0deg,#ffe6bf 0 9deg,#fff3d7 9deg 18deg)}
+  .rc-pic .ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .rc-pic .art{width:58%;height:62%;object-fit:contain;transform:rotate(-7deg)}
+  .rc-pic span{font-size:8.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b0401a;background:#fff3d7;border-radius:99px;padding:1px 6px}
+  @media print{.rc-pic span{display:none}}
+</style>
+<script>
+/* a long recipe is shrunk a little so the card still prints on ONE A4 page */
+(function(){
+  function fit(){
+    var sh = document.querySelector('.sheet'); if (!sh) return;
+    sh.style.removeProperty('--fit');
+    var cs = getComputedStyle(sh), mm = 96 / 25.4;
+    var used = sh.scrollHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    var room = (297 - 28) * mm - 4;
+    if (used > room) sh.style.setProperty('--fit', Math.max(0.7, room / used).toFixed(3));
+  }
+  window.addEventListener('load', fit); window.addEventListener('beforeprint', fit);
+})();
+</script>
+<div class="rc-top">
+  <div class="rc-head"><h1>{{ r.name }}</h1>
+  <div class="facts">
+    <div>Category<b>{{ r.category|default:"–" }}</b></div>
+    <div>{% if make %}Make (scaled){% else %}Batch yield{% endif %}<b>{% if make %}{{ make|num:0 }}{% elif s.yield %}{{ s.yield|num:0 }}{% else %}{{ s.finished|num:2 }} kg{% endif %}</b></div>
+    <div>Scaling weight<b>{% if r.scaling_weight %}{{ r.scaling_weight|num:3 }} kg{% else %}–{% endif %}</b></div>
+    <div>Bake<b>{{ r.bake_temp|default:"–" }} {% if r.bake_time %}· {{ r.bake_time }}{% endif %}</b></div>
+  </div></div>
+  <div class="rc-pic">{% if r.photo %}<img class="ph" src="{{ r.photo.url }}" alt="{{ r.name }}">{% else %}<img class="art" src="{% static 'brand/' %}{% if art %}art/{{ art }}_orange{% else %}logo/mark_orange{% endif %}.svg" alt=""><span>add a photo to the recipe</span>{% endif %}</div>
+</div>
+<table class="t">
+  <thead><tr><th>Ingredient</th><th class="r">Quantity</th><th>Unit</th><th style="width:60px">✓</th></tr></thead>
+  <tbody>
+  {% for sec in sections %}<tr class="sec"><td colspan="4">{{ sec.label }}</td></tr>
+    {% for it in sec.items %}<tr><td>{{ it.ln.ingredient.name }}</td><td class="r"><b>{{ it.qty|num:3 }}</b></td><td>{{ it.ln.ingredient.unit }}</td><td>☐</td></tr>{% endfor %}
+  {% endfor %}
+  </tbody>
+</table>
+<h3>Method</h3>
+{% if method_lines %}<ol style="margin:0;padding-left:20px">{% for m in method_lines %}<li style="margin-bottom:4px">{{ m }}</li>{% endfor %}</ol>{% else %}<p class="muted">–</p>{% endif %}
+<h3>Notes / allergens</h3><p style="white-space:pre-line;margin:0">{{ r.allergens|default:"–" }}</p>
+<div class="rc-foot"><span>Pondo Bakery · Recipe {{ r.number }} · {{ r.name }}</span><span>{% now "d M Y" %}</span></div>
+{% endblock %}

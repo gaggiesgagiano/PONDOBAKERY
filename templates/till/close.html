@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Close {{ shift.label }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'till:screen' shift.pk %}">{{ shift.label }}</a></div><h1>Close {{ shift.label }}</h1>
+  <div class="small muted">Count the drawer with the Supervisor watching (SOP 2.04): all notes and coins, the float included. ZWG notes separately.</div></div></div>
+{% if error %}<div class="msg error">{{ error }}</div>{% endif %}
+<section class="card stack"><h2 style="margin:0">{{ shift.label }} · {{ shift.cashier_name }} · {{ shift.date|date:"D j M" }}</h2>
+  <div class="tablebox"><table class="t"><tbody>
+  <tr><td>Sales</td><td style="text-align:right">{{ t.n }}</td></tr>
+  <tr><td>Refunds</td><td style="text-align:right">{{ t.refunds|length }}</td></tr>
+  <tr><td>Float at the start</td><td style="text-align:right">${{ shift.opening_float|floatformat:2 }}</td></tr>
+  {% for m in moves %}<tr><td class="small">{{ m.get_kind_display }} · {{ m.created_at|time:"H:i" }}{% if m.reason %} · {{ m.reason }}{% endif %} · approved by {{ m.approved_by.first_name|default:m.approved_by.username }}</td><td style="text-align:right">{% if m.kind != "nosale" %}${{ m.amount|floatformat:2 }}{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
+  <p class="small muted" style="margin:0">Count first – the till doesn't show what should be in the drawer. After closing, the cash-up shows over or short (SOP 2.04).</p>
+</section>
+<form class="card stack" method="post" style="max-width:560px" autocomplete="off">{% csrf_token %}
+  <div class="field"><label for="cash">US$ cash counted in the drawer (float included)</label><input id="cash" name="cash" inputmode="decimal" required value="{{ post.cash|default:'' }}"></div>
+  <div class="field"><label for="zig">ZWG notes counted (in ZWG)</label><input id="zig" name="zig" inputmode="decimal" value="{{ post.zig|default:'' }}" placeholder="0"></div>
+  <div class="field"><label for="float_left">Float going back to the safe in its bag (US$)</label><input id="float_left" name="float_left" inputmode="decimal" value="{{ post.float_left|default:shift.opening_float }}"></div>
+  <div class="row"><button class="btn primary" type="submit">Close the till &amp; make the cash-up</button><a class="btn quiet" href="{% url 'till:screen' shift.pk %}">Back to the till</a></div>
+</form>
+{% endblock %}

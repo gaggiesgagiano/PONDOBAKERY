@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Staff cards{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'core:settings' %}">Settings</a></div><h1>Staff cards</h1>
+  <div class="small muted">A photo card with a barcode for every staff member. Scan it to log in, and Supervisors / managers scan it to approve refunds, pay-outs, cash drops and no-sales on the till. Later it opens the staff account too. The card holds a secret code – never the password.</div></div>
+  <div class="actions"><form method="post" action="{% url 'core:card_all' %}" style="display:inline">{% csrf_token %}<button class="btn primary" type="submit">Make missing cards &amp; print all</button></form>
+  <a class="btn quiet" href="{% url 'core:cards_print' %}" target="_blank">Print all cards</a></div></div>
+<div class="msg info">Treat a card like a key: a manager's card can approve refunds and cash drops. Lost or copied (even a photo of the barcode)? Press <b>New card</b> – the old one stops working at once. When somebody leaves (untick <i>Still working here</i>) their card stops working by itself.</div>
+<section class="card"><h2 style="margin-top:0">Staff</h2>
+<div class="tablebox"><table class="t"><thead><tr><th></th><th>Staff no.</th><th>Name &amp; job</th><th>Card</th><th>Logs in to Pondo as</th><th></th></tr></thead><tbody>
+{% for r in staff %}<tr>
+  <td style="width:48px">{% if r.e.photo %}<img src="{% url 'staff:photo' r.e.pk %}?v={{ r.e.photo_v }}" alt="" style="width:40px;height:48px;object-fit:cover;border-radius:8px;display:block">{% else %}<span class="chip" title="No photo yet – add it on the staff record">{{ r.e.initials }}</span>{% endif %}</td>
+  <td><b>{{ r.e.code|default:"–" }}</b></td>
+  <td><a href="{% url 'staff:person' r.e.pk %}"><b>{{ r.e.name }}</b></a><div class="small muted">{{ r.e.job_title|default:r.e.get_department_display }}{% if not r.e.photo %} · <span style="color:#c0392b">no photo yet</span>{% endif %}</div></td>
+  <td>{% if r.card and r.card.active %}<span class="chip ok">Works</span><div class="small muted" style="white-space:nowrap">{{ r.card.issued_at|date:"d M Y" }}</div>{% elif r.card %}<span class="chip due">Stopped</span>{% else %}<span class="chip">No card yet</span>{% endif %}</td>
+  <td><form method="post" action="{% url 'core:card_link' r.e.pk %}" style="display:flex;gap:6px;align-items:center">{% csrf_token %}
+    <select name="user" onchange="this.form.submit()" style="max-width:260px"><option value="">– no login (card only) –</option>{% for ch in choices %}<option value="{{ ch.u.pk }}" {% if r.card.user_id == ch.u.pk %}selected{% endif %}>{{ ch.label }}</option>{% endfor %}</select></form></td>
+  <td style="text-align:right;white-space:nowrap">
+    {% if r.card and r.card.active %}<a class="btn small quiet" href="{% url 'core:cards_print' %}?ids={{ r.card.pk }}" target="_blank">Print</a>{% endif %}
+    <form method="post" action="{% url 'core:card_new' 'staff' r.e.pk %}" style="display:inline" {% if r.card %}onsubmit="return confirm('Make a new card? The old card stops working.');"{% endif %}>{% csrf_token %}<button class="btn small" type="submit">{% if r.card %}New card{% else %}Make card{% endif %}</button></form>
+    {% if r.card and r.card.active %}<form method="post" action="{% url 'core:card_stop' r.card.pk %}" style="display:inline" onsubmit="return confirm('Stop this card?');">{% csrf_token %}<button class="btn small quiet" type="submit">Stop</button></form>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="6" class="muted">No staff yet – add them under Staff &amp; payroll.</td></tr>{% endfor %}</tbody></table></div></section>
+
+{% if login_only %}<section class="card"><h2 style="margin-top:0">Logins without a staff record</h2>
+<p class="small muted" style="margin-top:0">E.g. the owner. Their card shows the name and rights. Once a person has a staff record, choose their login next to their name above – the staff card takes over.</p>
+<div class="tablebox"><table class="t"><thead><tr><th>Person</th><th>Rights</th><th>Card</th><th></th></tr></thead><tbody>
+{% for r in login_only %}<tr><td><b>{{ r.u.first_name|default:r.u.username }} {{ r.u.last_name }}</b><div class="small muted">{{ r.u.username }}</div></td><td>{{ r.role }}</td>
+  <td>{% if r.card and r.card.active %}<span class="chip ok">Works</span><div class="small muted" style="white-space:nowrap">{{ r.card.issued_at|date:"d M Y" }}</div>{% elif r.card %}<span class="chip due">Stopped</span>{% else %}<span class="chip">No card yet</span>{% endif %}</td>
+  <td style="text-align:right;white-space:nowrap">
+    {% if r.card and r.card.active %}<a class="btn small quiet" href="{% url 'core:cards_print' %}?ids={{ r.card.pk }}" target="_blank">Print</a>{% endif %}
+    <form method="post" action="{% url 'core:card_new' 'login' r.u.pk %}" style="display:inline" {% if r.card %}onsubmit="return confirm('Make a new card? The old card stops working.');"{% endif %}>{% csrf_token %}<button class="btn small" type="submit">{% if r.card %}New card{% else %}Make card{% endif %}</button></form>
+    {% if r.card and r.card.active %}<form method="post" action="{% url 'core:card_stop' r.card.pk %}" style="display:inline" onsubmit="return confirm('Stop this card?');">{% csrf_token %}<button class="btn small quiet" type="submit">Stop</button></form>{% endif %}</td></tr>
+{% endfor %}</tbody></table></div></section>{% endif %}
+<p class="small muted">Print on card or thick paper. Cut out each card and laminate it. A USB barcode scanner (Code 128) reads the card on the login screen and on the till.</p>
+{% endblock %}

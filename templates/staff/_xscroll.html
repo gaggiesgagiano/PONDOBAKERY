@@ -1,0 +1,26 @@
+{# Scroll bar that stays at the bottom of the screen for wide tables (class "xscroll" on the .tablebox). #}
+<style>
+  .tablebox.xscroll{scrollbar-width:none}
+  .tablebox.xscroll::-webkit-scrollbar{display:none}
+  .xbar{position:sticky;bottom:0;z-index:5;overflow-x:auto;overflow-y:hidden;height:22px;margin:6px -4px 0;
+        background:var(--peach);border-top:1px solid var(--line);border-radius:0 0 10px 10px}
+  .xbar>div{height:1px}
+  .xbar::-webkit-scrollbar{height:14px}
+  .xbar::-webkit-scrollbar-thumb{background:#e56026;border-radius:8px;border:3px solid var(--peach)}
+  .xbar::-webkit-scrollbar-thumb:hover{background:#7a1315}
+  .xbar.hide{display:none}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('.tablebox.xscroll').forEach(function(box){
+    var bar = document.createElement('div'), inner = document.createElement('div');
+    bar.className = 'xbar'; bar.title = 'Drag to see the columns on the right'; bar.appendChild(inner);
+    box.parentNode.insertBefore(bar, box.nextSibling);
+    function size(){ inner.style.width = box.scrollWidth + 'px'; bar.classList.toggle('hide', box.scrollWidth <= box.clientWidth + 1); }
+    var busy = false;
+    bar.addEventListener('scroll', function(){ if (busy) { busy = false; return; } busy = true; box.scrollLeft = bar.scrollLeft; });
+    box.addEventListener('scroll', function(){ if (busy) { busy = false; return; } busy = true; bar.scrollLeft = box.scrollLeft; });
+    window.addEventListener('resize', size); size();
+  });
+});
+</script>

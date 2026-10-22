@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Payment {{ p.number }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'money:statement' p.supplier.pk %}">{{ p.supplier }}</a></div><h1>Payment {{ p.number }} – {{ p.amount|money }}</h1>
+  <div class="small muted">{{ p.date|date:"d M Y" }} · paid from {{ p.account|default:"the owner's own pocket" }}{% if p.ref %} · ref {{ p.ref }}{% endif %}{% if p.created_by %} · typed by {{ p.created_by }}{% endif %}</div></div>
+  <div class="actions no-print"><button class="btn quiet" onclick="window.print()">Print</button>{% if can.owner %}<form method="post" action="{% url 'money:payment_delete' p.pk %}" onsubmit="return confirm('Delete this payment? The invoices show as unpaid again.');">{% csrf_token %}<button class="btn quiet" type="submit">Delete</button></form>{% endif %}</div></div>
+{% include "money/_tabs.html" %}
+<section class="card" style="max-width:760px"><div class="tablebox"><table class="t"><thead><tr><th>Invoice</th><th>Received</th><th class="r">Paid by this payment</th></tr></thead><tbody>
+{% for a in allocs %}<tr class="link" data-href="{% url 'stock:grv' a.grv.pk %}"><td>{{ a.grv.invoice_no|default:"–" }} <span class="small muted">{{ a.grv.number }}</span></td><td>{{ a.grv.date|date:"d M Y" }}</td><td class="r">{{ a.amount|money }}</td></tr>{% endfor %}
+<tr class="total"><td colspan="2">Total</td><td class="r">{{ p.amount|money }}</td></tr></tbody></table></div>
+{% if p.notes %}<p>{{ p.notes }}</p>{% endif %}</section>
+{% endblock %}

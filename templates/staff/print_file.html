@@ -1,0 +1,75 @@
+{% load static pondo %}<!doctype html>
+<html lang="en" data-font="{{ look.biz_font }}"><head><meta charset="utf-8">
+<title>Staff file{% if sheets|length == 1 %} – {{ sheets.0.e.name }}{% endif %} · Pondo Bakery</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=29">{% include "_brand_font.html" %}
+<style>
+  @page{size:A4 portrait;margin:10mm}
+  html,body{background:#ddd;margin:0;font-size:12.5px;color:#2a1412}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .bar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:9}
+  .sheet{width:190mm;min-height:277mm;margin:10mm auto;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.15);padding:0;display:flex;flex-direction:column;gap:5mm;page-break-after:always;break-after:page;box-sizing:border-box}
+  .sheet:last-child{page-break-after:auto;break-after:auto}
+  @media print{html,body{background:#fff}.bar{display:none}.sheet{margin:0;box-shadow:none;min-height:0;height:277mm}}
+  .sh{display:flex;justify-content:space-between;align-items:center;border-bottom:1.2mm solid #e56026;padding-bottom:3mm}
+  .sh img{width:52mm}
+  .sh .r{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2mm}
+  .sh h1{font-size:26px;color:#7a1315;margin:0}
+  .no{background:#7a1315;color:#fff3d7;border-radius:3mm;padding:2mm 5mm;font-family:var(--head);font-weight:var(--head-weight);font-size:24px;line-height:1}
+  .no.none{background:#fff;color:#7c5a4a;border:0.4mm dashed #c9a27e;font-family:Nunito;font-size:12px;font-weight:700}
+  .top{display:grid;grid-template-columns:35mm 1fr;gap:6mm;align-items:start}
+  .ph{width:35mm;height:45mm;border-radius:2mm;object-fit:cover;object-position:50% 30%;display:block}
+  .ph.empty{border:0.4mm dashed #c9a27e;display:flex;align-items:center;justify-content:center;text-align:center;color:#7c5a4a;font-size:11px;padding:3mm;box-sizing:border-box}
+  .facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2mm 6mm}
+  .facts div{border-bottom:0.25mm solid #ebd3b2;padding-bottom:1mm;min-height:9mm}
+  .facts span{display:block;font-size:10px;color:#7c5a4a;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+  .facts b{font-size:13px}
+  .facts .wide{grid-column:1/-1}
+  h2{font-size:17px;color:#7a1315;margin:0}
+  table.ck{width:100%;border-collapse:collapse}
+  table.ck th{background:#fff3d7;color:#7a1315;text-align:left;font-size:11px;padding:2mm 2.5mm;border-bottom:0.4mm solid #ebd3b2}
+  table.ck td{padding:2.2mm 2.5mm;border-bottom:0.25mm solid #ebd3b2;vertical-align:middle}
+  table.ck td.c{text-align:center;width:24mm}
+  .box{display:inline-flex;width:5mm;height:5mm;border:0.4mm solid #7a1315;border-radius:1mm;align-items:center;justify-content:center;font-weight:900;color:#14675d;line-height:1}
+  .need{color:#e56026;font-weight:900}
+  .exp-x{color:#9b1b1e;font-weight:700}
+  .sign{display:grid;grid-template-columns:1fr 1fr;gap:10mm;margin-top:auto}
+  .sign div{border-top:0.3mm solid #2a1412;padding-top:1.5mm;font-size:11px;color:#7c5a4a}
+  .foot{display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:#7c5a4a;border-top:0.25mm solid #ebd3b2;padding-top:2mm}
+  .foot img{width:12mm}
+  .secret{background:#7a1315;color:#fff3d7;border-radius:999px;padding:1mm 4mm;font-weight:800;font-size:10.5px}
+</style></head>
+<body>
+<div class="bar"><button class="btn primary" onclick="window.print()">Print</button><button class="btn quiet" onclick="window.close()">Close</button></div>
+{% for s in sheets %}{% with e=s.e %}
+<section class="sheet">
+  <div class="sh"><img src="{% static 'brand/logo/primary_orange.svg' %}" alt="Pondo Bakery">
+    <div class="r"><h1>Staff file</h1>{% if e.code %}<span class="no">{{ e.code }}</span>{% else %}<span class="no none">Staff no. ______</span>{% endif %}</div></div>
+  <div class="top">
+    {% if e.photo %}<img class="ph" src="{% url 'staff:photo' e.pk %}?v={{ e.photo_v }}" alt="Photo of {{ e.name }}">{% else %}<div class="ph empty">Stick a passport photo here</div>{% endif %}
+    <div class="facts">
+      <div class="wide"><span>Full name</span><b style="font-size:17px">{{ e.full_name }}</b>{% if e.known_as %} <span style="display:inline">· known as <b>{{ e.known_as }}</b></span>{% endif %}</div>
+      <div><span>Job</span><b>{{ e.job_title|default:"" }}</b></div><div><span>Department</span><b>{{ e.get_department_display }}</b></div>
+      <div><span>ID no.</span><b>{{ e.id_number }}</b></div><div><span>Date of birth</span><b>{{ e.date_of_birth|date:"d M Y" }}</b></div>
+      <div><span>Cell</span><b>{{ e.phone }}</b></div><div><span>Gender</span><b>{{ e.get_gender_display }}</b></div>
+      <div class="wide"><span>Address</span><b>{{ e.address }}</b></div>
+      <div class="wide"><span>Next of kin (name &amp; cell)</span><b>{{ e.next_of_kin }}</b></div>
+      <div><span>Started</span><b>{{ e.start_date|date:"d M Y" }}</b></div><div><span>Left on</span><b>{{ e.end_date|date:"d M Y" }}</b></div>
+      <div><span>NSSA no.</span><b>{{ e.nssa_no }}</b></div><div><span>ZIMRA tax no.</span><b>{{ e.tax_no }}</b></div>
+    </div>
+  </div>
+  <h2>Papers in this file</h2>
+  <table class="ck"><thead><tr><th>Paper</th><th class="c">On the laptop</th><th class="c">Paper copy in this file</th><th>Runs out</th><th>Checked by</th></tr></thead><tbody>
+    {% for i in s.items %}<tr><td><b>{{ i.label }}</b>{% if i.required %} <span class="need" title="Every file should have this">*</span>{% endif %}</td>
+      <td class="c"><span class="box">{% if i.soft %}✓{% endif %}</span></td><td class="c"><span class="box">{% if i.hard %}✓{% endif %}</span></td>
+      <td>{% if i.expires %}<span class="{% if i.exp == 'expired' %}exp-x{% endif %}">{{ i.expires|date:"d M Y" }}{% if i.exp == 'expired' %} – ran out{% endif %}</span>{% endif %}</td><td></td></tr>{% endfor %}
+    {% for p in s.others %}<tr><td><b>{{ p.get_kind_display }}</b>{% if p.title %} – {{ p.title }}{% endif %}</td>
+      <td class="c"><span class="box">{% if p.file %}✓{% endif %}</span></td><td class="c"><span class="box">{% if p.hard_copy %}✓{% endif %}</span></td>
+      <td>{{ p.expires|date:"d M Y" }}</td><td></td></tr>{% endfor %}
+    {% for x in "123" %}<tr><td style="height:7mm"></td><td class="c"><span class="box"></span></td><td class="c"><span class="box"></span></td><td></td><td></td></tr>{% endfor %}
+  </tbody></table>
+  <p class="small" style="margin:0;color:#7c5a4a"><span class="need">*</span> every staff file should have this. Tick the boxes by hand when a paper goes into the file, and add the scan on the laptop (Staff › {{ e.short }} › Staff file).</p>
+  <div class="sign"><div>Staff member – signature &amp; date</div><div>File checked by – name, signature &amp; date</div></div>
+  <div class="foot"><span class="secret">Confidential – personal information. Keep this file locked away.</span><span>Printed {{ today|date:"d M Y" }}</span><img src="{% static 'brand/logo/submark_orange.svg' %}" alt=""></div>
+</section>
+{% endwith %}{% empty %}<section class="sheet"><p>Nobody to print.</p></section>{% endfor %}
+</body></html>

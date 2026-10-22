@@ -1,0 +1,6 @@
+{% load static %}  <div class="lt-foot">
+    <b>{{ company.tagline|default:"Easy to enjoy" }}</b>
+    <div class="mid">{% if current_shop.tin %}TIN {{ current_shop.tin }}{% endif %}{% if current_shop.vat_no %} · VAT {{ current_shop.vat_no }}{% endif %}<br>
+      <span>Find us on Facebook · Instagram · TikTok: <b style="font-family:Nunito,sans-serif;font-size:8.4pt;color:#fff3d7;text-transform:none">Pondo Bakery</b></span></div>
+    <img src="{% static 'brand/logo/mark_cream.svg' %}" alt="">
+  </div>

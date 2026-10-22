@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}{% if sop %}Edit {{ sop.code }}{% else %}New SOP{% endif %}{% endblock %}
+{% block head %}{% include "core/sops/_doc_css.html" %}<style>
+  .rt-store{display:none!important}
+  .rt-wrap{border:2px solid var(--input-line,#218d80);border-radius:12px;background:#fff;overflow:hidden}
+  .rt-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 8px;background:var(--peach,#fff3d7);border-bottom:1px solid var(--line,#f4e4c9)}
+  .rt-bar button{min-width:38px;height:34px;border-radius:8px;border:1px solid var(--line2,#ebd3b2);background:#fff;cursor:pointer;font-size:14px;color:#3b1d14;padding:0 8px}
+  .rt-bar button.on{background:#7a1315;color:#fff3d7;border-color:#7a1315}
+  .rt-bar .sep{width:1px;height:24px;background:var(--line2,#ebd3b2);margin:0 2px}
+  .rt-bar .hint{margin-left:auto;font-size:12px;color:var(--muted,#7c5a4a)}
+  .rt-edit{min-height:460px;padding:16px 18px;outline:none}
+  .applies ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 16px}
+  .applies label{display:flex;gap:6px;align-items:center;font-weight:600}
+  .applies input{width:18px;height:18px}
+</style>{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'core:sops' %}">SOP file</a>{% if sop %} › <a href="{% url 'core:sop' sop.pk %}">{{ sop.code }}</a>{% endif %}</div>
+  <h1>{% if sop %}Edit {{ sop.code }}{% else %}New SOP{% endif %}</h1>
+  <div class="small muted">Use job titles only – never names – so the file also works for other shops.{% if sop.status == 'approved' %} <b>This SOP is approved:</b> changing the text keeps version {{ sop.version }} in the history and makes version {{ sop.version|add:1 }}, a draft to approve again.{% endif %}</div></div></div>
+<form method="post" class="stack" id="sopform">{% csrf_token %}
+  {% if form.errors %}<div class="msg error">Please fix the boxes marked in red.</div>{% endif %}
+  <section class="card stack"><div class="grid-form">
+    {% include "_field.html" with f=form.section %}{% include "_field.html" with f=form.seq %}
+    {% include "_field.html" with f=form.title wide=1 %}
+    {% include "_field.html" with f=form.purpose wide=1 %}
+    {% include "_field.html" with f=form.responsible wide=1 %}
+    <div class="field wide applies{% if form.applies_list.errors %} bad{% endif %}"><label>{{ form.applies_list.label }}</label>{{ form.applies_list }}<div class="help">{{ form.applies_list.help_text }}</div></div>
+    <div class="field wide{% if form.body.errors %} bad{% endif %}">
+      <label for="rt-edit">{{ form.body.label }}</label>
+      <div class="rt-wrap">
+        <div class="rt-bar" role="toolbar" aria-label="Text style">
+          <button type="button" data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button>
+          <button type="button" data-cmd="italic" title="Italics (Ctrl+I)"><i>I</i></button>
+          <button type="button" data-cmd="underline" title="Underline (Ctrl+U)"><u>U</u></button>
+          <span class="sep"></span>
+          <button type="button" data-block="h3" title="Heading">Heading</button>
+          <button type="button" data-block="p" title="Normal text">Normal</button>
+          <span class="sep"></span>
+          <button type="button" data-cmd="insertOrderedList" title="Numbered steps">1. Steps</button>
+          <button type="button" data-cmd="insertUnorderedList" title="Bullet points">• Points</button>
+          <span class="hint">Enter = next step · Enter twice = end the list</span>
+        </div>
+        <div class="rt-edit sopdoc" id="rt-edit" contenteditable="true" role="textbox" aria-multiline="true" data-keep spellcheck="true" lang="en-ZA"></div>
+      </div>
+      {{ form.body }}
+      {% for e in form.body.errors %}<div class="err">{{ e }}</div>{% endfor %}
+    </div>
+    {% if sop %}{% include "_field.html" with f=form.note wide=1 %}{% endif %}
+  </div></section>
+  <div class="actions"><button class="btn primary" type="submit">Save</button>
+    <a class="btn quiet" href="{% if sop %}{% url 'core:sop' sop.pk %}{% else %}{% url 'core:sops' %}{% endif %}">Cancel</a></div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  var ed = document.getElementById('rt-edit'), store = document.querySelector('textarea.rt-store'), form = document.getElementById('sopform');
+  try { document.execCommand('defaultParagraphSeparator', false, 'p'); document.execCommand('styleWithCSS', false, false); } catch (e) {}
+  ed.innerHTML = store.value || '<p><br></p>';
+  var btns = document.querySelectorAll('.rt-bar button');
+  function state(){ btns.forEach(function(b){ if (!b.dataset.cmd) return; try { b.classList.toggle('on', document.queryCommandState(b.dataset.cmd)); } catch (e) {} }); }
+  btns.forEach(function(b){
+    b.addEventListener('mousedown', function(e){ e.preventDefault(); });
+    b.addEventListener('click', function(){
+      ed.focus();
+      if (b.dataset.cmd) document.execCommand(b.dataset.cmd);
+      else document.execCommand('formatBlock', false, '<' + b.dataset.block + '>');
+      state(); sync();
+    });
+  });
+  ed.addEventListener('keydown', function(e){
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    var cmd = {b: 'bold', i: 'italic', u: 'underline'}[e.key.toLowerCase()];
+    if (cmd){ e.preventDefault(); document.execCommand(cmd); state(); }
+  });
+  ed.addEventListener('keyup', state); ed.addEventListener('mouseup', state);
+  ed.addEventListener('paste', function(e){ e.preventDefault(); document.execCommand('insertText', false, (e.clipboardData || window.clipboardData).getData('text/plain')); });
+  store.required = false;
+  function sync(){ store.value = ed.innerHTML; }
+  ed.addEventListener('input', sync); form.addEventListener('submit', sync);
+})();
+</script>
+{% endblock %}

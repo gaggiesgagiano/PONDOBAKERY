@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Receiving{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Stock</div><h1>Receiving (GRV)</h1></div>
+  <div class="actions">{% if can.stock_edit %}<button class="btn" type="button" data-pick title="Choose a delivery received (GRV) to change">Edit</button>{% endif %}{% if can.stock_edit %}<a class="btn primary" href="{% url 'stock:grv_new' %}">+ Receive goods</a>{% endif %}</div></div>
+{% include "stock/_tabs.html" %}
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>GRV</th><th>Date</th><th>Supplier</th><th>Order</th><th>Invoice no.</th><th class="r">Lines</th>{% if can.costs %}<th class="r">Value</th>{% endif %}<th>Received by</th></tr></thead>
+  <tbody>{% for g in grvs %}<tr class="link" data-href="{% url 'stock:grv' g.pk %}"{% if can.stock_edit %} data-edit="{% url 'stock:grv_edit' g.pk %}"{% endif %}>
+    <td><a class="rowlink" href="{% url 'stock:grv' g.pk %}">{{ g.number }}</a></td><td>{{ g.date|date:"d M Y" }}</td><td>{{ g.supplier }}</td><td class="small">{{ g.order.number|default:"" }}</td>
+    <td class="small">{{ g.invoice_no }}</td><td class="r">{{ g.lines.all|length }}</td>{% if can.costs %}<td class="r">{{ g.total|money }}</td>{% endif %}<td class="small">{{ g.received_by|default:"" }}</td></tr>
+  {% empty %}<tr class="emptyrow"><td colspan="8" class="muted">Nothing received yet.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

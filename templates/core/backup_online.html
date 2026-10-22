@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Backups{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Backup</div><h1>Backups</h1>
+  <div class="small muted">Pondo is online: the server makes a backup <b>every night</b> by itself. Once a week a manager downloads a copy to keep in the office.</div></div></div>
+<div class="cols">
+  <section class="card main stack">
+    <h2>Download a copy now</h2>
+    <p style="margin:0">One file (zip) with everything: all figures, recipes, staff, product photos and the staff papers. Save it on the office computer <b>and</b> on the flash drive, and lock the flash drive away – it holds personal papers.</p>
+    <form method="post">{% csrf_token %}<button class="btn primary" type="submit">Download backup</button></form>
+    {% if company.last_flash_backup %}<p class="small muted" style="margin:0">Last download: <b>{{ company.last_flash_backup|date:"l d F Y, H:i" }}</b> – {{ company.last_flash_backup_to }}</p>{% endif %}
+  </section>
+  <aside class="aside"><section class="card stack"><h2>Nightly backups on the server</h2>
+    <p class="small muted" style="margin:0">The last 14 nights. Click one to download it.</p>
+    {% for f in nightly %}<a class="small" href="?file={{ f.name }}">{{ f.name }}</a>{% empty %}<p class="small muted">None yet – the first one is made tonight.</p>{% endfor %}
+  </section></aside>
+</div>
+{% endblock %}

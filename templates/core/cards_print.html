@@ -1,0 +1,53 @@
+{% load static %}<!doctype html>
+<html lang="en" data-font="{{ look.biz_font }}"><head><meta charset="utf-8"><title>Staff cards · Pondo Bakery</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=29">{% include "_brand_font.html" %}
+<style>
+  @page{size:A4 portrait;margin:10mm}
+  html,body{background:#ddd;margin:0}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .bar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:9;align-items:center}
+  .bar .tip{background:#fff;border-radius:12px;padding:6px 12px;font-size:13px;font-weight:600;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+  .page{width:190mm;height:277mm;margin:64px auto 10mm;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.15);display:grid;grid-template-columns:repeat(2,85.6mm);grid-auto-rows:54mm;gap:7mm 8mm;justify-content:center;align-content:start;padding-top:8mm;box-sizing:border-box;page-break-after:always;break-after:page}
+  .page:last-child{page-break-after:auto;break-after:auto}
+  @media print{html,body{background:#fff}.bar{display:none}.page{margin:0;box-shadow:none}}
+  /* one staff card, one side – the size of a bank card. Cut along the thin grey line and laminate. */
+  .sc{--c:#e56026;--ci:#fff3d7;width:85.6mm;height:54mm;border-radius:3.2mm;overflow:hidden;background:#fff3d7;color:#2a1412;display:grid;grid-template-rows:10mm 1fr auto;outline:0.2mm dashed #bbb;outline-offset:0.6mm;font-family:Nunito,sans-serif;box-sizing:border-box}
+  .sc.teal{--c:#218d80}.sc.burgundy{--c:#7a1315}.sc.warm{--c:#f89b47;--ci:#7a1315}
+  .sc-band{background:var(--c);color:var(--ci);display:flex;align-items:center;justify-content:space-between;padding:0 4mm}
+  .sc-band img{height:6.8mm;display:block}
+  .sc-band span{font-family:var(--head);font-weight:var(--head-weight);text-transform:var(--head-case);font-size:9.5pt;letter-spacing:0;line-height:1}
+  .sc-body{display:grid;grid-template-columns:19mm 1fr;gap:3mm;padding:2mm 4mm 0;min-height:0}
+  .sc-ph{width:19mm;height:24mm;border-radius:1.8mm;object-fit:cover;object-position:50% 30%;display:block;background:#fde3c9}
+  .sc-ph.none{display:flex;align-items:center;justify-content:center;background:var(--c);color:var(--ci);font-family:var(--head);font-size:18pt}
+  .sc-info{display:flex;flex-direction:column;min-width:0;gap:0.5mm}
+  .sc-nm{font-family:var(--head);font-weight:var(--head-weight);text-transform:var(--head-case);letter-spacing:0;color:#7a1315;font-size:12.5pt;line-height:1.02;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .sc-nm.long{font-size:10.5pt}
+  .sc-job{font-weight:700;font-size:8pt;line-height:1.15}
+  .sc-dept{font-size:7pt;color:#7c5a4a}
+  .sc-num{margin-top:auto;align-self:flex-start;background:var(--c);color:var(--ci);border-radius:1.4mm;padding:0.7mm 2.2mm 0.6mm;display:flex;align-items:baseline;gap:1.6mm;line-height:1}
+  .sc-num small{font-size:5.4pt;font-weight:800;letter-spacing:.04em;text-transform:uppercase;opacity:.9}
+  .sc-num b{font-family:var(--head);font-weight:var(--head-weight);font-size:11pt;letter-spacing:0}
+  .sc-bc{margin:1.6mm 3mm 1.8mm;background:#fff;border-radius:1.6mm;padding:1mm 1.5mm 0.6mm}
+  .sc-bc svg{width:100%;height:9.5mm;display:block}
+  .sc-bl{display:flex;justify-content:space-between;align-items:baseline;gap:2mm;margin-top:0.3mm}
+  .sc-code{font:700 6.2pt "Courier New",monospace;letter-spacing:.12em}
+  .sc-ret{font-size:5pt;color:#7c5a4a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style></head>
+<body>
+<div class="bar"><span class="tip">Cut out each card and laminate it.</span><button class="btn primary" onclick="window.print()">Print</button><button class="btn quiet" onclick="window.close()">Close</button></div>
+{% for page in pages %}<section class="page">
+  {% for it in page %}<div class="sc {{ it.colour }}">
+    <div class="sc-band"><img src="{% static 'brand/logo/' %}{% if it.colour == 'warm' %}primary_reverse_burgundy{% else %}primary_reverse_cream{% endif %}.svg" alt="Pondo Bakery"><span>Staff</span></div>
+    <div class="sc-body">
+      {% if it.e and it.e.photo %}<img class="sc-ph" src="{% url 'staff:photo' it.e.pk %}?v={{ it.e.photo_v }}" alt="">{% elif it.e %}<div class="sc-ph none">{{ it.e.initials }}</div>{% else %}<div class="sc-ph none">{{ it.name|slice:":1"|upper }}</div>{% endif %}
+      <div class="sc-info">
+        <div class="sc-nm{% if it.name|length > 16 %} long{% endif %}">{{ it.name }}</div>
+        {% if it.e %}{% if it.e.job_title %}<div class="sc-job">{{ it.e.job_title }}</div>{% endif %}<div class="sc-dept">{{ it.e.get_department_display }}</div>
+        {% else %}<div class="sc-job">{{ it.job }}</div>{% endif %}
+        {% if it.no %}<div class="sc-num"><small>Staff no.</small><b>{{ it.no }}</b></div>{% endif %}
+      </div>
+    </div>
+    <div class="sc-bc">{{ it.svg }}<div class="sc-bl"><span class="sc-code">{{ it.c.code }}</span><span class="sc-ret">If found: {{ current_shop.name|default:company.company_name|default:"Pondo Bakery" }}{% if current_shop.phone %} · {{ current_shop.phone }}{% endif %}</span></div></div>
+  </div>{% empty %}<p style="grid-column:1/-1;padding:10mm">No cards yet – make them on the Staff cards page.</p>{% endfor %}
+</section>{% endfor %}
+</body></html>

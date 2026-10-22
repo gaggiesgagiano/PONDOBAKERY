@@ -1,0 +1,79 @@
+{% load static pondo %}<!doctype html>
+<html lang="en" data-font="{{ look.biz_font }}"><head><meta charset="utf-8">
+<title>Driver ID cards · Pondo Bakery</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=29">{% include "_brand_font.html" %}
+<style>
+  @page{size:A4 portrait;margin:10mm}
+  html,body{background:#ddd;margin:0}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .bar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:9;align-items:center}
+  .bar .tip{background:#fff;border-radius:12px;padding:6px 12px;font-size:13px;font-weight:600;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+  .page{width:190mm;height:277mm;margin:64px auto 10mm;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.15);display:flex;flex-direction:column;align-items:center;gap:10mm;padding-top:8mm;box-sizing:border-box;page-break-after:always;break-after:page}
+  .page:last-child{page-break-after:auto;break-after:auto}
+  @media print{html,body{background:#fff}.bar{display:none}.page{margin:0;box-shadow:none}}
+  /* one driver card: front and back side by side – cut out, fold on the middle line, laminate */
+  .dc-pair{display:flex;outline:0.2mm dashed #bbb;outline-offset:0.6mm;position:relative}
+  .dc-pair::after{content:"fold";position:absolute;left:50%;top:-4mm;transform:translateX(-50%);font-size:6pt;color:#999}
+  .dc-side{width:85.6mm;height:54mm;overflow:hidden;background:#fff3d7;color:#2a1412;display:grid;grid-template-rows:12mm 1fr;font-family:Nunito,sans-serif}
+  .dc-side+.dc-side{border-left:0.3mm dashed #c9a27e}
+  .dc-band{display:flex;align-items:center;justify-content:space-between;padding:0 4mm;background:#7a1315;color:#fff3d7}
+  .dc-band img{height:7.8mm;display:block}
+  .dc-band span{font-family:var(--head);font-weight:var(--head-weight);text-transform:var(--head-case);font-size:9.5pt;letter-spacing:0;line-height:1;text-align:right}
+  .dc-back .dc-band{background:#218d80}
+  .dc-body{display:grid;grid-template-columns:23mm 1fr;gap:3.4mm;padding:3mm 4mm 2.4mm}
+  .dc-ph{width:23mm;height:30.6mm;border-radius:2mm;object-fit:cover;object-position:50% 30%;display:block;background:#fde3c9}
+  .dc-ph.dc-none{display:flex;align-items:center;justify-content:center;background:#7a1315;color:#fff3d7;font-family:var(--head);font-size:22pt}
+  .dc-info{display:flex;flex-direction:column;gap:0.7mm;min-width:0}
+  .dc-nm{font-family:var(--head);font-weight:var(--head-weight);text-transform:var(--head-case);letter-spacing:0;color:#7a1315;font-size:13pt;line-height:1.02;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .dc-nm.dc-long{font-size:10.5pt}
+  .dc-kv{font-size:7.4pt;line-height:1.25}.dc-kv span{color:#7c5a4a}.dc-kv b{font-size:8.2pt}
+  .dc-no{margin-top:auto;align-self:flex-start;background:#7a1315;color:#fff3d7;border-radius:1.6mm;padding:0.9mm 2.4mm;display:flex;flex-direction:column;line-height:1}
+  .dc-no small{font-size:5.4pt;font-weight:800;letter-spacing:.04em;text-transform:uppercase;opacity:.9}
+  .dc-no b{font-family:var(--head);font-weight:var(--head-weight);font-size:12pt;letter-spacing:0}
+  .dc-bbody{display:grid;grid-template-columns:31mm 1fr;gap:3mm;padding:3mm 4mm 0}
+  .dc-car{width:31mm;height:23mm;border-radius:2mm;object-fit:cover;display:block;background:#d8efea}
+  .dc-car.dc-none{display:flex;align-items:center;justify-content:center}
+  .dc-car.dc-none svg{width:18mm;height:18mm;stroke:#218d80}
+  .plate{font-size:12.5pt;padding:0.3mm 2mm;border-width:0.5mm}
+  .cdot{width:2.6mm;height:2.6mm;margin-right:1mm}
+  .dc-cash{margin:2mm 4mm 0;background:#e56026;color:#fff3d7;border-radius:1.6mm;padding:1.3mm 2.5mm;display:flex;justify-content:space-between;align-items:center;gap:2mm}
+  .dc-cash b{font-family:var(--head);font-weight:var(--head-weight);font-size:11pt;letter-spacing:0;text-transform:var(--head-case)}
+  .dc-cash span{font-size:6.2pt;font-weight:700;line-height:1.2;text-align:right}
+  .dc-fine{padding:1.4mm 4mm 0;font-size:5.6pt;color:#7c5a4a;line-height:1.3;display:flex;justify-content:space-between;gap:3mm}
+  .dc-sign{border-top:0.2mm solid #2a1412;padding-top:0.5mm;min-width:24mm;text-align:center}
+</style></head>
+<body>
+<div class="bar"><span class="tip">Cut out each card, fold it in the middle and laminate it.</span><button class="btn primary" onclick="window.print()">Print</button><button class="btn quiet" onclick="window.close()">Close</button></div>
+{% for page in pages %}<section class="page">
+  {% for d in page %}<div class="dc-pair">
+    <div class="dc-side dc-front">
+      <div class="dc-band"><img src="{% static 'brand/logo/primary_reverse_cream.svg' %}" alt="Pondo Bakery"><span>Delivery<br>driver</span></div>
+      <div class="dc-body">
+        {% if d.photo %}<img class="dc-ph" src="{% url 'invoices:driver_photo' d.pk 'driver' %}?v={{ d.photo_v }}" alt="">{% else %}<div class="dc-ph dc-none">{{ d.initials }}</div>{% endif %}
+        <div class="dc-info">
+          <div class="dc-nm{% if d.name|length > 16 %} dc-long{% endif %}">{{ d.name }}</div>
+          {% if d.id_number %}<div class="dc-kv"><span>ID no.</span> <b>{{ d.id_number }}</b></div>{% endif %}
+          {% if d.phone %}<div class="dc-kv"><span>Cell</span> <b>{{ d.phone }}</b></div>{% endif %}
+          {% if d.licence_no %}<div class="dc-kv"><span>Licence</span> <b>{{ d.licence_no }}</b></div>{% endif %}
+          <div class="dc-no"><small>Driver no.</small><b>{{ d.number }}</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="dc-side dc-back">
+      <div class="dc-band"><span style="text-align:left">The car</span><span>{{ current_shop.name|default:company.company_name|default:"Pondo Bakery" }}</span></div>
+      <div>
+        <div class="dc-bbody">
+          {% if d.car_photo %}<img class="dc-car" src="{% url 'invoices:driver_photo' d.pk 'car' %}?v={{ d.photo_v }}" alt="">{% else %}<div class="dc-car dc-none"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15v-3l2-5h14l2 5v3"/><path d="M3 15h18v3H3z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg></div>{% endif %}
+          <div class="dc-info">
+            {% if d.car_reg %}<span class="plate">{{ d.car_reg }}</span>{% endif %}
+            <div class="dc-kv" style="margin-top:1mm"><span class="cdot" data-colour="{{ d.car_colour|lower }}"></span><b>{{ d.car|default:"–" }}</b></div>
+            <div class="dc-kv"><span>Card issued</span> <b>{{ d.issued|date:"d M Y" }}</b></div>
+          </div>
+        </div>
+        <div class="dc-cash"><b>Cash only</b><span>Pay the driver in cash.<br>He keeps only the delivery fee.</span></div>
+        <div class="dc-fine"><span>Only valid while signed by Pondo Bakery.{% if current_shop.phone %} Questions? {{ current_shop.phone }}{% endif %}</span><span class="dc-sign">signed</span></div>
+      </div>
+    </div>
+  </div>{% endfor %}
+</section>{% empty %}<section class="page"><p>No drivers.</p></section>{% endfor %}
+</body></html>

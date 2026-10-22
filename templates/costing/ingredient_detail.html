@@ -1,0 +1,33 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}{{ i.name }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'costing:ingredients' %}">Ingredients</a>{% if i.supplier %} › {{ i.supplier }}{% endif %}</div>
+  <h1>{{ i.name }}</h1>
+  <div class="chips"><span class="chip">{{ i.get_kind_display }}</span>{% if i.code %}<span class="chip">Code {{ i.code }}</span>{% endif %}{% if not i.active %}<span class="chip on">Archived</span>{% endif %}</div></div>
+  <div class="actions">{% if can.ingredients_edit %}<a class="btn primary" href="{% url 'costing:ingredient_edit' i.pk %}">{% if i.kind == 'subrecipe' %}Edit{% else %}Change price / edit{% endif %}</a>{% endif %}</div></div>
+
+<div class="stats">
+  {% if i.kind == 'subrecipe' %}
+  <div class="card stat"><div class="lbl">Made by recipe</div><div class="val" style="font-size:22px">{% if can.recipes_view %}<a href="{% url 'costing:recipe' i.recipe.pk %}">{{ i.recipe.name }}</a>{% else %}{{ i.recipe.name }}{% endif %}</div><div class="sub">made in the bakery</div></div>
+  {% else %}
+  {% if can.costs %}<div class="card stat"><div class="lbl">Pack price</div><div class="val">{{ i.pack_price|money }}</div><div class="sub">{% if i.vat_rate %}incl. {{ i.vat_rate|pct:1 }} VAT{% else %}as paid{% endif %}</div></div>{% endif %}
+  <div class="card stat"><div class="lbl">Pack size</div><div class="val">{{ i.pack_size|num:3 }}</div><div class="sub">{{ i.get_unit_display }}</div></div>
+  {% endif %}
+  {% if can.costs %}<div class="card stat dark"><div class="lbl">Cost per {{ i.get_unit_display }}</div><div class="val">{{ unit_cost|money:3 }}</div><div class="sub">excl. VAT, used in costing</div></div>{% endif %}
+  <div class="card stat"><div class="lbl">Used in</div><div class="val">{{ uses|length }}</div><div class="sub">recipe{{ uses|length|pluralize }}</div></div>
+</div>
+
+<div class="cols">
+  <section class="card main stack"><h2>Recipes that use it</h2>
+    <div class="tablebox"><table class="t"><thead><tr><th>Recipe</th><th>Part</th><th class="r">Qty per batch</th>{% if can.costs %}<th class="r">Cost per batch</th>{% endif %}</tr></thead><tbody>
+    {% for u in uses %}<tr class="link" data-href="{% url 'costing:recipe' u.r.pk %}"><td><a class="rowlink" href="{% url 'costing:recipe' u.r.pk %}">{{ u.r.name }}</a>{% if not u.r.active %} <span class="tag">archived</span>{% endif %}</td><td class="small">{{ u.section }}</td><td class="r">{{ u.qty|num:3 }} {{ i.unit }}</td>{% if can.costs %}<td class="r">{{ u.cost|money }}</td>{% endif %}</tr>
+    {% empty %}<tr class="emptyrow"><td colspan="4" class="muted">Not used in any recipe.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+  <aside class="aside"><section class="card stack">{% if can.costs %}<h2>Price history</h2>
+    {% for h in history %}<div class="small"><b>{{ h.changed_at|date:"d M Y" }}</b> · {{ h.old_price|money }} → <b>{{ h.new_price|money }}</b>{% if h.old_pack_size != h.new_pack_size %} (pack {{ h.old_pack_size|num }} → {{ h.new_pack_size|num }}){% endif %}<br><span class="muted">by {{ h.user|default:"system" }}</span></div>
+    {% empty %}<p class="small muted">No price changes recorded yet.</p>{% endfor %}{% endif %}
+    {% if i.notes %}<h3>Notes</h3><p class="small" style="white-space:pre-line;margin:0">{{ i.notes }}</p>{% endif %}
+  </section></aside>
+</div>
+{% endblock %}

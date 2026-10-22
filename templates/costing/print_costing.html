@@ -1,0 +1,36 @@
+{% extends "costing/print_base.html" %}{% load pondo %}
+{% block title %}Costing – {{ r.name }}{% endblock %}
+{% block kind %}COSTING SHEET · {{ r.number }}{% endblock %}
+{% block body %}
+<h1>{{ r.name }}</h1>
+<div class="facts">
+  <div>Batch yield<b>{% if s.yield %}{{ s.yield|num:0 }}{% else %}{{ s.finished|num:2 }} kg{% endif %}</b></div>
+  <div>Batch cost<b>{{ s.batch_cost|money }}</b></div>
+  <div>Cost per {% if s.yield %}unit{% else %}kg{% endif %}<b>{{ s.cpu|money:3 }}</b></div>
+  <div>{% if r.is_subrecipe %}Dough weight<b>{{ s.dough|num:2 }} kg</b>{% else %}Gross profit<b>{{ s.gp|pct }}</b>{% endif %}</div>
+</div>
+<table class="t">
+  <thead><tr><th>Ingredient</th><th class="r">Qty</th><th>Unit</th><th class="r">Price / unit</th><th class="r">Cost</th><th class="r">Share</th></tr></thead>
+  <tbody>
+  {% for sec in sections %}<tr class="sec"><td colspan="6">{{ sec.label }}</td></tr>
+    {% for it in sec.items %}<tr><td>{{ it.ln.ingredient.name }}</td><td class="r">{{ it.qty|num:3 }}</td><td>{{ it.ln.ingredient.unit }}</td><td class="r">{{ it.unit_cost|money:3 }}</td><td class="r">{{ it.cost|money }}</td><td class="r">{{ it.share|pct }}</td></tr>{% endfor %}
+    <tr><td colspan="4" class="r small muted">{{ sec.label }} subtotal</td><td class="r"><b>{{ sec.subtotal|money }}</b></td><td></td></tr>
+  {% endfor %}
+  <tr class="total"><td>Total batch</td><td class="r">{{ s.dough|num:2 }}</td><td>kg dough</td><td></td><td class="r">{{ s.batch_cost|money }}</td><td class="r">100%</td></tr>
+  </tbody>
+</table>
+{% if not r.is_subrecipe %}
+<table class="t" style="max-width:420px;margin-left:auto">
+  <tbody>
+  <tr><td>Cost per unit</td><td class="r">{{ s.cpu|money:3 }}</td></tr>
+  <tr><td>Selling price incl. VAT</td><td class="r">{{ r.sell_price|money }}</td></tr>
+  <tr><td>VAT</td><td class="r">{{ s.vat|pct:1 }}</td></tr>
+  <tr><td>Selling price excl. VAT</td><td class="r">{{ s.sell_excl|money }}</td></tr>
+  <tr><td>Gross profit per unit</td><td class="r">{{ s.gp_amount|money }}</td></tr>
+  <tr class="total"><td>Gross profit %</td><td class="r">{{ s.gp|pct }}</td></tr>
+  <tr><td class="small muted">Lowest price for {{ company.target_gp|pct:0 }} GP (incl. VAT)</td><td class="r small muted">{{ s.target_price|money }}</td></tr>
+  </tbody>
+</table>
+{% endif %}
+<p class="small muted">All costs exclude VAT. Prices as on the ingredient list on the day of printing.</p>
+{% endblock %}

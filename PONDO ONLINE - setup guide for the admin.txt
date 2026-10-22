@@ -1,0 +1,122 @@
+PONDO BAKERY – MOVING PONDO ONLINE (PythonAnywhere)
+Setup guide for the admin · prepared 19 October 2026
+
+Pondo is a Django 5.2 program (Python 3.13, SQLite). Everything it needs is in the "vendor" folder –
+no pip installs. The program already has an ONLINE MODE, switched on with environment variables
+(see step 4). Nothing else in the code has to change.
+
+WHAT ONLINE MODE DOES
+- Only the addresses in PONDO_HOSTS are accepted; cookies are HTTPS-only.
+- Every night a backup zip is made by a scheduled task (last 14 kept). Managers download a copy
+  once a week from "Back up now" in Pondo (the Short Cut reminds them).
+- The paid brand font (Retro Star) is only sent to logged-in users.
+- 5 wrong passwords for one name within 15 minutes blocks that name for 15 minutes.
+- Login register: Settings > Login register shows every log-in with address and device.
+
+------------------------------------------------------------------------------------------------
+1. ACCOUNT
+------------------------------------------------------------------------------------------------
+- Go to www.pythonanywhere.com > Pricing & signup. Take the paid "Developer" plan (about US$10/month;
+  the free plan has no scheduled tasks and deletes unused apps).
+  Tip: the EU servers (eu.pythonanywhere.com) are closer to Zimbabwe than the US ones.
+- Username suggestion: pondobakery
+- Account > Security: switch on two-factor authentication. Use a strong password and keep it safe.
+- Account > System image: choose "innit" (needed for Python 3.13).
+
+------------------------------------------------------------------------------------------------
+2. UPLOAD THE PROGRAM  (Claude prepares "Pondo online - program.zip" on moving day)
+------------------------------------------------------------------------------------------------
+- Files tab: upload "Pondo online - program.zip" to /home/pondobakery/
+- Consoles tab > Bash:
+      cd ~ && unzip "Pondo online - program.zip" -d pondo
+      mkdir -p ~/pondo-data
+  (The laptop-only files – python folder, .exe, .bat – are not in the zip.)
+
+------------------------------------------------------------------------------------------------
+3. FIRST TEST (empty Pondo)
+------------------------------------------------------------------------------------------------
+- Bash console:
+      cd ~/pondo
+      PONDO_DATA_DIR=~/pondo-data python3.13 manage.py migrate
+- This makes an empty Pondo – the real data comes on moving day (step 7).
+
+------------------------------------------------------------------------------------------------
+4. WEB APP
+------------------------------------------------------------------------------------------------
+- Web tab > Add a new web app > Manual configuration > Python 3.13.
+  First as pondobakery.pythonanywhere.com to test; the real address comes in step 6.
+- Source code: /home/pondobakery/pondo      Working directory: /home/pondobakery/pondo
+- Click the WSGI configuration file link, delete everything in it and paste:
+
+import os, sys
+path = "/home/pondobakery/pondo"
+sys.path.insert(0, path)
+sys.path.insert(0, path + "/vendor")
+os.environ["PONDO_ONLINE"] = "1"
+os.environ["PONDO_HOSTS"] = "pondo.pondobakery.co.zw,pondobakery.pythonanywhere.com"
+os.environ["PONDO_DATA_DIR"] = "/home/pondobakery/pondo-data"
+os.environ["DJANGO_SETTINGS_MODULE"] = "pondo_site.settings"
+from django.core.wsgi import get_wsgi_application
+application = get_wsgi_application()
+
+- IMPORTANT: do NOT add "Static files" mappings. Pondo serves its own files, so the brand font and
+  staff papers stay behind the login.
+- Security section: "Force HTTPS" = Enabled.
+- Click Reload. Open https://pondobakery.pythonanywhere.com – the Pondo set-up page should show.
+  (Don't fill it in if moving day is close – the real data replaces it.)
+
+------------------------------------------------------------------------------------------------
+5. NIGHTLY BACKUP (scheduled task)
+------------------------------------------------------------------------------------------------
+- Tasks tab > Daily task at 19:30 (UTC = 21:30 in Harare), command:
+
+cd /home/pondobakery/pondo && PONDO_ONLINE=1 PONDO_DATA_DIR=/home/pondobakery/pondo-data python3.13 manage.py pondo_nightly_backup
+
+- Check the task log the next morning: it must say "Backup saved: ...".
+
+------------------------------------------------------------------------------------------------
+6. THE ADDRESS  pondo.pondobakery.co.zw
+------------------------------------------------------------------------------------------------
+- Web tab: add a web app for the domain  pondo.pondobakery.co.zw  (same settings as step 4,
+  same WSGI text). If the plan allows only one web app, delete the test app first.
+- The Web tab then shows a CNAME like  webapp-123456.pythonanywhere.com
+- At the company that manages pondobakery.co.zw (DNS), add ONE record:
+      Type CNAME   Name: pondo   Value: webapp-123456.pythonanywhere.com
+  Do not touch the other records – e-mail and the website keep working.
+- When the address works (can take a few hours): Web tab > Security > get a Let's Encrypt
+  certificate (HTTPS) and Force HTTPS.
+
+------------------------------------------------------------------------------------------------
+7. MOVING DAY  (after closing; takes about an hour)
+------------------------------------------------------------------------------------------------
+1. Last cash-up done and signed off. Everybody logged out of the laptop Pondo.
+2. Close Pondo on the laptop (small Pondo window).
+3. Claude makes "Pondo online - data.zip" (database, product photos, staff files, signature,
+   secret key) from the laptop.
+4. Upload it to /home/pondobakery/ and in a Bash console:
+      cd ~ && unzip -o "Pondo online - data.zip" -d pondo-data
+      cd ~/pondo && PONDO_DATA_DIR=~/pondo-data python3.13 manage.py migrate
+5. Web tab > Reload. Log in at https://pondo.pondobakery.co.zw with the normal usernames and
+   passwords – everything is there.
+6. Test: dashboard, a cash-up, Forms > print, Settings > E-mail > send a test e-mail,
+   Back up now > Download backup, and on a phone on mobile data.
+7. From now on nobody uses the laptop Pondo. Claude removes the Pondo start-up from the laptop
+   so it can't be opened by mistake (two copies would split the figures).
+
+------------------------------------------------------------------------------------------------
+8. THINGS TO CHECK ON THE SERVER
+------------------------------------------------------------------------------------------------
+- E-mail with PDF (orders, invoices) makes the PDF with Chrome. In a Bash console run:
+      which chromium google-chrome chromium-browser
+  If nothing is found, tell Claude – the PDF maker will be switched.
+- Outgoing e-mail (SMTP to mail.pondobakery.co.zw, port 465) must be allowed from the server.
+
+------------------------------------------------------------------------------------------------
+9. LOOKING AFTER IT (admin)
+------------------------------------------------------------------------------------------------
+- Weekly: Tasks tab – nightly backup ran?  Web tab – no errors in the error log?
+- Keep the payment card valid: if the monthly payment fails, the site stops.
+- Never share the PythonAnywhere password. Pondo's own users and rights are managed inside Pondo
+  (Settings > Users & rights) by the Manager.
+- When the internet is down at the shop, staff use the paper sheets (Forms > When Pondo is down,
+  SOP 8.06) and type them in later.

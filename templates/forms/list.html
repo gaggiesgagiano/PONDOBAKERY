@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Forms{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Help &amp; settings</div><h1>Forms</h1>
+  <div class="muted small">Empty Pondo forms to print on A4 and fill in by hand.</div></div></div>
+<p class="small muted" style="margin:0">Each form prints with the Pondo letterhead and the shop details from <b>Settings</b>. Press <b>Open to print</b>, then <b>Print / save as PDF</b>. Choose <b>A4</b>, scale <b>100%</b> and tick <b>Background graphics</b> for the colours.</p>
+{% for group, items in groups %}
+<section class="card stack"><h2>{{ group }}</h2>
+  <div class="xl-list">
+  {% for x in items %}<div class="xl-row">
+    <span class="xl-ic fm-ic" aria-hidden="true">A4</span>
+    <div class="xl-txt"><b>{{ x.label }}</b><span class="small muted">{{ x.about }}</span></div>
+    <div class="xl-act"><a class="btn primary small" href="{% url 'core:form_print' x.key %}" target="_blank">Open to print</a></div>
+  </div>{% endfor %}
+  {% if group == "Office" and can.costs %}<div class="xl-row">
+    <span class="xl-ic fm-ic" aria-hidden="true">✉</span>
+    <div class="xl-txt"><b>Type a letter</b><span class="small muted">Type, save and print letters on the letterhead – page 1 on the letterhead, the rest on clean pages. Saved letters can be printed again.</span></div>
+    <div class="xl-act"><a class="btn small" href="{% url 'core:letters' %}">Letters</a><a class="btn primary small" href="{% url 'core:letter_new' %}">+ New letter</a></div>
+  </div>{% endif %}
+  </div>
+</section>
+{% empty %}<section class="card"><p class="muted" style="margin:0">There are no forms for your login. Ask the Manager.</p></section>
+{% endfor %}
+{% endblock %}

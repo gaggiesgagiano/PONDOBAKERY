@@ -1,0 +1,153 @@
+{% extends "base.html" %}{% load static pondo %}
+{% block title %}{% if mine %}My look{% else %}Look & feel{% endif %}{% endblock %}
+{% block head %}<style>
+  .opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+  .opt{position:relative;display:flex;flex-direction:column;gap:6px;background:var(--card);border:2px solid var(--line2);border-radius:16px;padding:10px;cursor:pointer}
+  .opt input{position:absolute;opacity:0;pointer-events:none}
+  .opt:hover{border-color:var(--warm)}
+  .opt:has(input:checked){border-color:var(--orange);box-shadow:0 0 0 3px var(--orange-soft)}
+  .opt:has(input:checked)::after{content:"✓";position:absolute;top:8px;right:10px;width:24px;height:24px;border-radius:50%;background:var(--orange);color:#fff3d7;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:14px}
+  .opt:has(input:disabled){opacity:.55;cursor:not-allowed}
+  .opt:has(input:focus-visible){outline:3px solid var(--orange);outline-offset:2px}
+  .opt .name{font-weight:900}
+  .pv{display:flex;height:112px;border-radius:10px;overflow:hidden;border:1px solid rgba(0,0,0,.06)}
+  .pv .s{width:38%;background:var(--m);padding:8px 7px;display:flex;flex-direction:column;gap:5px}
+  .pv .s img{width:100%;margin-bottom:3px}
+  .pv .s i{display:block;height:7px;border-radius:4px;background:var(--mi);opacity:.45}
+  .pv .s i.on{opacity:1;height:9px}
+  .pv .p{flex:1;background:var(--pg);padding:9px 8px;display:flex;flex-direction:column;gap:6px}
+  .pv .p b{font-family:"Pondo Local","Gorditas";font-weight:400;color:var(--hd);font-size:12px;letter-spacing:0}
+  .pv .p .c{flex:1;background:var(--cd);border-radius:6px;display:flex;align-items:flex-end;padding:5px;gap:4px}
+  .pv .p .c u{display:block;height:9px;width:46%;border-radius:4px;background:var(--ac)}
+  .pv .p .c em{display:block;height:9px;width:30%;border-radius:4px;background:var(--b2)}
+  .fs{font-size:24px;line-height:1.05;color:var(--maroon);padding:10px 4px;min-height:64px;display:flex;align-items:center}
+  .seg{display:inline-flex;border:2px solid var(--line2);border-radius:12px;overflow:hidden;background:var(--card)}
+  .seg label{padding:9px 16px;font-weight:800;cursor:pointer;border-right:1px solid var(--line2)}
+  .seg label:last-child{border-right:0}
+  .seg input{position:absolute;opacity:0}
+  .seg label:has(input:checked){background:var(--btn-bg);color:var(--btn-ink)}
+  .savebar{position:sticky;bottom:0;background:var(--cream);padding:12px 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center;z-index:3}
+  .note-font{border-left:4px solid var(--orange);padding:8px 12px;background:var(--peach);border-radius:0 10px 10px 0}
+</style>{% endblock %}
+{% block content %}
+<div class="head"><div class="title">
+  <div class="crumbs">{% if mine %}My look{% else %}<a href="{% url 'core:settings' %}">Settings</a> › Look &amp; feel{% endif %}</div>
+  <h1>{% if mine %}My look{% else %}Look &amp; feel{% endif %}</h1>
+  <div class="small muted">{% if mine %}Pick the colours, heading font and text size <b>you</b> like. Only you see it.
+    {% else %}The look for <b>everybody</b> (and the log-in screen). Each person can still pick their own under “My look”.{% endif %}
+    All options use the Pondo Bakery brand colours.</div></div>
+  <div class="actions">{% if mine and user.is_superuser %}<a class="btn quiet" href="{% url 'core:look_business' %}">Look for the whole business</a>{% endif %}
+    {% if not mine %}<a class="btn quiet" href="{% url 'core:look' %}">My own look</a>{% endif %}
+    <a class="btn quiet" href="{% url 'core:brand' %}">Our Brand</a></div></div>
+
+<form method="post" class="stack" id="lookform">{% csrf_token %}
+  <section class="card stack"><h2>Colours</h2>
+    <div class="opts">
+      {% if mine %}{% with t=themes|get_item:business.theme %}
+      <label class="opt"><input type="radio" name="theme" value="" {% if not sel.theme %}checked{% endif %}>
+        <div class="pv" style="--m:{{ t.menu }};--mi:{{ t.menu_ink }};--pg:{{ t.page }};--ac:{{ t.accent }};--hd:{% if business.theme == 'night' %}#f89b47{% else %}#7a1315{% endif %};--cd:{% if business.theme == 'night' %}#3f0c0e{% else %}#fff{% endif %};--b2:#7a1315">
+          <div class="s"><img src="{% static 'brand/logo/' %}{{ t.logo }}.svg" alt=""><i></i><i class="on"></i><i></i><i></i></div>
+          <div class="p"><b>DASHBOARD</b><span class="c"><u></u><em></em></span></div></div>
+        <div class="name">Same as the business</div><div class="small muted">{{ t.label }} – changes when the Manager changes it.</div></label>
+      {% endwith %}{% endif %}
+      {% for key, t in themes.items %}
+      <label class="opt"><input type="radio" name="theme" value="{{ key }}" {% if sel.theme == key %}checked{% endif %}>
+        <div class="pv" style="--m:{{ t.menu }};--mi:{{ t.menu_ink }};--pg:{{ t.page }};--ac:{{ t.accent }};--hd:{% if key == 'night' %}#f89b47{% elif key == 'teal' %}#13574f{% else %}#7a1315{% endif %};--cd:{% if key == 'night' %}#3f0c0e{% else %}#fff{% endif %};--b2:{% if key == 'night' %}#e56026{% elif key == 'teal' %}#13574f{% else %}#7a1315{% endif %}">
+          <div class="s"><img src="{% static 'brand/logo/' %}{{ t.logo }}.svg" alt=""><i></i><i class="on"></i><i></i><i></i></div>
+          <div class="p"><b>DASHBOARD</b><span class="c"><u></u><em></em></span></div></div>
+        <div class="name">{{ t.label }}</div><div class="small muted">{{ t.say }}</div></label>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card stack"><h2>Heading font</h2>
+    <div class="small muted">Normal text always uses <b>Nunito</b> – the brand's secondary and supporting font.</div>
+    <div class="opts">
+      {% if mine %}<label class="opt"><input type="radio" name="font" value="" {% if not sel.font %}checked{% endif %}>
+        <div class="fs" style="font-family:var(--body);font-weight:800;font-size:18px">Same as the business</div>
+        <div class="small muted">{{ fonts|get_item:business.font|get_item:"label" }}</div></label>{% endif %}
+      {% for key, f in fonts.items %}
+      <label class="opt"><input type="radio" name="font" value="{{ key }}" {% if sel.font == key %}checked{% endif %}{% if key == 'pondo' and not has_brand_font %} disabled{% endif %}>
+        <div class="fs" style="{% if key == 'retro' %}font-family:'Pondo Local',Gorditas;text-transform:uppercase{% elif key == 'pondo' %}font-family:'Pondo Brand',Gorditas;text-transform:uppercase{% elif key == 'round' %}font-family:'Baloo 2';font-weight:800{% else %}font-family:Nunito;font-weight:900{% endif %}">Pondo Bakery</div>
+        <div class="name">{{ f.label }}</div><div class="small muted">{{ f.say }}{% if key == 'pondo' and not has_brand_font %} <b>Not added yet</b>{% if user.is_superuser %} – add it below{% if mine %} in <a href="{% url 'core:look_business' %}">Look &amp; feel</a>{% endif %}{% endif %}.{% endif %}</div></label>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card stack"><h2>Text size</h2>
+    <div class="opts">
+      {% if mine %}<label class="opt"><input type="radio" name="size" value="" {% if not sel.size %}checked{% endif %}>
+        <div class="fs" style="font-family:var(--body);font-weight:800;font-size:18px">Same as the business</div>
+        <div class="small muted">{{ sizes|get_item:business.size }}</div></label>{% endif %}
+      {% for key, label in sizes.items %}
+      <label class="opt"><input type="radio" name="size" value="{{ key }}" {% if sel.size == key %}checked{% endif %}>
+        <div class="fs" style="font-family:var(--body);font-weight:800;font-size:{% if key == 'normal' %}18{% elif key == 'large' %}22{% else %}26{% endif %}px">Aa 123</div>
+        <div class="name">{{ label }}</div></label>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card stack"><h2>Extras</h2>
+    <div class="row" style="gap:18px 30px">
+      <div class="stack" style="gap:6px"><b>Bakery pattern in the menu</b>
+        <div class="seg">{% if mine %}<label><input type="radio" name="pattern" value="" {% if not sel.pattern %}checked{% endif %}>Same as business</label>{% endif %}
+          <label><input type="radio" name="pattern" value="on" {% if sel.pattern == 'on' %}checked{% endif %}>On</label>
+          <label><input type="radio" name="pattern" value="off" {% if sel.pattern == 'off' %}checked{% endif %}>Off</label></div></div>
+      <div class="stack" style="gap:6px"><b>Friendly greeting on the dashboard</b>
+        <div class="seg">{% if mine %}<label><input type="radio" name="greeting" value="" {% if not sel.greeting %}checked{% endif %}>Same as business</label>{% endif %}
+          <label><input type="radio" name="greeting" value="on" {% if sel.greeting == 'on' %}checked{% endif %}>On</label>
+          <label><input type="radio" name="greeting" value="off" {% if sel.greeting == 'off' %}checked{% endif %}>Off</label></div></div>
+      {% if not mine %}<div class="field" style="min-width:260px"><label for="id_tagline">Tagline</label>
+        <input id="id_tagline" name="tagline" maxlength="60" value="{{ cs.tagline }}"><div class="help">Shown on the log-in screen, invoices and price cards. Brand: “Easy to enjoy”.</div></div>{% endif %}
+    </div>
+  </section>
+
+  <div class="savebar"><button class="btn primary" type="submit">Save {% if mine %}my look{% else %}for everybody{% endif %}</button>
+    {% if mine %}<button class="btn quiet" type="submit" name="reset" value="1">Back to the business look</button>{% endif %}
+    <span class="small muted">You see a preview as soon as you click an option.</span></div>
+</form>
+
+{% if not mine %}
+<section class="card stack" id="font"><h2>Pondo font file</h2>
+  <div class="note-font small">Your brand font <b>“Pondo”</b> (<b>Retro Star by Genetype</b>) is <b>built into the program</b> – every heading,
+    printout and price card uses it on any computer. You only need this box if your designer sends a newer version of the font.</div>
+  <div class="row small"><span class="pill gp-ok">Built in: Retro Star</span> <span style="font-family:'Pondo Local';font-size:28px;color:var(--maroon);text-transform:uppercase">Pondo Bakery 123</span></div>
+  {% if font_file %}<div class="row"><span class="pill gp-ok">Added: {{ font_file }}</span>
+    <span style="font-family:'Pondo Brand';font-size:28px;color:var(--maroon)">PONDO BAKERY 123</span></div>{% endif %}
+  <form method="post" action="{% url 'core:brand_font_upload' %}" enctype="multipart/form-data" class="row">{% csrf_token %}
+    <input type="file" name="font" accept=".otf,.ttf,.woff,.woff2" required>
+    <button class="btn" type="submit">{% if font_file %}Replace the font{% else %}Add the font{% endif %}</button></form>
+  {% if font_file %}<form method="post" action="{% url 'core:brand_font_upload' %}">{% csrf_token %}<input type="hidden" name="remove" value="1">
+    <button class="btn danger small" type="submit">Remove the font file</button></form>{% endif %}
+</section>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+// Is the real Pondo font installed on this computer? (then headings already use it)
+(function(){ var box = document.getElementById('localfont'); if (!box || !document.fonts) return;
+  document.fonts.load('24px "Pondo Local"').then(function(f){
+    box.innerHTML = f.length ? '<span class="pill gp-ok">✓ The Pondo font is installed on this computer – headings use it.</span>'
+                             : '<span class="pill gp-none">The Pondo font is not installed on this computer.</span>';
+  }, function(){ box.innerHTML = '<span class="pill gp-none">The Pondo font is not installed on this computer.</span>'; }); })();
+</script>
+<script>
+// Live preview: show the choice straight away (saved only when you press Save)
+(function(){
+  var html = document.documentElement, form = document.getElementById('lookform');
+  var biz = {theme:"{{ business.theme|default:sel.theme }}", font:"{{ business.font|default:sel.font }}", size:"{{ business.size|default:sel.size }}",
+             pattern:"{{ business.pattern|default:sel.pattern }}", greeting:"{{ business.hello|default:sel.greeting }}"};
+  var pat = {{ pattern_map|safe }};
+  function val(n){ var i = form.querySelector('input[name="'+n+'"]:checked'); return i ? i.value : ''; }
+  function apply(){
+    var t = val('theme') || biz.theme;
+    html.dataset.theme = t; html.dataset.font = val('font') || biz.font; html.dataset.size = val('size') || biz.size;
+    var p = val('pattern') || biz.pattern; html.dataset.pattern = p;
+    if (p === 'on') { html.style.setProperty('--side-pattern', 'url({% static "brand/art/" %}pattern_' + pat[t][0] + '.svg)'); html.style.setProperty('--side-pattern-op', pat[t][1]); }
+    else html.style.removeProperty('--side-pattern');
+    var logo = document.querySelector('.side .logo img'); if (logo) logo.src = '{% static "brand/logo/" %}' + pat[t][2] + '.svg';
+  }
+  form.addEventListener('change', apply);
+})();
+</script>
+{% endblock %}

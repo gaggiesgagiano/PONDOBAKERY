@@ -1,0 +1,34 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}{{ run }}{% endblock %}
+{% block head %}{% include 'staff/_xscroll.html' %}<style>.paylines td.r{white-space:nowrap}</style>{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'staff:payruns' %}">Payroll</a> › {{ run.number }}</div>
+  <h1>Pay run · {{ run.period|date:"F Y" }}</h1>
+  <div class="chips"><span class="chip {% if run.status == 'final' %}on{% endif %}">{{ run.get_status_display }}</span><span class="chip">Pay date {{ run.pay_date|date:"d M Y" }}</span><span class="chip">{{ s.tax_table_note }}</span></div></div>
+  <div class="actions"><a class="btn xl" href="{% url 'core:excel_file' 'payrun' %}?run={{ run.pk }}" title="Download this list as an Excel file">Excel</a>
+    <a class="btn" href="{% url 'staff:payslips' run.pk %}" target="_blank">Print payslips</a><a class="btn" href="{% url 'staff:payrun_summary' run.pk %}" target="_blank">Print summary</a>
+    {% if can.staff_edit %}{% if run.status == 'draft' %}<a class="btn" href="{% url 'staff:payrun_edit' run.pk %}">Edit</a>
+      <form method="post" action="{% url 'staff:payrun_status' run.pk %}" onsubmit="return confirm('Make this pay run final? Advances taken off are marked as paid back.')">{% csrf_token %}<input type="hidden" name="to" value="final"><button class="btn primary" type="submit">Make final</button></form>
+    {% elif can.owner %}<form method="post" action="{% url 'staff:payrun_status' run.pk %}" onsubmit="return confirm('Re-open this pay run?')">{% csrf_token %}<input type="hidden" name="to" value="draft"><button class="btn quiet" type="submit">Re-open</button></form>{% endif %}{% endif %}</div></div>
+<div class="stats">
+  <div class="card stat dark"><div class="lbl">Net to pay out</div><div class="val">{{ t.net|money }}</div><div class="sub">{{ t.n }} people</div></div>
+  <div class="card stat"><div class="lbl">PAYE + AIDS levy to ZIMRA</div><div class="val">{{ t.tax|money }}</div><div class="sub">PAYE {{ t.paye|money }} · AIDS {{ t.aids_levy|money }}</div></div>
+  <div class="card stat"><div class="lbl">NSSA to pay</div><div class="val">{{ t.nssa_total|money }}</div><div class="sub">workers {{ t.nssa|money }} + business {{ t.nssa_employer|money }}</div></div>
+  <div class="card stat"><div class="lbl">Cost to the business</div><div class="val">{{ t.cost|money }}</div><div class="sub">gross + NSSA + ZIMDEF {{ t.zimdef|money }}</div></div>
+</div>
+<section class="card"><div class="tablebox xscroll"><table class="t paylines">
+  <thead><tr><th>Who</th><th class="r">Basic</th><th class="r">Overtime</th><th class="r">Allow.</th><th class="r">Bonus / other</th><th class="r">Gross</th><th class="r">NSSA</th><th class="r">PAYE</th><th class="r">AIDS</th><th class="r">Advances</th><th class="r">Other ded.</th><th class="r">Net</th><th></th></tr></thead>
+  <tbody>{% for ln in lines %}<tr>
+    <td style="min-width:150px"><a href="{% url 'staff:person' ln.employee.pk %}"><b>{{ ln.employee.name }}</b></a><div class="small muted">{% if ln.pay_type == 'monthly' %}{% if ln.unpaid_days %}{{ ln.unpaid_days|num:1 }} unpaid days{% else %}full month{% endif %}{% elif ln.pay_type == 'daily' %}{{ ln.days|num:1 }} days{% else %}{{ ln.hours|num:1 }} hours{% endif %}{% if ln.overtime_hours %} · {{ ln.overtime_hours|num:1 }} OT hrs{% endif %}{% if ln.holiday_hours %} · {{ ln.holiday_hours|num:1 }} Sun/hol hrs{% endif %}</div></td>
+    <td class="r">{{ ln.basic|money }}</td><td class="r">{{ ln.overtime_pay|money }}</td><td class="r">{{ ln.allowances|money }}</td><td class="r">{{ ln.bonus|money }}{% if ln.other_earnings %} + {{ ln.other_earnings|money }}{% endif %}</td>
+    <td class="r"><b>{{ ln.gross|money }}</b></td><td class="r">{{ ln.nssa|money }}</td><td class="r">{{ ln.paye|money }}</td><td class="r">{{ ln.aids_levy|money }}</td>
+    <td class="r">{{ ln.advances|money }}</td><td class="r">{{ ln.other_deductions|money }}{% if ln.deduction_note %}<div class="small muted">{{ ln.deduction_note }}</div>{% endif %}</td>
+    <td class="r"><b {% if ln.net < 0 %}style="color:var(--low)"{% endif %}>{{ ln.net|money }}</b></td>
+    <td><a class="small" href="{% url 'staff:payslip' run.pk ln.employee.pk %}" target="_blank">Payslip</a></td></tr>
+  {% empty %}<tr class="emptyrow"><td colspan="13" class="muted">Nobody on this pay run.</td></tr>{% endfor %}
+  {% if lines %}<tr class="total"><td>Total</td><td class="r">{{ t.basic|money }}</td><td class="r">{{ t.overtime_pay|money }}</td><td class="r">{{ t.allowances|money }}</td><td class="r">{{ t.bonus|money }}{% if t.other_earnings %} + {{ t.other_earnings|money }}{% endif %}</td><td class="r">{{ t.gross|money }}</td><td class="r">{{ t.nssa|money }}</td><td class="r">{{ t.paye|money }}</td><td class="r">{{ t.aids_levy|money }}</td><td class="r">{{ t.advances|money }}</td><td class="r">{{ t.other_deductions|money }}</td><td class="r">{{ t.net|money }}</td><td></td></tr>{% endif %}</tbody>
+</table></div></section>
+{% if run.notes %}<section class="card"><h3>Notes</h3><p style="white-space:pre-line;margin:6px 0 0">{{ run.notes }}</p></section>{% endif %}
+<p class="small muted">Check the tax with ZIMRA's own tables when they change, and keep the NSSA ceiling up to date under Tax &amp; NSSA rates.</p>
+{% if can.staff_edit and run.status == 'draft' %}<form method="post" action="{% url 'staff:payrun_delete' run.pk %}" onsubmit="return confirm('Delete this pay run?')">{% csrf_token %}<button class="btn danger small" type="submit">Delete pay run</button></form>{% endif %}
+{% endblock %}

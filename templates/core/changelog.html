@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{% if tab == 'logins' %}Login register{% else %}Change history{% endif %}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'core:settings' %}">Settings</a> › {% if tab == 'logins' %}Login register{% else %}Change history{% endif %}</div>
+  <h1>{% if tab == 'logins' %}Who logged in, when and where{% else %}Who changed what{% endif %}</h1></div>
+  <div class="actions"><button class="btn" type="button" onclick="window.print()">Print</button></div></div>
+<div class="chips subnav no-print" style="margin:0">
+  <a class="chip {% if tab != 'logins' %}on{% endif %}" href="?{% if who %}who={{ who }}{% endif %}">Changes</a>
+  <a class="chip {% if tab == 'logins' %}on{% endif %}" href="?tab=logins{% if who %}&who={{ who }}{% endif %}">Logins</a>
+</div>
+<form class="filters no-print" method="get">{% if tab == 'logins' %}<input type="hidden" name="tab" value="logins">{% endif %}
+  <label for="who" class="small muted">Person</label>
+  <select id="who" name="who" onchange="this.form.submit()"><option value="">Everybody</option>{% for u in users %}<option value="{{ u.username }}"{% if u.username == who %} selected{% endif %}>{{ u.username }}{% if u.get_full_name %} – {{ u.get_full_name }}{% endif %}</option>{% endfor %}</select>
+  {% if tab == 'logins' %}<label class="row small" style="font-weight:700;gap:6px"><input type="checkbox" name="failed" value="1" {% if failed %}checked{% endif %} onchange="this.form.submit()" style="width:18px;height:18px"> Only wrong passwords</label>{% endif %}
+</form>
+{% if tab == 'logins' %}
+<section class="card"><div class="tablebox"><table class="t"><thead><tr><th>Date</th><th>Time</th><th>Who</th><th>What</th><th>Where</th><th>Computer / phone</th></tr></thead><tbody>
+{% for r in rows %}<tr><td>{{ r.when|date:"D d M Y" }}</td><td>{{ r.when|date:"H:i" }}</td><td><b>{{ r.username|default:"–" }}</b>{% if r.user and r.user.get_full_name %} <span class="small muted">{{ r.user.get_full_name }}</span>{% endif %}</td>
+  <td>{% if r.event == 'failed' %}<b style="color:#b3261e">Wrong password</b>{% elif r.event == 'in' %}<span style="color:#218d80;font-weight:700">Logged in</span>{% else %}Logged out{% endif %}</td>
+  <td>{{ r.where }}</td><td class="small">{{ r.device|default:"–" }}</td></tr>
+{% empty %}<tr class="emptyrow"><td colspan="6" class="muted">No logins recorded yet – the register starts from today.</td></tr>{% endfor %}
+</tbody></table></div></section>
+<p class="small muted"><b>Where:</b> “Main computer” = the laptop Pondo runs on · “Shop network” = another computer or phone on the shop Wi-Fi · “Outside” = from outside the shop. Several wrong passwords in a row for one name can mean somebody is guessing – change that person's password.</p>
+{% else %}
+<section class="card"><div class="tablebox"><table class="t"><thead><tr><th>When</th><th>Who</th><th>Area</th><th>What</th><th>Action</th><th>Details</th></tr></thead><tbody>
+{% for c in rows %}<tr><td class="small">{{ c.when|date:"d M Y H:i" }}</td><td>{{ c.user|default:"system" }}</td><td>{{ c.area }}</td><td><b>{{ c.item }}</b></td><td>{{ c.action }}</td><td class="small muted">{{ c.details }}</td></tr>
+{% empty %}<tr class="emptyrow"><td colspan="6" class="muted">Nothing yet.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endif %}
+{% endblock %}

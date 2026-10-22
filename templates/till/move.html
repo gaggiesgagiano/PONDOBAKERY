@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}<script>(function(){var c=document.getElementById("card");if(!c)return;c.addEventListener("keydown",function(e){if(e.key==="Enter"&&c.value.trim()){e.preventDefault();c.form.requestSubmit?c.form.requestSubmit():c.form.submit();}});})();</script>
+{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'till:screen' shift.pk %}">{{ shift.label }}</a></div><h1>{{ title }}</h1>
+  <div class="small muted">{% if kind == "drop" %}SOP 2.02: when the till has more than ${{ drop_at|floatformat:0 }}, the manager and the cashier count the drop together, away from customers. Leave the float in the till. The manager locks the bag in the safe straight away.
+  {% elif kind == "payout" %}SOP 2.03: pay-outs (gas, transport, small purchases) need the Supervisor's approval and a receipt or slip. Stock from a supplier is never paid from the till – it goes on a GRV.
+  {% else %}Opening the drawer without a sale is always recorded – e.g. change for a note, a coin fell in. The slip that prints opens the drawer.{% endif %}</div></div>
+  <div class="actions"><a class="btn quiet" href="{% url 'till:screen' shift.pk %}">Back to the till</a></div></div>
+{% if error %}<div class="msg error">{{ error }}</div>{% endif %}
+<form class="card stack" method="post" style="max-width:620px" autocomplete="off">{% csrf_token %}
+  {% if kind != "nosale" %}<div class="field"><label for="amount">Amount (US$)</label><input id="amount" name="amount" inputmode="decimal" required value="{{ post.amount|default:'' }}" style="font-size:22px"></div>{% endif %}
+  {% if kind == "payout" %}
+  <div class="field"><label for="category">What for</label><select id="category" name="category" required><option value="">Choose…</option>{% for c in cats %}<option value="{{ c.pk }}" {% if post.category == c.pk|stringformat:"s" %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="payee">Paid to</label><input id="payee" name="payee" value="{{ post.payee|default:'' }}" placeholder="Person or shop"></div>
+  <div class="field"><label for="slip">Receipt / slip no.</label><input id="slip" name="slip" value="{{ post.slip|default:'' }}"></div>{% endif %}
+  <div class="field"><label for="reason">{% if kind == "drop" %}Note (optional){% elif kind == "payout" %}Details{% else %}Reason{% endif %}</label><input id="reason" name="reason" value="{{ post.reason|default:'' }}" {% if kind != "drop" %}required{% endif %}></div>
+  <h3 style="margin:6px 0 0">Approval – {% if kind == "drop" %}manager{% else %}Supervisor or manager{% endif %}</h3>
+  <div class="field scanbox"><label for="card">Scan the approver's staff card</label><input id="card" name="card" type="password" autocomplete="off" inputmode="none" placeholder="▮▮▮ scan card ▮▮▮" style="font-size:20px"></div>
+  <div class="small muted" style="margin:-4px 0 2px">No card? Type the username and password instead.</div>
+  <div class="field"><label for="by">Username</label><input id="by" name="by" autocomplete="off"></div>
+  <div class="field"><label for="pw">Password</label><input id="pw" name="pw" type="password" autocomplete="new-password"></div>
+  <div class="row"><button class="btn primary" type="submit">Approve &amp; print the slip</button><a class="btn quiet" href="{% url 'till:screen' shift.pk %}">Cancel</a></div>
+</form>
+<script>(function(){var c=document.getElementById("card");if(!c)return;c.addEventListener("keydown",function(e){if(e.key==="Enter"&&c.value.trim()){e.preventDefault();c.form.requestSubmit?c.form.requestSubmit():c.form.submit();}});})();</script>
+{% endblock %}

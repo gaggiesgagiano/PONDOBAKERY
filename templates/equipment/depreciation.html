@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Depreciation {{ year }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'equipment:register' %}">Equipment</a> › Depreciation</div>
+  <h1>Depreciation – {{ year }}</h1>
+  <div class="small muted">Straight line: (cost − scrap value) ÷ (useful life × 12), the same every month from the month it was bought. The lives are estimates, not tax advice – use your accountant's rates.</div></div>
+  <div class="actions"><a class="btn quiet" href="?year={{ year|add:-1 }}">← {{ year|add:-1 }}</a><a class="btn quiet" href="?year={{ year|add:1 }}">{{ year|add:1 }} →</a><button class="btn" type="button" onclick="window.print()">Print</button></div></div>
+{% include "equipment/_tabs.html" %}
+<div class="stats">
+  <div class="card stat dark"><div class="lbl">Depreciation for {{ year }}</div><div class="val">{{ s.year|money:0 }}</div><div class="sub">about {{ s.avg|money:0 }} a month</div></div>
+  <div class="card stat"><div class="lbl">Equipment bought for</div><div class="val">{{ cost|money:0 }}</div></div>
+  <div class="card stat"><div class="lbl">Book value now</div><div class="val">{{ book|money:0 }}</div></div>
+</div>
+<section class="card"><div class="tablebox"><table class="t dash" style="min-width:1100px">
+  <thead><tr><th>Category</th>{% for m in s.months %}<th class="r">{{ m|date:"M" }}</th>{% endfor %}<th class="r">Year</th></tr></thead>
+  <tbody>{% for name, vals, tot in s.rows %}<tr><td class="small"><b>{{ name }}</b></td>{% for v in vals %}<td class="r small">{% if v %}{{ v|money:0 }}{% endif %}</td>{% endfor %}<td class="r"><b>{{ tot|money:0 }}</b></td></tr>
+  {% empty %}<tr class="emptyrow"><td colspan="14" class="muted">No depreciation this year.</td></tr>{% endfor %}
+  <tr class="total"><td>Total</td>{% for v in s.totals %}<td class="r">{{ v|money:0 }}</td>{% endfor %}<td class="r">{{ s.year|money:0 }}</td></tr></tbody>
+</table></div></section>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% load static pondo %}<!doctype html>
+<html lang="en" data-font="{{ look.biz_font }}"><head><meta charset="utf-8">
+<title>Staff cards · Pondo Bakery</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=29">{% include "_brand_font.html" %}
+<style>
+  @page{size:A4 portrait;margin:10mm}
+  html,body{background:#ddd;margin:0}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .bar{position:fixed;top:12px;right:12px;left:12px;display:flex;flex-wrap:wrap;gap:8px;z-index:9;justify-content:flex-end;align-items:center}
+  .bar .opts{background:#fff;border-radius:12px;padding:6px 10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;box-shadow:0 2px 10px rgba(0,0,0,.12);font-weight:700;font-size:13px}
+  .page{width:190mm;height:277mm;margin:64px auto 10mm;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.15);display:grid;grid-template-columns:repeat(2,85.6mm);grid-auto-rows:54mm;gap:7mm 8mm;justify-content:center;align-content:start;padding-top:8mm;box-sizing:border-box;page-break-after:always;break-after:page}
+  .page:last-child{page-break-after:auto;break-after:auto}
+  @media print{html,body{background:#fff}.bar{display:none}.page{margin:0;box-shadow:none}}
+
+  /* one staff card – the size of a bank card. Cut along the thin grey line. */
+  .sc{--c:#e56026;--ci:#fff3d7;--logo:url();position:relative;width:85.6mm;height:54mm;border-radius:3.2mm;overflow:hidden;background:#fff3d7;color:#2a1412;display:grid;grid-template-rows:12.5mm 1fr;outline:0.2mm dashed #bbb;outline-offset:0.6mm;font-family:Nunito,sans-serif}
+  .sc.teal{--c:#218d80}.sc.burgundy{--c:#7a1315}.sc.warm{--c:#f89b47;--ci:#7a1315}
+  .sc-band{background:var(--c);color:var(--ci);display:flex;align-items:center;justify-content:space-between;padding:0 4mm}
+  .sc-band img{height:8.2mm;display:block}
+  .sc-band span{font-family:var(--head);font-weight:var(--head-weight);text-transform:var(--head-case);font-size:10pt;letter-spacing:0;line-height:1}
+  .sc-body{display:grid;grid-template-columns:23mm 1fr;gap:3.6mm;padding:3.2mm 4mm 2.6mm}
+  .sc-ph{width:23mm;height:30.6mm;border-radius:2mm;object-fit:cover;object-position:50% 30%;display:block;background:#fde3c9}
+  .sc-ph.none{display:flex;align-items:center;justify-content:center;background:var(--c);color:var(--ci);font-family:var(--head);font-size:22pt}
+  .sc-info{display:flex;flex-direction:column;min-width:0;gap:0.8mm}
+  .sc-nm{font-family:var(--head);font-weight:var(--head-weight);text-transform:var(--head-case);letter-spacing:0;color:#7a1315;font-size:13.5pt;line-height:1.02;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .sc-nm.long{font-size:11pt}
+  .sc-job{font-weight:600;font-size:8.3pt;line-height:1.2;color:#2a1412}
+  .sc-dept{font-size:7.3pt;color:#7c5a4a}
+  .sc-cfoot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;gap:2mm}
+  .sc-num{flex:0 0 auto;background:var(--c);color:var(--ci);border-radius:1.6mm;padding:1mm 2.4mm 0.9mm;display:flex;flex-direction:column;line-height:1}
+  .sc-num small{font-size:5.6pt;font-weight:800;letter-spacing:.04em;text-transform:uppercase;opacity:.9}
+  .sc-num b{font-family:var(--head);font-weight:var(--head-weight);font-size:13pt;letter-spacing:0}
+  .sc-ret{font-size:5.3pt;color:#7c5a4a;text-align:right;line-height:1.25;min-width:0}
+</style></head>
+<body>
+<div class="bar">
+  <div class="opts">Card colour:
+    {% if pk %}{% url 'staff:card_print' pk as base %}{% else %}{% url 'staff:cards_print' as base %}{% endif %}
+    <a class="chip{% if colour == 'dept' %} on{% endif %}" href="{{ base }}?colour=dept{% if ids %}&ids={{ ids }}{% endif %}">By department</a>
+    <a class="chip{% if colour == 'orange' %} on{% endif %}" href="{{ base }}?colour=orange{% if ids %}&ids={{ ids }}{% endif %}">Orange</a>
+    <a class="chip{% if colour == 'teal' %} on{% endif %}" href="{{ base }}?colour=teal{% if ids %}&ids={{ ids }}{% endif %}">Teal</a>
+    <a class="chip{% if colour == 'burgundy' %} on{% endif %}" href="{{ base }}?colour=burgundy{% if ids %}&ids={{ ids }}{% endif %}">Burgundy</a>
+    <a class="chip{% if colour == 'warm' %} on{% endif %}" href="{{ base }}?colour=warm{% if ids %}&ids={{ ids }}{% endif %}">Warm orange</a>
+  </div>
+  {% if user.is_superuser %}<a class="btn" href="{% url 'core:cards' %}">Cards with barcodes</a>{% endif %}<button class="btn primary" onclick="window.print()">Print</button><button class="btn quiet" onclick="window.close()">Close</button>
+</div>
+{% for page in pages %}<section class="page">
+  {% for e in page %}<div class="sc {{ e.card }}">
+    <div class="sc-band"><img src="{% static 'brand/logo/' %}{% if e.card == 'warm' %}primary_reverse_burgundy{% else %}primary_reverse_cream{% endif %}.svg" alt="Pondo Bakery"><span>Staff</span></div>
+    <div class="sc-body">
+      {% if e.photo %}<img class="sc-ph" src="{% url 'staff:photo' e.pk %}?v={{ e.photo_v }}" alt="">{% else %}<div class="sc-ph none">{{ e.initials }}</div>{% endif %}
+      <div class="sc-info">
+        <div class="sc-nm{% if e.name|length > 16 %} long{% endif %}">{{ e.name }}</div>
+        {% if e.job_title %}<div class="sc-job">{{ e.job_title }}</div>{% endif %}
+        <div class="sc-dept">{{ e.get_department_display }}</div>
+        <div class="sc-cfoot"><div class="sc-num"><small>Staff no.</small><b>{{ e.code|default:"—" }}</b></div>
+          <div class="sc-ret">If found, please return to<br><b>{{ current_shop.name|default:company.company_name|default:"Pondo Bakery" }}</b>{% if current_shop.phone %}<br>{{ current_shop.phone }}{% endif %}</div></div>
+      </div>
+    </div>
+  </div>{% endfor %}
+</section>{% endfor %}
+</body></html>

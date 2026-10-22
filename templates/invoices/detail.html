@@ -1,0 +1,50 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}{{ doc.number }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'invoices:list' %}">Invoices &amp; quotes</a> › {{ doc.number }}</div>
+  <h1>{{ doc.get_kind_display }} {{ doc.number }}</h1>
+  <div class="chips"><span class="chip">{{ doc.date|date:"d M Y" }}</span>{% if doc.due %}<span class="chip">{% if doc.kind == 'quote' %}Valid until{% else %}Due{% endif %} {{ doc.due|date:"d M Y" }}</span>{% endif %}
+    {% if doc.status == 'paid' %}<span class="chip on">Paid {{ doc.paid_on|date:"d M Y" }} · {{ doc.paid_how }}</span>{% elif doc.overdue %}<span class="chip on">Overdue</span>{% else %}<span class="chip">{{ doc.get_status_display }}</span>{% endif %}
+    {% if doc.from_doc %}<a class="chip" href="{% url 'invoices:doc' doc.from_doc.pk %}">from {{ doc.from_doc.number }}</a>{% endif %}
+    {% for x in made_from %}<a class="chip" href="{% url 'invoices:doc' x.pk %}">→ {{ x.number }}</a>{% endfor %}</div></div>
+  <div class="actions"><a class="btn primary" href="{% url 'invoices:print' doc.pk %}" target="_blank">Print / PDF</a>{% if can.invoices_edit and doc.status != 'cancelled' %}<a class="btn" href="{% url 'core:email' 'doc' doc.pk %}">✉ E-mail</a>{% endif %}
+    {% if can.invoices_edit %}{% if doc.status != 'paid' and doc.status != 'cancelled' %}{% if doc.delivery %}<a class="btn" href="{% url 'invoices:delivery_edit' doc.delivery.pk %}">Edit</a>{% else %}<a class="btn" href="{% url 'invoices:edit' doc.pk %}">Edit</a>{% endif %}{% endif %}{% endif %}</div></div>
+{% if doc.delivery %}<div class="banner"><span>This invoice goes with delivery <b>{{ doc.delivery.number }}</b> – driver {{ doc.delivery.driver_name }}, {{ doc.delivery.car_reg }}. {% if doc.delivery.fee %}The delivery fee of {{ doc.delivery.fee|money }} is for the driver.{% endif %}</span><a class="btn small" href="{% url 'invoices:delivery' doc.delivery.pk %}">Open the delivery</a></div>{% endif %}
+<div class="cols">
+  <section class="card main stack">
+    <div class="tablebox"><table class="t">
+      <thead><tr><th>#</th><th>Description</th><th class="r">Qty</th><th class="r">Price incl. VAT</th><th class="r">Discount</th><th class="r">Line total</th></tr></thead>
+      <tbody>{% for ln in lines %}<tr><td class="small muted">{{ forloop.counter }}</td><td><b>{{ ln.description }}</b></td><td class="r">{{ ln.qty|num:2 }}</td><td class="r">{{ ln.price|money }}</td><td class="r">{% if ln.discount %}{{ ln.discount|pct:0 }}{% endif %}</td><td class="r">{{ ln.total|money }}</td></tr>{% endfor %}
+      <tr><td colspan="5" class="r">Subtotal excl. VAT</td><td class="r">{{ doc.subtotal|money }}</td></tr>
+      <tr><td colspan="5" class="r">VAT</td><td class="r">{{ doc.vat|money }}</td></tr>
+      <tr class="total"><td colspan="5" class="r">TOTAL incl. VAT</td><td class="r">{{ doc.total|money }}</td></tr></tbody></table></div>
+    {% if doc.notes %}<p style="white-space:pre-line;margin:0"><b>Notes:</b> {{ doc.notes }}</p>{% endif %}
+  </section>
+  <aside class="aside">
+    <section class="card stack"><h2>Customer</h2>
+      <div><b>{{ doc.name }}</b>{% if doc.company %}<br>{{ doc.company }}{% endif %}{% if doc.address1 %}<br>{{ doc.address1 }}{% endif %}{% if doc.address2 %}<br>{{ doc.address2 }}{% endif %}</div>
+      <div class="small">{% if doc.phone %}{{ doc.phone }}<br>{% endif %}{% if doc.email %}{{ doc.email }}<br>{% endif %}{% if doc.vat_no %}VAT no. {{ doc.vat_no }}{% endif %}</div>
+      {% if doc.your_ref %}<div class="small">Their ref: <b>{{ doc.your_ref }}</b></div>{% endif %}
+      {% if doc.customer %}<a class="small" href="{% url 'invoices:customer_edit' doc.customer.pk %}">Customer card →</a>{% endif %}
+    </section>
+    {% if can.invoices_edit %}
+    <section class="card stack"><h2>Next step</h2>
+      {% if not doc.delivery and doc.status != 'paid' and doc.status != 'cancelled' %}<a class="btn" href="{% url 'invoices:delivery_new' %}?from={{ doc.pk }}">Send with a driver (delivery)</a>{% endif %}
+      {% if doc.kind == 'invoice' and doc.status == 'open' %}
+        <form method="post" action="{% url 'invoices:status' doc.pk %}" class="stack">{% csrf_token %}<input type="hidden" name="to" value="paid">
+          <div class="grid-form">{% for f in paid_form %}{% include "_field.html" %}{% endfor %}</div><button class="btn primary" type="submit">Mark as paid</button></form>
+      {% endif %}
+      {% if doc.kind != 'invoice' and doc.status != 'cancelled' %}
+        <form method="post" action="{% url 'invoices:convert' doc.pk %}" class="row">{% csrf_token %}
+          {% if doc.kind == 'quote' %}<button class="btn" name="kind" value="proforma" type="submit">Make pro-forma</button>{% endif %}
+          <button class="btn primary" name="kind" value="invoice" type="submit">Make tax invoice</button></form>
+      {% endif %}
+      {% if doc.kind == 'quote' and doc.status == 'open' %}<form method="post" action="{% url 'invoices:status' doc.pk %}">{% csrf_token %}<button class="btn small quiet" name="to" value="accepted" type="submit">Customer accepted</button></form>{% endif %}
+      {% if doc.status == 'paid' or doc.status == 'cancelled' or doc.status == 'accepted' %}<form method="post" action="{% url 'invoices:status' doc.pk %}">{% csrf_token %}<button class="btn small quiet" name="to" value="open" type="submit">Re-open</button></form>{% endif %}
+      {% if doc.status == 'open' %}<form method="post" action="{% url 'invoices:status' doc.pk %}" onsubmit="return confirm('Cancel {{ doc.number }}?')">{% csrf_token %}<button class="btn small quiet" name="to" value="cancelled" type="submit">Cancel this document</button></form>{% endif %}
+      {% if doc.status != 'paid' %}<form method="post" action="{% url 'invoices:delete' doc.pk %}" onsubmit="return confirm('Delete {{ doc.number }} for good?')">{% csrf_token %}<button class="btn small danger" type="submit">Delete</button></form>{% endif %}
+    </section>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

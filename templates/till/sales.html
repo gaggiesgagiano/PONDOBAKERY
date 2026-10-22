@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ shift.label }} – sales{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'till:screen' shift.pk %}">{{ shift.label }}</a></div><h1>Sales on {{ shift.label }}</h1>
+  <div class="small muted">{{ shift.date|date:"l j F" }} · {{ shift.cashier_name }}. Reprint a slip, or refund with the Supervisor (SOP 6.02).</div></div>
+  <div class="actions"><a class="btn primary" href="{% url 'till:screen' shift.pk %}">Back to the till</a></div></div>
+<form class="filters" method="get"><input type="search" name="q" value="{{ q }}" placeholder="Slip number, e.g. T1-00012"><button class="btn quiet" type="submit">Find</button></form>
+<section class="card"><div class="tablebox"><table class="t"><thead><tr><th>Slip</th><th>Time</th><th>Products</th><th>Paid by</th><th style="text-align:right">Total</th><th></th></tr></thead><tbody>
+{% for s in sales %}<tr><td><b>{{ s.number }}</b>{% if s.is_refund %} <span class="chip due">Refund</span>{% endif %}</td><td>{{ s.created_at|time:"H:i" }}</td>
+  <td class="small">{% for it in s.items.all %}{{ it.qty|floatformat:"-3" }} × {{ it.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+  <td class="small">{% for p in s.payments.all %}{{ p.method }}{% if not forloop.last %} + {% endif %}{% endfor %}</td>
+  <td style="text-align:right">{{ s.total|floatformat:2 }}</td>
+  <td style="text-align:right;white-space:nowrap"><a class="btn small quiet" href="{% url 'till:receipt' s.pk %}?print=1&back={% url 'till:sales' shift.pk %}">Reprint</a>
+    {% if not s.is_refund and shift.is_open %}<a class="btn small" href="{% url 'till:refund' shift.pk s.pk %}">Refund</a>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="6" class="muted">No sales yet.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

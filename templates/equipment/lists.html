@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Categories &amp; places{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'equipment:register' %}">Equipment</a></div><h1>Categories &amp; places</h1></div></div>
+{% include "equipment/_tabs.html" %}
+<form method="post" class="cols">{% csrf_token %}
+  <section class="card main stack"><h2>Categories and their useful life</h2>
+    {{ cf.management_form }}
+    <div class="tablebox"><table class="t lines"><thead><tr><th>Category</th><th>Useful life (years)</th></tr></thead><tbody>
+    {% for f in cf %}<tr>{{ f.id }}<td class="ing">{{ f.name }}</td><td class="qty">{{ f.life_years }}</td></tr>{% endfor %}</tbody></table></div>
+    <p class="small muted" style="margin:0">Changing a life changes the depreciation of every item in that category (unless the item has its own life).</p>
+  </section>
+  <section class="card aside stack"><h2>Places</h2>
+    {{ lf.management_form }}
+    {% for f in lf %}{{ f.id }}{{ f.name }}{% endfor %}
+  </section>
+  <div class="actions" style="flex-basis:100%"><button class="btn primary" type="submit">Save</button></div>
+</form>
+{% endblock %}

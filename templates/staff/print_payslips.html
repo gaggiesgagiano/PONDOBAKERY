@@ -1,0 +1,59 @@
+{% load static pondo %}<!doctype html>
+<html lang="en" data-font="{{ look.biz_font }}"><head><meta charset="utf-8"><title>Payslips {{ run.period|date:"F Y" }}</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=29">{% include "_brand_font.html" %}
+<style>
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A4;margin:10mm}
+  html,body{background:#fff;font-size:12.5px}
+  .slip{max-width:186mm;margin:0 auto 10mm;border:1.5px solid var(--line2);border-radius:12px;padding:12px 16px;page-break-inside:avoid;display:flex;flex-direction:column;gap:8px}
+  .slip + .slip{page-break-before:auto}
+  .two .slip:nth-child(2n){page-break-after:always}
+  .ph{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid var(--orange);padding-bottom:6px}
+  .ph img{width:130px}
+  .ph .sh{text-align:right;font-size:11px;color:var(--muted)}
+  h1{font-size:22px} h1 small{font-size:14px;color:var(--muted)}
+  .who{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 12px;font-size:11.5px}
+  .who b{display:block;font-size:12.5px;color:var(--ink)}
+  .cols2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  table.t td,table.t th{padding:3px 6px;font-size:12px}
+  .net{display:flex;justify-content:space-between;align-items:center;background:#7a1315;color:#fff3d7;border-radius:10px;padding:8px 14px}
+  .net b{font-family:Nunito;font-weight:900;font-size:24px}
+  .foot{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+  .bar{position:fixed;top:14px;right:14px;display:flex;gap:10px;z-index:5}
+  @media print{.bar{display:none}}
+</style></head>
+<body class="two">
+<div class="bar"><button class="btn primary" onclick="window.print()">Print</button><button class="btn quiet" onclick="window.close()">Close</button></div>
+{% for sl in slips %}{% with ln=sl.ln e=sl.ln.employee %}
+<div class="slip">
+  <div class="ph"><img src="{% static 'brand/logo/primary_orange.svg' %}" alt="Pondo Bakery">
+    <div class="sh"><b>{{ current_shop.name|default:company.company_name }}</b>{% if current_shop.address_line1 %}<br>{{ current_shop.address_line1 }}{% endif %}{% if current_shop.address_line2 %}, {{ current_shop.address_line2 }}{% endif %}{% if current_shop.phone %}<br>{{ current_shop.phone }}{% endif %}{% if current_shop.tin %} · TIN {{ current_shop.tin }}{% endif %}</div></div>
+  <h1>Payslip <small>{{ run.period|date:"F Y" }} · paid {{ run.pay_date|date:"d M Y" }}{% if run.status == 'draft' %} · DRAFT{% endif %}</small></h1>
+  <div class="who">
+    <div>Name<b>{{ e.full_name }}</b></div><div>Staff no.<b>{{ e.code|default:"–" }}</b></div><div>Job<b>{{ e.job_title|default:"–" }}</b></div><div>ID no.<b>{{ e.id_number|default:"–" }}</b></div>
+    <div>NSSA no.<b>{{ e.nssa_no|default:"–" }}</b></div><div>Tax no.<b>{{ e.tax_no|default:"–" }}</b></div><div>Pay<b>{{ ln.rate|money }} {% if ln.pay_type == 'monthly' %}/ month{% elif ln.pay_type == 'daily' %}/ day{% else %}/ hour{% endif %}</b></div><div>Leave left<b>{{ sl.leave|num:1 }} days</b></div>
+  </div>
+  <div class="cols2">
+    <table class="t"><thead><tr><th>Earnings</th><th class="r">$</th></tr></thead><tbody>
+      <tr><td>Basic{% if ln.pay_type == 'daily' %} ({{ ln.days|num:2 }} days){% elif ln.pay_type == 'hourly' %} ({{ ln.hours|num:2 }} hrs){% elif ln.unpaid_days %} (less {{ ln.unpaid_days|num:1 }} unpaid days){% endif %}</td><td class="r">{{ ln.basic|money }}</td></tr>
+      {% if ln.overtime_pay %}<tr><td>Overtime{% if ln.overtime_hours %} {{ ln.overtime_hours|num:1 }} h{% endif %}{% if ln.holiday_hours %} + Sun/hol {{ ln.holiday_hours|num:1 }} h{% endif %}</td><td class="r">{{ ln.overtime_pay|money }}</td></tr>{% endif %}
+      {% if ln.allowances %}<tr><td>Allowances</td><td class="r">{{ ln.allowances|money }}</td></tr>{% endif %}
+      {% if ln.bonus %}<tr><td>Bonus</td><td class="r">{{ ln.bonus|money }}</td></tr>{% endif %}
+      {% if ln.other_earnings %}<tr><td>Other pay</td><td class="r">{{ ln.other_earnings|money }}</td></tr>{% endif %}
+      <tr class="total"><td>Gross pay</td><td class="r">{{ ln.gross|money }}</td></tr>
+    </tbody></table>
+    <table class="t"><thead><tr><th>Deductions</th><th class="r">$</th></tr></thead><tbody>
+      <tr><td>NSSA</td><td class="r">{{ ln.nssa|money }}</td></tr>
+      <tr><td>PAYE</td><td class="r">{{ ln.paye|money }}</td></tr>
+      <tr><td>AIDS levy</td><td class="r">{{ ln.aids_levy|money }}</td></tr>
+      {% if ln.advances %}<tr><td>Advances</td><td class="r">{{ ln.advances|money }}</td></tr>{% endif %}
+      {% if ln.other_deductions %}<tr><td>{{ ln.deduction_note|default:"Other" }}</td><td class="r">{{ ln.other_deductions|money }}</td></tr>{% endif %}
+      <tr class="total"><td>Total deductions</td><td class="r">{{ ln.total_deductions|money }}</td></tr>
+    </tbody></table>
+  </div>
+  <div class="net"><span>NET PAY{% if e.paid_by != 'cash' %} · {{ e.get_paid_by_display }}{% endif %}</span><b>{{ ln.net|money }}</b></div>
+  <div class="foot"><span>Year to date: gross {{ sl.ytd.gross|money }} · PAYE {{ sl.ytd.paye|money }} · AIDS {{ sl.ytd.aids|money }} · NSSA {{ sl.ytd.nssa|money }} · net {{ sl.ytd.net|money }}</span></div>
+  <div class="foot" style="margin-top:14px"><span>Received by: ______________________</span><span>Date: ____________</span></div>
+</div>
+{% endwith %}{% empty %}<p>No payslips.</p>{% endfor %}
+</body></html>

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{% if i.pk %}Edit {{ i.name }}{% else %}New ingredient{% endif %}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'costing:ingredients' %}">Ingredients</a>{% if i.pk %} › <a href="{% url 'costing:ingredient' i.pk %}">{{ i.name }}</a>{% endif %}</div>
+  <h1>{% if i.pk %}Edit ingredient{% else %}New ingredient{% endif %}</h1></div></div>
+<form method="post" class="stack">{% csrf_token %}
+  <section class="card stack">
+    <div class="grid-form">
+      {% include "_field.html" with f=form.name %}{% include "_field.html" with f=form.kind %}{% include "_field.html" with f=form.supplier %}{% include "_field.html" with f=form.code %}
+    </div>
+  </section>
+  <section class="card stack" id="price-box"><h2>Price</h2>
+    <div class="grid-form">
+      {% include "_field.html" with f=form.pack_price %}{% include "_field.html" with f=form.pack_size %}{% include "_field.html" with f=form.unit %}{% include "_field.html" with f=form.vat_percent %}
+    </div>
+    <div class="card peach" style="padding:14px 18px"><span class="small">Cost per unit used in recipes:</span> <b id="unit-cost" style="font-size:20px;color:var(--maroon)">–</b></div>
+  </section>
+  <section class="card stack" id="recipe-box"><h2>Mother recipe</h2>
+    <div class="grid-form">{% include "_field.html" with f=form.recipe %}</div>
+    <p class="small muted" style="margin:0">The cost comes from the recipe: per finished kg if the unit is kg or litre, otherwise per finished item.</p>
+  </section>
+  <section class="card stack"><h2>Stock levels</h2><div class="grid-form">{% include "_field.html" with f=form.reorder_level %}{% include "_field.html" with f=form.stock_par %}</div></section>
+  <section class="card stack"><div class="grid-form">{% include "_field.html" with f=form.notes wide=1 %}{% include "_field.html" with f=form.active %}</div></section>
+  <div class="actions"><button class="btn primary" type="submit">Save</button><a class="btn quiet" href="{% if i.pk %}{% url 'costing:ingredient' i.pk %}{% else %}{% url 'costing:ingredients' %}{% endif %}">Cancel</a></div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  var kind = document.getElementById('id_kind');
+  function show(){ var sub = kind.value === 'subrecipe';
+    document.getElementById('price-box').style.display = sub ? 'none' : '';
+    document.getElementById('recipe-box').style.display = sub ? '' : 'none'; }
+  function calc(){ var p = parseFloat(document.getElementById('id_pack_price').value), s = parseFloat(document.getElementById('id_pack_size').value),
+      v = parseFloat(document.getElementById('id_vat_percent').value) || 0, u = document.getElementById('id_unit').value;
+    document.getElementById('unit-cost').textContent = (p >= 0 && s > 0) ? '$' + (p/(1+v/100)/s).toFixed(3) + ' per ' + u : '–'; }
+  kind.onchange = show; ['id_pack_price','id_pack_size','id_vat_percent','id_unit'].forEach(function(id){ document.getElementById(id).oninput = calc; document.getElementById(id).onchange = calc; });
+  show(); calc();
+})();
+</script>
+{% endblock %}

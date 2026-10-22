@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Excel downloads{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Money &amp; people</div><h1>Excel downloads</h1>
+  <div class="muted small">Download a list as an Excel file to sort, filter, print or send to the accountant.</div></div></div>
+<p class="small muted" style="margin:0">Each file opens in Excel with a coloured header, filters on every column and totals that follow the filter. You only see the lists your rights allow{% if not can.costs %} – without costs and profit{% endif %}. Changes made in Excel do <b>not</b> come back into the program.</p>
+{% for group, items in groups.items %}
+<section class="card stack"><h2>{{ group }}</h2>
+  <div class="xl-list">
+  {% for x in items %}<div class="xl-row">
+    <span class="xl-ic" aria-hidden="true">XLS</span>
+    <div class="xl-txt"><b>{{ x.label }}</b><span class="small muted">{{ x.about }}</span></div>
+    {% if x.monthly %}<form method="get" action="{% url 'core:excel_file' x.key %}" class="xl-act">
+      <label class="visually-hidden" for="m-{{ x.key }}">Month for {{ x.label }}</label>
+      <input type="month" id="m-{{ x.key }}" name="month" value="{{ this_month }}" style="width:160px">
+      <button class="btn primary small" type="submit">Download month</button>
+      <a class="btn small quiet" href="{% url 'core:excel_file' x.key %}">Everything</a></form>
+    {% else %}<div class="xl-act"><a class="btn primary small" href="{% url 'core:excel_file' x.key %}">Download</a></div>{% endif %}
+  </div>{% endfor %}
+  {% if group == "Staff" and runs %}<div class="xl-row">
+    <span class="xl-ic" aria-hidden="true">XLS</span>
+    <div class="xl-txt"><b>Pay runs</b><span class="small muted">Every line of one month's payroll – for the bank or the accountant</span></div>
+    <div class="xl-act">{% for r in runs|slice:":6" %}<a class="btn small{% if forloop.first %} primary{% endif %}" href="{% url 'core:excel_file' 'payrun' %}?run={{ r.pk }}">{{ r.period|date:"M Y" }}</a>{% endfor %}</div>
+  </div>{% endif %}
+  </div>
+</section>
+{% empty %}<section class="card"><p class="muted" style="margin:0">There are no lists you may download. Ask the Manager if you need one.</p></section>
+{% endfor %}
+{% endblock %}

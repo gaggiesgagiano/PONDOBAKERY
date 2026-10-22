@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Cash-up{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'sales:cashups' %}">Cash-ups</a> › {{ cu.number }}</div>
+  <h1>Cash-up · {{ cu.till }} · {{ cu.date|date:"D d M Y" }}</h1></div></div>
+<form method="post" class="stack" id="cu-form">{% csrf_token %}
+  {% if hf.non_field_errors %}<div class="msg error">{{ hf.non_field_errors|join:" " }}</div>{% endif %}
+  <section class="card stack"><h2>1 · What the till says</h2>
+    <p class="small muted" style="margin:0">Copy the totals from the till's end-of-day report. For card and EcoCash also type what <b>really</b> came in (card machine batch slip, EcoCash statement).</p>
+    <div class="tablebox"><table class="t lines" style="min-width:560px">
+      <thead><tr><th>Payment type</th><th>Till says ($)</th><th>Really received ($)</th><th class="r">Over / short</th></tr></thead>
+      <tbody>{% for m, till, actual in tf.rows %}
+        <tr data-cash="{{ m.is_cash|yesno:'1,0' }}"><td><b>{{ m.name }}</b>{% for e in till.errors %}<div class="err">{{ e }}</div>{% endfor %}</td>
+          <td class="qty">{{ till }}</td>
+          <td class="qty">{% if actual %}{{ actual }}{% for e in actual.errors %}<div class="err">{{ e }}</div>{% endfor %}{% else %}<span class="small muted">counted below</span>{% endif %}</td>
+          <td class="cost var">–</td></tr>
+      {% endfor %}
+      <tr class="total"><td>Total sales</td><td class="r" id="tot-till">–</td><td></td><td class="r" id="tot-var">–</td></tr></tbody>
+    </table></div>
+  </section>
+
+  <section class="card stack"><h2>2 · Money paid out of the till</h2>
+    <p class="small muted" style="margin:0">Anything paid in cash from the drawer today – gas, transport, small buys. Keep the slips. These also show on the Expenses page.</p>
+    {{ fs.management_form }}
+    {% if fs.non_form_errors %}<div class="msg error">{{ fs.non_form_errors }}</div>{% endif %}
+    <div class="tablebox"><table class="t lines" style="min-width:780px">
+      <thead><tr><th>For</th><th>Paid to</th><th>What for</th><th>Amount ($)</th><th>Slip no.</th><th>Remove</th></tr></thead>
+      <tbody id="po-body">{% for f in fs %}
+        <tr class="po{% if f.errors %} has-error{% endif %}"><td>{{ f.category }}</td><td>{{ f.payee }}</td><td>{{ f.description }}</td><td class="qty">{{ f.amount }}</td><td class="qty">{{ f.receipt_no }}</td><td style="text-align:center">{{ f.DELETE }}</td></tr>
+        {% if f.errors %}<tr><td colspan="6" style="color:var(--low);font-weight:700">{{ f.non_field_errors|join:" " }}</td></tr>{% endif %}
+      {% endfor %}</tbody>
+    </table></div>
+    <template id="po-template"><tr class="po"><td>{{ fs.empty_form.category }}</td><td>{{ fs.empty_form.payee }}</td><td>{{ fs.empty_form.description }}</td><td class="qty">{{ fs.empty_form.amount }}</td><td class="qty">{{ fs.empty_form.receipt_no }}</td><td style="text-align:center">{{ fs.empty_form.DELETE }}</td></tr></template>
+    <div class="row"><button class="btn quiet small" type="button" id="add-po">+ Add pay-out</button><span class="small muted">Paid out: <b id="tot-po">$0.00</b></span></div>
+  </section>
+
+  <section class="card stack"><h2>3 · Count the cash</h2>
+    <div class="grid-form">
+      {% include "_field.html" with f=hf.cashier %}{% include "_field.html" with f=hf.opening_float %}{% include "_field.html" with f=hf.drops %}{% include "_field.html" with f=hf.cash_counted %}
+    </div>
+    <details{% if hf.instance.zig_counted %} open{% endif %}><summary class="small" style="cursor:pointer;font-weight:800">ZiG notes in the drawer?</summary>
+      <div class="grid-form" style="margin-top:10px">{% include "_field.html" with f=hf.zig_counted %}{% include "_field.html" with f=hf.zig_rate %}</div>
+      <div class="small muted">ZiG in US$: <b id="zig-usd">–</b> – it counts as cash taken.</div></details>
+    <div class="card peach stack" style="padding:14px 18px">
+      <div class="row" style="justify-content:space-between"><span>Cash taken = counted (+ ZiG in $) − float + paid out + cash drops</span><b id="cash-taken" style="font-size:18px">–</b></div>
+      <div class="row" style="justify-content:space-between"><span>Cash the till says</span><b id="cash-till">–</b></div>
+      <div class="row" style="justify-content:space-between"><span>Cash over / short</span><b id="cash-var" style="font-size:18px">–</b></div>
+    </div>
+    <div class="grid-form">{% include "_field.html" with f=hf.float_left %}{% include "_field.html" with f=hf.banked %}</div>
+    <div class="small muted">Cash to bank = counted − float left: <b id="to-bank">–</b></div>
+    <div class="grid-form">{% include "_field.html" with f=hf.notes wide=1 %}</div>
+  </section>
+  <div class="actions"><button class="btn primary" type="submit">Save cash-up</button><a class="btn quiet" href="{% url 'sales:cashup' cu.pk %}">Cancel</a></div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  function v(el){ if(!el) return null; var x = parseFloat(el.value); return isNaN(x) ? null : x; }
+  function m(x){ return (x < 0 ? '-$' : '$') + Math.abs(x).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function tag(el, x){ el.textContent = x === null ? '–' : (Math.abs(x) < 0.005 ? 'balances' : (x < 0 ? 'short ' : 'over ') + m(Math.abs(x)));
+    el.style.color = x === null || Math.abs(x) < 0.005 ? 'var(--ok)' : (x < 0 ? 'var(--low)' : 'var(--mid)'); }
+  var form = document.getElementById('cu-form');
+  function calc(){
+    var tot = 0, cashTill = 0, varTot = 0, po = 0;
+    form.querySelectorAll('tr[data-cash]').forEach(function(tr){
+      var ins = tr.querySelectorAll('input'); var t = v(ins[0]) || 0; tot += t;
+      if (tr.dataset.cash === '1') { cashTill += t; tr.querySelector('.var').textContent = 'see 3'; return; }
+      var a = v(ins[1]); var d = a === null ? null : a - t; if (d !== null) varTot += d; tag(tr.querySelector('.var'), d);
+    });
+    document.querySelectorAll('#po-body tr.po').forEach(function(tr){
+      var del = tr.querySelector('input[name$="-DELETE"]'); if (del && del.checked) return;
+      po += v(tr.querySelector('input[name$="-amount"]')) || 0; });
+    var counted = v(document.getElementById('id_cash_counted')), fl = v(document.getElementById('id_opening_float')) || 0;
+    var left = v(document.getElementById('id_float_left')) || 0;
+    var zig = v(document.getElementById('id_zig_counted')), rate = v(document.getElementById('id_zig_rate'));
+    var zigUsd = (zig && rate) ? zig / rate : 0;
+    document.getElementById('zig-usd').textContent = zigUsd ? m(zigUsd) : '–';
+    var drops = v(document.getElementById('id_drops')) || 0;
+    var taken = (counted === null && !zigUsd) ? null : (counted || 0) + zigUsd - fl + po + drops;
+    var cv = taken === null ? null : taken - cashTill;
+    if (cv !== null) varTot += cv;
+    document.getElementById('tot-till').textContent = m(tot);
+    document.getElementById('tot-po').textContent = m(po);
+    document.getElementById('cash-till').textContent = m(cashTill);
+    document.getElementById('cash-taken').textContent = taken === null ? '–' : m(taken);
+    tag(document.getElementById('cash-var'), cv); tag(document.getElementById('tot-var'), varTot);
+    document.getElementById('to-bank').textContent = counted === null ? '–' : m(counted - left);
+  }
+  form.addEventListener('input', calc); form.addEventListener('change', calc);
+  document.getElementById('add-po').onclick = function(){
+    var t = document.getElementById('id_po-TOTAL_FORMS');
+    document.getElementById('po-body').insertAdjacentHTML('beforeend', document.getElementById('po-template').innerHTML.replace(/__prefix__/g, t.value));
+    t.value = +t.value + 1;
+  };
+  calc();
+})();
+</script>
+{% endblock %}

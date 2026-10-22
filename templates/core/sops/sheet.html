@@ -1,0 +1,36 @@
+{% load static %}<!doctype html>
+<html lang="en" data-font="{{ look.biz_font }}"><head><meta charset="utf-8">
+<title>Sign-off sheet {{ sop.code }}</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=29">{% include "_brand_font.html" %}
+<style>
+  @page{size:A4 portrait;margin:14mm 15mm}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  html,body{background:#ddd;font-family:Nunito,Arial,sans-serif;color:#2e1610}
+  .bar{position:fixed;top:12px;right:12px;display:flex;gap:8px}
+  .page{width:180mm;margin:10mm auto;background:#fff;padding:12mm;box-shadow:0 4px 18px rgba(0,0,0,.15)}
+  .top{display:flex;justify-content:space-between;align-items:center;border-bottom:1.2mm solid #218d80;padding-bottom:3mm}
+  .top h1{font-family:var(--head);text-transform:var(--head-case);color:#7a1315;font-size:19pt;margin:0}
+  .top img{width:20mm}
+  .what{margin:4mm 0;font-size:11pt}
+  .what b{color:#218d80}
+  .stmt{background:#fff3d7;border-radius:2mm;padding:3mm 4mm;font-size:10pt;margin-bottom:4mm}
+  table{width:100%;border-collapse:collapse;font-size:9.5pt}
+  th{background:#7a1315;color:#fff3d7;text-align:left;padding:2mm;font-size:8.5pt}
+  td{border-bottom:1px solid #d9c3a5;padding:0 2mm;height:13mm}
+  td.n{width:7mm;color:#9a7a6a} td.sig{width:62mm} td.d{width:24mm}
+  tr{break-inside:avoid}
+  .foot{display:grid;grid-template-columns:2fr 1fr;gap:12mm;margin-top:20mm;font-size:9pt;color:#7c5a4a}
+  .foot div{border-top:1px solid #2e1610;padding-top:1mm}
+  @media print{html,body{background:#fff}.bar{display:none}.page{width:auto;margin:0;padding:0;box-shadow:none}}
+</style></head><body>
+<div class="bar"><button class="btn primary" onclick="window.print()">Print</button><button class="btn quiet" onclick="window.close()">Close</button></div>
+<div class="page">
+  <div class="top"><h1>SOP sign-off sheet</h1><img src="{% static 'brand/logo/submark_orange.svg' %}" alt=""></div>
+  <div class="what"><b>{{ sop.code }}</b> · {{ sop.title }} · version {{ sop.version }}{% if sop.approved_on %} · approved {{ sop.approved_on|date:"d M Y" }}{% else %} · <b style="color:#e56026">DRAFT</b>{% endif %}<br>
+    <span style="font-size:9.5pt;color:#7c5a4a">Must be read by: {{ sop.applies_text }}</span></div>
+  <div class="stmt">By signing I confirm that the SOP above was explained to me, that I have read and understood it, and that I will follow it. I know that not following it can lead to disciplinary action.</div>
+  <table><thead><tr><th></th><th>Staff no.</th><th>Name</th><th>Job</th><th>Signature</th><th>Date</th></tr></thead>
+  <tbody>{% for e in people %}<tr><td class="n">{{ forloop.counter }}</td><td>{{ e.code }}</td><td><b>{{ e.name }}</b></td><td>{{ e.job_title }}</td><td class="sig"></td><td class="d"></td></tr>{% endfor %}
+  {% for i in "12345" %}<tr><td class="n"></td><td></td><td></td><td></td><td class="sig"></td><td class="d"></td></tr>{% endfor %}</tbody></table>
+  <div class="foot"><div>Explained by (name, title &amp; signature)</div><div>Date</div></div>
+</div></body></html>

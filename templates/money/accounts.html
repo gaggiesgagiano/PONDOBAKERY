@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Money accounts{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'money:home' %}">Money &amp; accounts</a></div><h1>Accounts set-up</h1>
+  <div class="small muted">Where the business keeps money. Each account starts on a day with the balance on that day – Pondo works out the rest.</div></div>
+  <div class="actions"><a class="btn primary" href="{% url 'money:account_new' %}">+ Add an account</a></div></div>
+{% include "money/_tabs.html" %}
+<section class="card"><div class="tablebox"><table class="t"><thead><tr><th>Account</th><th>Type</th><th>No.</th><th>Books start</th><th class="r">Balance then</th><th></th></tr></thead><tbody>
+{% for a in accounts %}<tr class="link" data-href="{% url 'money:account_edit' a.pk %}"><td><b>{{ a.name }}</b>{% if not a.active %} <span class="chip">not used</span>{% endif %}</td><td>{{ a.get_kind_display }}</td><td>{{ a.number|default:"–" }}</td><td>{{ a.opening_date|date:"d M Y" }}</td><td class="r">{{ a.opening_balance|money }}</td><td class="r"><a class="btn small quiet" href="{% url 'money:account_edit' a.pk %}">Change</a></td></tr>
+{% empty %}<tr><td colspan="6" class="muted">No accounts yet. Add <b>Safe</b> (cash in the safe), <b>Bank</b> and <b>EcoCash</b>.</td></tr>{% endfor %}</tbody></table></div></section>
+<div class="msg info">Cash-up cash goes to the first <i>Cash in the safe</i> account, swipe / card and bank transfers to the first <i>Bank account</i>, EcoCash to the first <i>EcoCash</i> account. Expenses paid from the bank, supplier payments and wages paid by bank come off the bank account. When cash from the safe is taken to the bank, type it as <i>Move money between accounts</i>.</div>
+{% endblock %}

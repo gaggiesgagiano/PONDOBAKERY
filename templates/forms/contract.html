@@ -1,0 +1,106 @@
+{% extends "forms/_base.html" %}
+{% block fit %}{% endblock %}
+{% block css %}
+  .legal h3 + ul,.legal h3 + p{break-before:avoid}
+  .legal{line-height:1.42}
+  .legal li{margin-bottom:.9mm}
+  .legal h3{font-family:Nunito,sans-serif;font-weight:800;font-size:10pt;letter-spacing:.06em;text-transform:uppercase;color:#7a1315;margin:2.6mm 0 1.2mm;display:flex;align-items:center;gap:2.2mm;break-after:avoid}
+  .legal h3 .n{width:5.6mm;height:5.6mm;border-radius:1.6mm;background:#e56026;color:#fff3d7;display:inline-flex;align-items:center;justify-content:center;font-family:var(--head);font-size:9.5pt;letter-spacing:0}
+  .legal .g{margin:1mm 0 1.6mm}
+  .legal ul li{break-inside:avoid}
+  .party{background:#fffaf0;border:.35mm solid #ecd3ad;border-radius:3mm;padding:2.5mm 3.5mm;margin:1.5mm 0}
+  .initials{display:flex;justify-content:flex-end;gap:8mm;font-size:8.5pt;color:#7c5a4a;margin-top:2mm}
+  .initials span{border-bottom:.35mm solid #b9977f;width:30mm;display:inline-block;height:9mm}
+  .signbox{border:.35mm solid #ecd3ad;border-radius:3mm;padding:2.5mm 3.5mm;break-inside:avoid;margin-top:2mm}
+  .signbox h4{margin:0 0 1mm;font-size:9.5pt;letter-spacing:.06em;text-transform:uppercase;color:#7a1315}
+{% endblock %}
+{% block subtitle %}<div class="sub">Two copies: one for the employee,<br>one for the staff file.</div>{% endblock %}
+{% block content %}
+{% with emp=current_shop.name|default:company.company_name|default:"Pondo Bakery" %}
+<div class="legal">
+<p>This Fixed Term Contract of Employment (&ldquo;the Contract&rdquo;) is entered into between:</p>
+<div class="party"><b>{{ emp }}</b>, of {{ current_shop.address_line1|default:"74 Chinhoyi Street" }}, {{ current_shop.address_line2|default:"Harare, Zimbabwe" }} (&ldquo;the Employer&rdquo;)</div>
+<p>and</p>
+<div class="party g" style="display:grid;gap:1mm">
+  <div class="f"><span>Employee's full name</span><i></i></div>
+  <div class="f"><span>National ID no.</span><i></i></div>
+  <div class="f"><span>Home address</span><i></i></div>
+</div>
+<p>(together &ldquo;the Parties&rdquo;), on the terms and conditions set out below.</p>
+
+<h3><span class="n">1</span>Position and duties</h3>
+<div class="g g2"><div class="f"><span>Job title</span><i></i></div><div class="f"><span>Department / section</span><i></i></div></div>
+<p>The Employee shall report to the person designated by the Employer and shall perform the duties of the above position diligently, and any other reasonable duties assigned from time to time.</p>
+
+<h3><span class="n">2</span>Duration of contract</h3>
+<div class="g g2"><div class="f"><span>Start date</span><i></i></div><div class="f"><span>End date</span><i></i></div></div>
+<div class="ticks g4" style="margin:1mm 0"><span class="tk">1st one-month contract</span><span class="tk">2nd one-month contract</span><span class="tk">3rd one-month contract</span><span class="tk">Month to month</span></div>
+<p>This is a fixed term contract which shall automatically terminate on the end date stated above, without notice, unless renewed in writing by mutual agreement of the Parties. A new Employee is employed on one-month contracts; up to three (3) consecutive one-month contracts may be given. Thereafter, if both Parties agree in writing, the Employee is employed on a month-to-month basis on the terms of this Contract. This Contract does not constitute a contract of employment without limit of time.</p>
+<div class="f"><span>Probation period <small>(if applicable)</small></span><i></i></div>
+
+<h3><span class="n">3</span>Remuneration</h3>
+<div class="g g3"><div class="f"><span>Basic salary</span><i></i></div><div class="f"><span>Currency</span><i></i></div><div class="f"><span>Paid <small>(e.g. monthly)</small></span><i></i></div></div>
+<p>Salary shall be paid in cash by the last working day of each pay period, subject to statutory deductions (PAYE, NSSA, and any other deductions required by law).</p>
+
+<h3><span class="n">4</span>Working hours</h3>
+<div class="f"><span>Normal working hours</span><i></i></div>
+<p>The Employee may be required to work reasonable overtime as operational requirements demand, in accordance with the Employer's policies and applicable labour law.</p>
+<p>All working time is recorded on the Employer's <b>fingerprint clocking machine</b>. The Employee must clock in on arrival and clock out on leaving. Time that is not clocked is not paid.</p>
+<div class="initials">Initials: Employer <span></span> Employee <span></span></div>
+
+<h3><span class="n">5</span>Leave</h3>
+<ul>
+  <li><b>Annual leave:</b> In terms of section 14 of the Labour Act [Chapter 28:01], the Employee shall accrue paid vacation leave at the rate of one-twelfth (1/12) of their qualifying service for each year of employment (equivalent to approximately 22 working days, or 30 calendar days, per completed year of service), subject to a maximum accrual of ninety (90) days, unless the Employer's policy provides more favourable terms. All Saturdays, Sundays, and public holidays falling within a period of vacation leave are counted as part of that leave.</li>
+  <li><b>Sick leave:</b> In terms of section 14 of the Labour Act [Chapter 28:01], the Employee shall be entitled to up to ninety (90) days' sick leave on full pay in respect of any one illness or injury, supported by a certificate from a registered medical practitioner. Where the ninety days on full pay are exhausted and, in the opinion of the certifying medical practitioner, the Employee is likely to resume duty, the Employer shall grant a further period of up to ninety (90) days' sick leave on half pay. If the Employee remains unable to resume duty after this combined period of one hundred and eighty (180) days, the Employer may terminate the Contract.</li>
+  <li><b>Public holidays:</b> as gazetted in Zimbabwe.</li>
+</ul>
+
+<h3><span class="n">6</span>Confidentiality and company recipes</h3>
+<ul>
+  <li>All recipes, quantities, methods, baking times and temperatures, fillings and decorations, recipe cards, production plans, ingredient lists, costings and supplier details of the Employer (“the Recipes”) are the Employer's sole property and trade secrets – including any recipe the Employee develops or improves while employed.</li>
+  <li>During and after this Contract the Employee shall not disclose the Recipes, or any information about the Employer's suppliers, customers, pricing, security or business, to any third party, nor use the Recipes for their own benefit or for any other person or business.</li>
+  <li>The Employee shall not photograph, film, copy or write down the Recipes in any form, keep them on a phone, computer, notebook, messaging app, e-mail or cloud, or remove any recipe card or printed list from the production area. When this Contract ends, all such documents are returned and any copies deleted.</li>
+  <li>A breach is serious misconduct and may lead to dismissal. The Employer may take legal action to stop the breach and recover any loss, also after this Contract has ended. The Employee confirms having read the SOP “Company recipes are confidential”.</li>
+</ul>
+
+<h3><span class="n">7</span>Cash handling and shortages</h3>
+<p>This clause applies when the Employee works at a till or handles cash for the Employer.</p>
+<ul>
+  <li>The Employee is responsible for the cash in the till assigned to them from the time the float is counted and signed for until the cash-up is signed off by the manager.</li>
+  <li>Every cash-up is recorded in the Employer's system, which reports any amount <b>short</b> or <b>over</b> for each cashier. Overs do not cancel out shorts. Overs are kept by the Employer.</li>
+  <li>Where there is a logical and reasonable explanation for a shortage, the manager may write it off; the reason is recorded and signed by the manager.</li>
+  <li>At the end of each month the over &amp; short report is reviewed with the Employee and signed by both Parties. The Employee shall repay the total of the shortages for that month that were not written off.</li>
+  <li>The Employee hereby <b>consents in writing</b> to such shortages being deducted from their wages, in the month they occur or in instalments agreed in writing between the Parties.</li>
+  <li>Repeated or serious shortages may also be dealt with under the Employer's disciplinary code.</li>
+</ul>
+<div class="initials">Employee's initials <span></span></div>
+
+<h3><span class="n">8</span>Uniform</h3>
+<ul>
+  <li>The Employer issues <b>two (2) sets</b> of uniform, including a <b>name badge</b>, signed for by the Employee on the uniform issue form. The uniform remains the property of the Employer.</li>
+  <li>The Employee shall wear the full, clean uniform of their section, with the name badge, at all times while on duty. Shirt colours belong to each section and may not be swapped. Working in own clothing is not allowed.</li>
+  <li>An Employee who reports for duty without the proper uniform will be sent home, and the day shall be treated as <b>unpaid leave</b>.</li>
+  <li>Lost, stolen or damaged items are re-ordered by the Employer and <b>paid for by the Employee</b>.</li>
+  <li>On leaving the Employer's service, the Employee shall return the full uniform and name badge <b>before any final payment is made</b>. The Employee consents in writing to the cost of any items not returned being deducted from the final payment.</li>
+</ul>
+<div class="initials">Employee's initials <span></span></div>
+
+<h3><span class="n">9</span>Termination</h3>
+<ul>
+  <li>Either Party may terminate this Contract during its term by giving written notice in accordance with section 12(4) of the Labour Act [Chapter 28:01] or the applicable Collective Bargaining Agreement, whichever is longer, namely: three months' notice for a contract of two years or more; two months' notice for a contract of one year or more but less than two years; one month's notice for a contract of six months or more but less than one year; two weeks' notice for a contract of three months or more but less than six months; and one day's notice for a contract of less than three months or for casual or seasonal work. The Employer may elect to pay the Employee cash in lieu of notice.</li>
+  <li>The Employer may terminate this Contract summarily for gross misconduct, in accordance with the Employer's disciplinary code and applicable law.</li>
+  <li>Upon termination or expiry, the Employee shall return all Employer property, including uniforms, name badge, keys, and equipment (see clause 8).</li>
+</ul>
+
+<h3><span class="n">10</span>Code of conduct</h3>
+<p>The Employee agrees to abide by the Employer's Code of Conduct, hygiene and food safety standards, and all lawful and reasonable instructions given by management, and to follow the Employer's standard operating procedures (SOP file) for their job.</p>
+
+<h3><span class="n">11</span>Whole agreement</h3>
+<p>This Contract, together with the Employer's policies referred to herein, constitutes the entire agreement between the Parties and supersedes all prior discussions or agreements, whether oral or written. Any variation must be in writing and signed by both Parties.</p>
+
+<p style="margin-top:3mm"><b>Signed at Harare, Zimbabwe</b></p>
+<div class="signbox"><h4>For the Employer – {{ emp }}</h4><div class="g g2"><div class="f"><span>Name</span><i></i></div><div class="f"><span>Position</span><i></i></div><div class="f"><span>Signature</span><i></i></div><div class="f"><span>Date</span><i></i></div></div></div>
+<div class="signbox"><h4>For the Employee</h4><div class="g g2"><div class="f"><span>Name</span><i></i></div><div class="f"><span>Staff no.</span><i></i></div><div class="f"><span>Signature</span><i></i></div><div class="f"><span>Date</span><i></i></div></div></div>
+</div>
+{% endwith %}
+{% endblock %}

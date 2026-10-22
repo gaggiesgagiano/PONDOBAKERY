@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Choose short cuts{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'core:dashboard' %}">Dashboard</a> › Short Cuts</div><h1>Choose your short cuts</h1>
+  <div class="small muted">Tick the jobs you want on your dashboard and put them in your order. Only you see your choice.</div></div>
+  <div class="actions"><a class="btn primary" href="{% url 'core:my_job_new' %}">+ Add my own job</a></div></div>
+<form method="post" class="stack" id="jobs-form">{% csrf_token %}<input type="hidden" name="order" id="order">
+  <section class="card stack"><div class="row" style="justify-content:space-between;align-items:baseline"><h2>Jobs</h2><span class="small muted">↑ ↓ moves a job up or down</span></div>
+    <ul class="jlist" id="jlist">
+    {% for it in items %}<li data-key="{{ it.key }}" class="{% if not it.on %}off{% endif %}">
+      <label class="tk"><input type="checkbox" name="on" value="{{ it.key }}" {% if it.on %}checked{% endif %} aria-label="Show {{ it.name }}"></label>
+      <span class="sw c-{{ it.colour }}" aria-hidden="true"></span>
+      <div><b>{{ it.name }}</b>{% if it.kind == 'mine' %}<span class="tag">{% if it.mj.shared %}for everybody{% else %}my own{% endif %}</span>{% endif %}<br><span class="small muted">{{ it.about }}</span>
+        {% if it.mine %} · <a class="small" href="{% url 'core:my_job_edit' it.mj.pk %}">change</a>{% endif %}</div>
+      <div class="mv"><button type="button" class="up" aria-label="Move {{ it.name }} up">↑</button><button type="button" class="down" aria-label="Move {{ it.name }} down">↓</button></div>
+    </li>{% endfor %}
+    </ul>
+  </section>
+  <div class="actions"><button class="btn primary" type="submit">Save</button><a class="btn quiet" href="{% url 'core:dashboard' %}">Cancel</a></div>
+</form>
+<form method="post" action="{% url 'core:jobs_reset' %}" style="margin-top:-8px">{% csrf_token %}<button class="btn small quiet" type="submit">Back to the standard list</button></form>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  var list = document.getElementById('jlist');
+  list.addEventListener('click', function(e){
+    var b = e.target.closest('button'); if (!b) return;
+    var li = b.closest('li');
+    if (b.classList.contains('up') && li.previousElementSibling) list.insertBefore(li, li.previousElementSibling);
+    if (b.classList.contains('down') && li.nextElementSibling) list.insertBefore(li.nextElementSibling, li);
+    b.focus();
+  });
+  list.addEventListener('change', function(e){ var li = e.target.closest('li'); if (li) li.classList.toggle('off', !e.target.checked); });
+  document.getElementById('jobs-form').addEventListener('submit', function(){
+    document.getElementById('order').value = Array.prototype.map.call(list.children, function(li){ return li.dataset.key; }).join(',');
+  });
+})();
+</script>
+{% endblock %}

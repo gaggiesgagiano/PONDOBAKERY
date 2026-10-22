@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Waste log{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'production:waste_list' %}">Waste</a> › {{ w.number }}</div>
+  <h1>Waste · {{ w.get_shift_display }} {{ w.date|date:"D d M Y" }}</h1></div></div>
+<form method="post" class="stack" id="waste-form">{% csrf_token %}
+  <section class="card stack"><h2>What was wasted</h2>
+    {{ fs.management_form }}
+    <datalist id="product-names">{% for n in names %}<option value="{{ n }}">{% endfor %}</datalist>
+    <div class="tablebox"><table class="t lines" style="min-width:760px">
+      <thead><tr><th>Product</th><th>Qty</th><th>Reason</th><th>Notes</th><th>Remove</th></tr></thead>
+      <tbody id="line-body">{% for f in fs %}
+        <tr class="line{% if f.errors %} has-error{% endif %}"><td class="ing">{{ f.product }}</td><td class="qty">{{ f.qty }}</td><td>{{ f.reason }}</td><td>{{ f.notes }}</td><td style="text-align:center">{{ f.DELETE }}</td></tr>
+        {% if f.errors %}<tr><td colspan="5" style="color:var(--low);font-weight:700">{{ f.non_field_errors|join:" " }}</td></tr>{% endif %}
+      {% endfor %}</tbody>
+    </table></div>
+    <template id="line-template"><tr class="line"><td class="ing">{{ fs.empty_form.product }}</td><td class="qty">{{ fs.empty_form.qty }}</td><td>{{ fs.empty_form.reason }}</td><td>{{ fs.empty_form.notes }}</td><td style="text-align:center">{{ fs.empty_form.DELETE }}</td></tr></template>
+    <div class="row"><button class="btn quiet small" type="button" id="add-line">+ Add line</button></div>
+  </section>
+  <section class="card stack"><div class="grid-form">{% include "_field.html" with f=hf.notes wide=1 %}</div></section>
+  <div class="actions"><button class="btn primary" type="submit">Save waste log</button><a class="btn quiet" href="{% url 'production:waste' w.pk %}">Cancel</a></div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('add-line').onclick = function(){
+  var t = document.getElementById('id_ln-TOTAL_FORMS');
+  document.getElementById('line-body').insertAdjacentHTML('beforeend', document.getElementById('line-template').innerHTML.replace(/__prefix__/g, t.value));
+  t.value = +t.value + 1;
+};
+</script>
+{% endblock %}

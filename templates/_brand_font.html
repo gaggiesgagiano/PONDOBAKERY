@@ -1,0 +1,1 @@
+{% if look.has_brand_font %}<style>@font-face{font-family:"Pondo Brand";src:url("{% url 'core:brand_font' %}?v={{ look.font_version|urlencode }}");font-display:swap}</style>{% endif %}

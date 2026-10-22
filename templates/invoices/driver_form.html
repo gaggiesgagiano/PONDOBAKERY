@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{% if drv.pk %}{{ drv.name }}{% else %}New driver{% endif %}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'invoices:drivers' %}">Drivers</a>{% if drv.pk %} › <a href="{% url 'invoices:driver' drv.pk %}">{{ drv.name }}</a>{% endif %}</div>
+  <h1>{% if drv.pk %}Change {{ drv.name }}{% else %}New driver{% endif %}</h1></div></div>
+<form method="post" class="stack">{% csrf_token %}
+  {% if form.errors %}<div class="msg error">Please fix the boxes marked in red.</div>{% endif %}
+  <section class="card stack"><h2>Driver</h2><div class="grid-form">
+    {% include "_field.html" with f=form.name %}{% include "_field.html" with f=form.phone %}{% include "_field.html" with f=form.id_number %}{% include "_field.html" with f=form.licence_no %}
+  </div></section>
+  <section class="card stack"><h2>Car</h2><div class="grid-form">
+    {% include "_field.html" with f=form.car_reg %}{% include "_field.html" with f=form.car_make %}{% include "_field.html" with f=form.car_colour %}
+  </div><p class="small muted" style="margin:0">If he comes with another car, type it on the delivery – the driver's card then shows the newest car.</p></section>
+  <section class="card stack"><div class="grid-form">{% include "_field.html" with f=form.issued %}{% include "_field.html" with f=form.active %}{% include "_field.html" with f=form.notes wide=1 %}</div></section>
+  {% if not drv.pk %}<p class="small muted" style="margin:0">After saving you can take his photo and a photo of the car, and print his ID card.</p>{% endif %}
+  <div class="actions"><button class="btn primary" type="submit">Save</button><a class="btn quiet" href="{% if drv.pk %}{% url 'invoices:driver' drv.pk %}{% else %}{% url 'invoices:drivers' %}{% endif %}">Cancel</a></div>
+</form>
+{% endblock %}

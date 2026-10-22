@@ -1,0 +1,133 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}{{ r.name }}{% endblock %}
+{% block scripts %}
+<script>
+// Shrink big phone photos before sending them, so they load fast and don't fill the laptop.
+(function(){
+  var input = document.getElementById('photo-input'); if (!input) return;
+  input.addEventListener('change', function(){
+    var f = input.files[0], form = document.getElementById('photo-form'); if (!f) return;
+    document.getElementById('photo-busy').hidden = false;
+    if (!/^image\/(jpeg|png|webp)$/.test(f.type) || f.size < 700000 || !window.createImageBitmap || !window.DataTransfer) { form.submit(); return; }
+    createImageBitmap(f).then(function(bmp){
+      var sc = Math.min(1, 1400 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
+      c.width = Math.round(bmp.width * sc); c.height = Math.round(bmp.height * sc);
+      c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+      c.toBlob(function(b){
+        if (b) { var dt = new DataTransfer(); dt.items.add(new File([b], f.name.replace(/\.[^.]+$/, '') + '.jpg', {type: 'image/jpeg'})); input.files = dt.files; }
+        form.submit();
+      }, 'image/jpeg', 0.85);
+    }).catch(function(){ form.submit(); });
+  });
+})();
+</script>
+{% endblock %}
+{% block content %}
+<div class="head">
+  <div class="title">
+    <div class="crumbs"><a href="{% url 'costing:recipes' %}">Recipes &amp; Costing</a>{% if r.category %} › <a href="{% url 'costing:recipes' %}?cat={{ r.category_id }}">{{ r.category }}</a>{% endif %}</div>
+    <h1>{{ r.name }}</h1>
+    <div class="chips">
+      <span class="chip">Recipe {{ r.number }}</span>
+      {% if r.category %}<span class="chip">{{ r.category }}</span>{% endif %}
+      {% if r.is_subrecipe %}<span class="chip">Mother recipe</span>{% endif %}
+      {% if r.bake_temp or r.bake_time %}<span class="chip">Bake {{ r.bake_temp }}{% if r.bake_temp and r.bake_time %} · {% endif %}{{ r.bake_time }}</span>{% endif %}
+      {% if not r.active %}<span class="chip on">Archived</span>{% endif %}
+    </div>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{% url 'costing:recipe_print' r.pk 'card' %}" target="_blank">Print recipe card</a>
+    {% if can.costs %}<a class="btn" href="{% url 'costing:recipe_print' r.pk 'costing' %}" target="_blank">Print costing</a>{% endif %}
+    {% if can.recipes_edit %}<a class="btn quiet" href="{% url 'costing:recipe_new' %}?copy={{ r.pk }}">Copy</a>
+    <a class="btn primary" href="{% url 'costing:recipe_edit' r.pk %}">Edit recipe</a>{% endif %}
+  </div>
+</div>
+
+{% if error %}<div class="msg error">{{ error }} Edit the recipe and remove that line.</div>{% endif %}
+{% if missing and can.costs %}<div class="banner">No price yet for: {% for i in missing %}<a href="{% url 'costing:ingredient_edit' i.pk %}?next={{ request.path|urlencode }}">{{ i.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}. These count as $0 until you add a price.</div>{% endif %}
+
+{% if s %}
+<div class="stats">
+  <div class="card stat"><div class="lbl">Batch yield</div>
+    {% if s.yield %}<div class="val">{{ s.yield|num:0 }}</div><div class="sub">{% if r.scaling_weight %}at {{ r.scaling_weight|num:3 }} kg each{% else %}typed yield{% endif %}</div>
+    {% else %}<div class="val">{{ s.finished|num:2 }} kg</div><div class="sub">finished weight</div>{% endif %}</div>
+  {% if can.costs %}<div class="card stat"><div class="lbl">Batch cost</div><div class="val">{{ s.batch_cost|money }}</div><div class="sub">{{ s.dough|num:2 }} kg dough{% if r.weight_loss %}, {{ r.weight_loss|pct:0 }} baking loss{% endif %} · excl. VAT</div></div>
+  <div class="card stat"><div class="lbl">{% if s.yield %}Cost per unit{% else %}Cost per kg{% endif %}</div><div class="val">{{ s.cpu|money:3 }}</div><div class="sub">ingredients + packaging</div></div>
+  {% if not r.is_subrecipe %}
+  <div class="card stat"><div class="lbl">Selling price{% if r.sold_per == "kg" %} per kg{% endif %}</div><div class="val">{{ r.sell_price|money }}</div><div class="sub">{% if r.sell_price %}incl. VAT {{ s.vat|pct:1 }} · {{ s.sell_excl|money }} excl.{% else %}not set yet{% endif %}</div></div>
+  <div class="card stat dark"><div class="lbl">Gross profit</div><div class="val">{{ s.gp|pct }}</div><div class="sub">{% if s.gp_amount is not None %}{{ s.gp_amount|money }} per unit · {% endif %}target {{ company.target_gp|pct:0 }}</div></div>
+  {% else %}
+  <div class="card stat dark"><div class="lbl">Cost per finished kg</div><div class="val">{{ s.cpkg|money:3 }}</div><div class="sub">used in {{ used_in|length }} recipe{{ used_in|length|pluralize }}</div></div>
+  {% endif %}{% endif %}
+  {% if not can.costs and can.prices_view and not r.is_subrecipe %}<div class="card stat"><div class="lbl">Selling price{% if r.sold_per == "kg" %} per kg{% endif %}</div><div class="val">{{ r.sell_price|money }}</div><div class="sub">incl. VAT</div></div>{% endif %}
+</div>
+{% endif %}
+
+<div class="cols">
+  <section class="card main stack">
+    <div class="row" style="justify-content:space-between"><h2>What goes in</h2>
+      {% if s.yield %}<form class="row" method="get" action="{% url 'costing:recipe_print' r.pk 'card' %}" target="_blank">
+        <label for="make" class="small" style="font-weight:800">Make</label><input id="make" name="make" type="number" min="1" step="1" value="{{ s.yield|num:0 }}" class="text" style="width:100px;min-height:40px">
+        <button class="btn small quiet" type="submit">Print scaled card</button></form>{% endif %}
+    </div>
+    <div class="tablebox"><table class="t" style="min-width:620px">
+      <thead><tr><th>Ingredient</th><th class="r">Qty</th><th>Unit</th>{% if can.costs %}<th class="r">Price / unit</th><th class="r">Cost</th><th class="r">Share</th>{% endif %}</tr></thead>
+      <tbody>
+      {% for sec in sections %}
+        <tr class="sec"><td colspan="{% if can.costs %}6{% else %}3{% endif %}">{{ sec.label }}</td></tr>
+        {% for it in sec.items %}
+        <tr>
+          <td>{% if can.ingredients_view %}<a href="{% url 'costing:ingredient' it.ln.ingredient.pk %}">{{ it.ln.ingredient.name }}</a>{% else %}{{ it.ln.ingredient.name }}{% endif %}{% if it.ln.ingredient.is_subrecipe %} <span class="tag">mother</span>{% endif %}
+            {% if it.ln.qty_mode != "fixed" %}<div class="small muted">{{ it.ln.qty|num:4 }} {{ it.ln.get_qty_mode_display }}</div>{% endif %}</td>
+          <td class="r">{{ it.qty|num:3 }}</td><td>{{ it.ln.ingredient.unit }}</td>
+          {% if can.costs %}<td class="r">{{ it.unit_cost|money:3 }}</td>
+          <td class="r"><b>{{ it.cost|money }}</b></td>
+          <td class="r">{{ it.share|pct }}</td>{% endif %}
+        </tr>
+        {% endfor %}
+      {% empty %}<tr class="emptyrow"><td colspan="6" class="muted">No ingredients yet. {% if can.recipes_edit %}<a href="{% url 'costing:recipe_edit' r.pk %}">Add them</a>{% endif %}.</td></tr>
+      {% endfor %}
+      {% if sections %}<tr class="total"><td>Total batch</td><td class="r">{{ s.dough|num:2 }}</td><td>kg dough</td>{% if can.costs %}<td></td><td class="r">{{ s.batch_cost|money }}</td><td class="r">100%</td>{% endif %}</tr>{% endif %}
+      </tbody>
+    </table></div>
+  </section>
+
+  <aside class="aside">
+    {% if r.photo or can.recipes_edit %}
+    <section class="card stack" id="photo">
+      <h2>Photo</h2>
+      {% if r.photo %}<a href="{{ r.photo.url }}" target="_blank"><img class="photo" src="{{ r.photo.url }}" alt="Photo of {{ r.name }}"></a>
+      {% else %}<div class="photo none">No photo yet</div>{% endif %}
+      {% if can.recipes_edit %}
+      <form method="post" action="{% url 'costing:recipe_photo' r.pk %}" enctype="multipart/form-data" class="row" id="photo-form">{% csrf_token %}
+        <label class="btn small primary" style="cursor:pointer">{% if r.photo %}Change photo{% else %}Add photo{% endif %}
+          <input type="file" name="photo" accept="image/*" class="visually-hidden" id="photo-input"></label>
+        {% if r.photo %}<button class="btn small quiet" type="submit" name="remove" value="1" onclick="return confirm('Remove this photo?')">Remove</button>{% endif %}
+        <span class="small muted" id="photo-busy" hidden>Saving the photo …</span>
+      </form>
+      <p class="small muted" style="margin:0">A photo from your phone or camera (JPG or PNG). It shows on the recipe card, the recipe list and the price list.</p>
+      {% endif %}
+    </section>
+    {% endif %}
+    {% if can.costs and not r.is_subrecipe and s and s.target_price %}
+    <section class="card peach stack">
+      <h2>Price check</h2>
+      <div class="small">To make {{ company.target_gp|pct:0 }} gross profit, sell at least at</div>
+      <div class="big">{{ s.target_price|money }}</div>
+      <div class="small">{% if r.sell_price %}{% if s.gp >= company.target_gp %}You sell at {{ r.sell_price|money }}, so you are on target.{% else %}You sell at {{ r.sell_price|money }} – that is <b>below</b> target.{% endif %}{% else %}No selling price set yet.{% endif %} (incl. VAT)</div>
+    </section>
+    {% endif %}
+    {% if as_ing %}
+    <section class="card stack"><h2>Used in</h2>
+      {% for u in used_in %}<a href="{% url 'costing:recipe' u.pk %}">{{ u.name }}</a>{% empty %}<p class="muted small">Not used in any recipe yet.</p>{% endfor %}
+      {% if can.costs %}<p class="small muted">On the ingredient list as <a href="{% url 'costing:ingredient' as_ing.pk %}">{{ as_ing.name }}</a>, priced automatically from this recipe.</p>{% endif %}
+    </section>
+    {% endif %}
+    <section class="card stack"><h2>Method</h2>
+      {% if method_lines %}<ol style="margin:0;padding-left:20px" class="stack">{% for m in method_lines %}<li>{{ m }}</li>{% endfor %}</ol>{% else %}<p class="muted small">No method written yet.</p>{% endif %}
+      <h3>Notes / allergens</h3><p class="small" style="margin:0;white-space:pre-line">{{ r.allergens|default:"–" }}</p>
+    </section>
+    {% if can.recipes_edit %}<form method="post" action="{% url 'costing:recipe_archive' r.pk %}">{% csrf_token %}<button class="btn quiet small" type="submit">{% if r.active %}Archive this recipe{% else %}Restore this recipe{% endif %}</button></form>{% endif %}
+  </aside>
+</div>
+{% endblock %}

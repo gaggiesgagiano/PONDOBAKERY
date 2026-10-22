@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Product sales{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Sales &amp; Cash-Up</div><h1>Product sales</h1></div>
+  <div class="actions">{% if can.sales_edit %}<button class="btn" type="button" data-pick title="Choose a day's product sales to change">Edit</button>{% endif %}<a class="btn xl" href="{% url 'core:excel_file' 'product_sales' %}" title="Download this list as an Excel file">Excel</a></div></div>
+{% include "sales/_tabs.html" %}
+<div class="cols">
+  <section class="card main stack"><h2>What was sold each day</h2>
+    <div class="tablebox"><table class="t">
+      <thead><tr><th>No.</th><th>Date</th><th class="r">Products</th><th class="r">Items</th><th class="r">Value</th>{% if can.costs %}<th class="r">GP</th>{% endif %}</tr></thead>
+      <tbody>{% for d, t in rows %}<tr class="link" data-href="{% url 'sales:daysales' d.pk %}"{% if can.sales_edit %} data-edit="{% url 'sales:daysales_edit' d.pk %}"{% endif %}>
+        <td class="small muted">{{ d.number }}</td><td><a class="rowlink" href="{% url 'sales:daysales' d.pk %}">{{ d.date|date:"D d M Y" }}</a></td>
+        <td class="r">{{ d.lines.all|length }}</td><td class="r">{{ t.qty|num:0 }}</td><td class="r"><b>{{ t.value|money }}</b></td>
+        {% if can.costs %}<td class="r"><span class="pill {{ t.gp|gpclass:company }}">{{ t.gp|pct }}</span></td>{% endif %}</tr>
+      {% empty %}<tr class="emptyrow"><td colspan="6" class="muted">No product sales typed yet.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+  {% if can.sales_edit %}
+  <aside class="aside"><form class="card stack" method="post" action="{% url 'sales:daysales_new' %}">{% csrf_token %}<h2>Type a day's product sales</h2>
+    {% for f in form %}{% include "_field.html" %}{% endfor %}
+    <button class="btn primary" type="submit">Start</button>
+    <p class="small muted" style="margin:0">Optional, but worth it: copy the quantities from the till's product report. You then see your real gross profit and best sellers.</p>
+  </form></aside>
+  {% endif %}
+</div>
+{% endblock %}

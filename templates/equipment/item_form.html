@@ -1,0 +1,31 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}{% if item.pk %}{{ item.asset_no }}{% else %}New item{% endif %}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'equipment:register' %}">Equipment</a> › {{ item.asset_no }}</div>
+  <h1>{% if item.pk %}{{ item.description }}{% else %}New equipment item{% endif %}</h1></div></div>
+<div class="cols">
+  <form method="post" class="main stack">{% csrf_token %}
+    {% if form.errors %}<div class="msg error">Please fix the boxes marked in red.</div>{% endif %}
+    <section class="card stack"><h2>Item</h2><div class="grid-form">
+      {% include "_field.html" with f=form.asset_no %}{% include "_field.html" with f=form.description %}{% include "_field.html" with f=form.category %}{% include "_field.html" with f=form.location %}
+      {% include "_field.html" with f=form.serial %}{% include "_field.html" with f=form.supplier %}</div></section>
+    <section class="card stack"><h2>Cost</h2><div class="grid-form">
+      {% include "_field.html" with f=form.purchase_date %}{% include "_field.html" with f=form.unit_cost %}{% include "_field.html" with f=form.qty %}{% include "_field.html" with f=form.life_override %}{% include "_field.html" with f=form.scrap_value %}</div>
+      <p class="small muted" style="margin:0">For identical things (trays, tins, chairs) use one line and type how many were bought.</p></section>
+    <section class="card stack"><h2>Gone?</h2><div class="grid-form">{% include "_field.html" with f=form.disposed_on %}{% include "_field.html" with f=form.disposed_note %}{% include "_field.html" with f=form.notes wide=1 %}</div>
+      <p class="small muted" style="margin:0">Only when it is really gone – broken, sold, or stolen and reported. Depreciation stops that month.</p></section>
+    {% if can.equipment_edit %}<div class="actions"><button class="btn primary" type="submit">Save</button><a class="btn quiet" href="{% url 'equipment:register' %}">Cancel</a></div>{% endif %}
+  </form>
+  {% if item.pk %}<aside class="aside">
+    {% if can.costs %}<section class="card peach stack"><h2>Value</h2>
+      <div class="tablebox"><table class="t"><tbody>
+        <tr><td>Bought for</td><td class="r">{{ item.total_cost|money }}</td></tr>
+        <tr><td>Useful life</td><td class="r">{{ item.life|num:1 }} years</td></tr>
+        <tr><td>Depreciation a month</td><td class="r">{{ item.per_month|money }}</td></tr>
+        <tr><td>Depreciated so far</td><td class="r">{{ dep_to|money }}</td></tr>
+        <tr class="total"><td>Book value now</td><td class="r">{{ book|money }}</td></tr></tbody></table></div></section>{% endif %}
+    <section class="card stack"><h2>Counts</h2>
+      {% for ln in history %}<div class="row" style="justify-content:space-between"><span>{{ ln.count.month|date:"M Y" }}</span><b {% if ln.qty < item.qty %}style="color:var(--low)"{% endif %}>{{ ln.qty }} of {{ item.qty }}</b></div>{% empty %}<p class="small muted" style="margin:0">Not counted yet.</p>{% endfor %}</section>
+  </aside>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% load static %}<!doctype html><html lang="en"><head><meta charset="utf-8"><title>{{ sale.number }}</title>
+<style>
+  @page{size:80mm auto;margin:0}
+  *{box-sizing:border-box}
+  body{margin:0;background:#eee;font-family:"Courier New",Courier,monospace;color:#000}
+  .slip{width:72mm;margin:0 auto;padding:4mm 2mm 8mm;background:#fff;font-size:11.5px;line-height:1.35}
+  .c{text-align:center}.r{text-align:right}.b{font-weight:700}
+  .logo{width:46mm;display:block;margin:0 auto 2mm;filter:brightness(0)}
+  .brand{font-family:"Pondo Brand","Courier New",monospace;text-transform:uppercase;letter-spacing:.02em}
+  h1{font-size:15px;margin:0;letter-spacing:1px}
+  .hr{border-top:1px dashed #000;margin:2mm 0}
+  table{width:100%;border-collapse:collapse}td{vertical-align:top;padding:0}
+  .big{font-size:15px;font-weight:700}
+  .cust td{text-align:left}.cust td:first-child{white-space:nowrap;padding-right:2mm;width:1%}.cust td+td{word-break:break-word}
+  .warn{border:1.5px solid #000;padding:1.5mm;text-align:center;font-weight:700;margin:2mm 0}
+  .bar{display:none}
+  @media screen{.bar{display:flex;gap:8px;justify-content:center;padding:10px;font-family:Arial,sans-serif}.bar a,.bar button{font-size:15px;padding:8px 14px;border-radius:8px;border:1px solid #999;background:#fff;text-decoration:none;color:#000;cursor:pointer}}
+  @media print{body{background:#fff}.bar{display:none}}
+</style>{% include "_brand_font.html" %}</head><body>
+<div class="bar"><button onclick="window.print()">Print</button>{% if back %}<a href="{{ back }}">Back</a>{% endif %}</div>
+<div class="slip">
+  <img class="logo" src="{% static 'brand/logo/secondary_burgundy.svg' %}" alt="Pondo Bakery">
+  <div class="c">{% with s=current_shop %}{% if s %}{{ s.address_line1 }}{% if s.address_line2 %}, {{ s.address_line2 }}{% endif %}<br>Tel {{ s.phone }}{% if s.email %}<br>{{ s.email }}{% endif %}<br>www.pondobakery.co.zw{% if s.tin %}<br>TIN {{ s.tin }}{% endif %}{% if s.vat_no %} · VAT {{ s.vat_no }}{% endif %}{% else %}74 Chinhoyi Street, Harare<br>Tel +263 78 048 9777<br>jurie@pondobakery.co.zw<br>www.pondobakery.co.zw{% endif %}{% endwith %}</div>
+  {% if sale.is_fiscal %}{% with t=fiscal.trader %}<div class="c">{% if t.name %}<b>{{ t.name }}</b><br>{% endif %}{% if t.tin %}TIN {{ t.tin }}{% endif %}{% if t.vat %} · VAT {{ t.vat }}{% endif %}</div>{% endwith %}
+    <div class="c b" style="font-size:13px;margin-top:2mm">{% if sale.is_refund %}FISCAL CREDIT NOTE{% else %}FISCAL TAX INVOICE{% endif %}</div>
+    {% if sale.fiscal_mode == "test" %}<div class="warn">ZIMRA TEST – NOT A TAX INVOICE</div>{% endif %}
+  {% elif sale.fiscal_status == "failed" %}<div class="warn">NOT YET FISCALISED – NOT A TAX INVOICE<br><span style="font-weight:400">Ask for your fiscal slip later</span></div>
+  {% else %}<div class="warn">PRACTICE – NOT A TAX INVOICE</div>{% endif %}
+  {% if sale.is_refund %}<div class="warn">REFUND of slip {{ sale.refund_of.number }}{% if sale.is_fiscal and sale.refund_of.fiscal_global_no %}<br>ZIMRA receipt {{ sale.refund_of.fiscal_global_no }} · day {{ sale.refund_of.fiscal_day }}{% endif %}</div>{% endif %}
+  <table>{% if sale.fiscal_ref %}<tr><td class="b">Invoice no:</td><td class="r b">{{ sale.fiscal_ref }}</td></tr>{% endif %}
+    <tr><td><b>Slip:</b> {{ sale.number }}</td><td class="r"><b>Till:</b> {{ sale.shift.label }}</td></tr>
+    <tr><td colspan="2"><b>Date &amp; Time:</b> {{ sale.created_at|date:"d/m/Y H:i" }}</td></tr>
+    <tr><td colspan="2"><b>Cashier:</b> {{ sale.shift.cashier_name }}</td></tr></table>
+  {% if sale.customer_name %}<div class="hr"></div>
+  <table class="cust"><tr><td class="b">{% if sale.is_refund %}Refund to:{% else %}Customer:{% endif %}</td><td>{{ sale.customer_name }}</td></tr>
+    {% if sale.customer_address %}<tr><td class="b">Address:</td><td>{{ sale.customer_address }}</td></tr>{% endif %}
+    {% if sale.customer_phone %}<tr><td class="b">Phone:</td><td>{{ sale.customer_phone }}</td></tr>{% endif %}
+    {% if sale.customer_email %}<tr><td class="b">E-mail:</td><td>{{ sale.customer_email }}</td></tr>{% endif %}
+    {% if sale.customer_tin %}<tr><td class="b">TIN no:</td><td>{{ sale.customer_tin }}</td></tr>{% endif %}
+    {% if sale.customer_vat %}<tr><td class="b">VAT no:</td><td>{{ sale.customer_vat }}</td></tr>{% endif %}</table>{% endif %}
+  <div class="hr"></div>
+  {% if sale.in_zwg %}<div class="c b">Currency: ZWG (ZiG) · ZWG {{ sale.fx_rate|floatformat:2 }} = USD 1</div>{% endif %}
+  <table>{% for it, price, line in lines %}<tr><td colspan="2">{{ it.name }}</td></tr>
+    <tr><td>&nbsp;&nbsp;{{ it.qty|floatformat:"-3" }} x {{ price|floatformat:2 }}</td><td class="r">{{ line|floatformat:2 }}</td></tr>{% endfor %}</table>
+  <div class="hr"></div>
+  {% if sale.in_zwg %}<table><tr><td class="big">TOTAL ZWG</td><td class="r big">{{ sale.total_fx|floatformat:2 }}</td></tr>
+    <tr><td>incl. VAT</td><td class="r">{{ sale.vat_fx|floatformat:2 }}</td></tr></table>
+  {% else %}<table><tr><td class="big">TOTAL USD</td><td class="r big">{{ sale.total|floatformat:2 }}</td></tr>
+    <tr><td>incl. VAT</td><td class="r">{{ sale.vat|floatformat:2 }}</td></tr></table>{% endif %}
+  {% if vat_rows %}<table style="font-size:10.5px;margin:1.5mm 0"><tr><td>VAT %</td><td class="r">Net</td><td class="r">VAT</td><td class="r">Amount</td></tr>
+    {% for r in vat_rows %}<tr><td>{{ r.pct }}%</td><td class="r">{{ r.net|floatformat:2 }}</td><td class="r">{{ r.vat|floatformat:2 }}</td><td class="r">{{ r.total|floatformat:2 }}</td></tr>{% endfor %}</table>{% endif %}
+  <table>
+    {% if sale.in_zwg %}{% for p in payments %}<tr><td>{{ p.label }}{% if p.ref %}<br>&nbsp;&nbsp;Ref {{ p.ref }}{% endif %}</td><td class="r">{{ p.zig_amount|floatformat:2 }}</td></tr>{% endfor %}
+    {% else %}{% for p in payments %}<tr><td>{{ p.label }}{% if p.zig_amount %} {{ p.zig_amount|floatformat:2 }}<br>&nbsp;&nbsp;@ ZWG {{ p.zig_rate|floatformat:2 }} = USD 1{% endif %}{% if p.ref %}<br>&nbsp;&nbsp;Ref {{ p.ref }}{% endif %}</td><td class="r">{{ p.tendered|default:p.amount|floatformat:2 }}</td></tr>{% endfor %}{% endif %}
+    {% if sale.in_zwg %}{% if sale.change_fx %}<tr><td class="b">CHANGE ZWG</td><td class="r b">{{ sale.change_fx|floatformat:2 }}</td></tr>{% endif %}
+    {% elif sale.change %}<tr><td class="b">CHANGE</td><td class="r b">{{ sale.change|floatformat:2 }}</td></tr>{% endif %}</table>
+  {% if sale.is_refund %}<div class="hr"></div><div>Reason: {{ sale.reason }}<br>Approved by: {{ sale.approved_by.first_name|default:sale.approved_by.username }}</div>{% endif %}
+  {% if sale.is_fiscal %}<div class="hr"></div>
+  <table><tr><td>Fiscal device</td><td class="r">{{ sale.fiscal_device|default:fiscal.trader.device }}</td></tr>
+    <tr><td>Fiscal day</td><td class="r">{{ sale.fiscal_day }}</td></tr>
+    <tr><td>Receipt no.</td><td class="r">{{ sale.fiscal_global_no }}</td></tr></table>
+  <div class="c" style="margin-top:2mm">{{ fiscal.qr }}</div>
+  {% if fiscal.code %}<div class="c">Verification code<br><b>{{ fiscal.code }}</b></div>{% endif %}
+  <div class="c" style="font-size:9px;word-break:break-all">Verify at ZIMRA:<br>{{ sale.fiscal_qr }}</div>
+  {% if sale.fiscal_status == "pending" %}<div class="c" style="font-size:10px">Signed offline – sent to ZIMRA when the line is back</div>{% endif %}
+  {% if sale.fiscal_status == "flagged" %}<div class="c" style="font-size:10px">ZIMRA validation: RED</div>{% endif %}{% endif %}
+  <div class="hr"></div>
+  <div class="c">Thank you – see you tomorrow!<br><b class="brand" style="font-size:15px">Pondo yako chete!</b><br><span style="font-size:10px">Food items are not exchanged once they have left the shop.</span>
+    <br><b><i style="font-size:10px">Please check your change before leaving the shop.</i></b></div>
+</div>
+{% if auto %}<script>
+  window.addEventListener('load', function(){ setTimeout(function(){ window.print();
+    {% if back %}setTimeout(function(){ location.href = "{{ back|escapejs }}"; }, 400);{% endif %} }, 150); });
+</script>{% endif %}
+</body></html>

@@ -1,0 +1,21 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}{{ day }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'sales:daysales_list' %}">Product sales</a> › {{ day.number }}</div>
+  <h1>Product sales · {{ day.date|date:"D d M Y" }}</h1></div>
+  <div class="actions"><button class="btn" type="button" onclick="window.print()">Print</button>{% if can.sales_edit %}<a class="btn primary" href="{% url 'sales:daysales_edit' day.pk %}">Edit</a>{% endif %}</div></div>
+<div class="stats">
+  <div class="card stat dark"><div class="lbl">Value sold</div><div class="val">{{ t.value|money }}</div><div class="sub">{{ t.qty|num:0 }} items</div></div>
+  <div class="card stat"><div class="lbl">Till sales that day</div><div class="val">{{ till|money }}</div><div class="sub">{% if diff is not None %}{% if diff == 0 %}matches{% else %}difference {{ diff|money }}{% endif %}{% else %}no cash-up yet{% endif %}</div></div>
+  {% if can.costs %}<div class="card stat"><div class="lbl">Gross profit</div><div class="val">{{ gp|pct }}</div><div class="sub">{{ t.excl|sub:t.cost|money }} on {{ t.excl|money }} excl. VAT</div></div>{% endif %}
+</div>
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>Product</th><th>Category</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Value</th>{% if can.costs %}<th class="r">Cost</th><th class="r">GP</th>{% endif %}</tr></thead>
+  <tbody>{% for ln in lines %}<tr><td><b>{{ ln.recipe.name }}</b></td><td class="small">{{ ln.recipe.category|default:"" }}</td><td class="r">{{ ln.qty|num:2 }}</td><td class="r">{{ ln.price|money }}</td><td class="r">{{ ln.value|money }}</td>
+    {% if can.costs %}<td class="r">{{ ln.cost|money }}</td><td class="r"><span class="pill {{ ln.gp|gpclass:company }}">{{ ln.gp|pct }}</span></td>{% endif %}</tr>
+  {% empty %}<tr class="emptyrow"><td colspan="7" class="muted">Nothing typed yet.</td></tr>{% endfor %}
+  {% if lines %}<tr class="total"><td colspan="4">Total</td><td class="r">{{ t.value|money }}</td>{% if can.costs %}<td class="r">{{ t.cost|money }}</td><td class="r">{{ gp|pct }}</td>{% endif %}</tr>{% endif %}</tbody>
+</table></div></section>
+{% if day.notes %}<section class="card"><h3>Notes</h3><p style="white-space:pre-line;margin:6px 0 0">{{ day.notes }}</p></section>{% endif %}
+{% if can.sales_edit %}<form method="post" action="{% url 'sales:daysales_delete' day.pk %}" onsubmit="return confirm('Delete these product sales?')">{% csrf_token %}<button class="btn danger small" type="submit">Delete</button></form>{% endif %}
+{% endblock %}

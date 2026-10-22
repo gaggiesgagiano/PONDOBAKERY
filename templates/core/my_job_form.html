@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{% if mj %}Change job{% else %}Add a job{% endif %}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'core:dashboard' %}">Dashboard</a> › <a href="{% url 'core:jobs' %}">Short Cuts</a></div>
+  <h1>{% if mj %}Change “{{ mj.title }}”{% else %}Add my own job{% endif %}</h1>
+  <div class="small muted">Your own job shows under Short Cuts on the days you choose. Tick it off when it is done – it starts again the next day.</div></div></div>
+<form method="post" class="stack">{% csrf_token %}
+  {% if form.errors %}<div class="msg error">Please fix the boxes marked in red.</div>{% endif %}
+  <section class="card stack">
+    <div class="grid-form">{% include "_field.html" with f=form.title %}{% include "_field.html" with f=form.note %}{% include "_field.html" with f=form.link %}</div>
+    <div class="field"><label>{{ form.days_list.label }}</label><div class="daypick">{% for c in form.days_list %}<label>{{ c.tag }} {{ c.choice_label }}</label>{% endfor %}</div>
+      {% for e in form.days_list.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
+    <div class="field"><label>Colour</label><div class="colpick">{% for c in form.colour %}<label>{{ c.tag }} <span class="cdot" style="background:{% cycle '#e56026' '#218d80' '#7a1315' '#f89b47' %};border:0"></span>{{ c.choice_label }}</label>{% endfor %}</div></div>
+    {% if form.shared %}{% include "_field.html" with f=form.shared %}{% endif %}
+  </section>
+  <div class="actions"><button class="btn primary" type="submit">Save</button><a class="btn quiet" href="{% url 'core:jobs' %}">Cancel</a></div>
+</form>
+{% if mj %}<form method="post" action="{% url 'core:my_job_delete' mj.pk %}" onsubmit="return confirm('Delete this job?')">{% csrf_token %}<button class="btn small danger" type="submit">Delete this job</button></form>{% endif %}
+{% endblock %}

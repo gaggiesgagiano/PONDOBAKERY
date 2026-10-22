@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Help{% endblock %}
+{% block head %}<style>
+  .steps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+  .steps li::marker{font-weight:800;color:var(--rust)}
+  .guide h2{display:flex;gap:10px;align-items:center}
+  .guide .when{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--rust)}
+</style>{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Help</div><h1>Quick guide</h1>
+  <div class="small muted">What to do, and when. Everything is in US$; sales, costs and stock values are <b>excluding VAT</b>.</div></div>
+  <div class="actions"><a class="btn primary" href="{% url 'core:manual' %}">Open the staff manual</a><button class="btn quiet" type="button" onclick="window.print()">Print this page</button></div></div>
+<div class="cols guide">
+  <div class="main">
+    <section class="card stack"><div class="when">Every day – after closing</div><h2>💵 Sales &amp; money</h2>
+      <ol class="steps">
+        <li><b>Daily sales:</b> <a href="{% url 'sales:daily_today' %}">Sales &amp; Cash-Up → Daily sales</a> – type the sales per category from the till's end-of-day report (excl. VAT). Day and night shift together.</li>
+        <li><b>Cash-up:</b> count the drawer and type what the till says per payment type. The program shows if the till is over or short. A manager signs it off.</li>
+        <li><b>Waste:</b> <a href="{% url 'production:waste_list' %}">Waste</a> – one log per shift for everything thrown away, damaged, given to staff or returned.</li>
+        <li><b>Dashboard:</b> nothing to type. It shows today, the week and the month against break-even and your profit target. Press Print to send it to the directors.</li>
+      </ol></section>
+    <section class="card stack"><div class="when">Every day – before each shift</div><h2>🥖 Production</h2>
+      <ol class="steps">
+        <li><a href="{% url 'production:plans' %}">Production</a> → start the plan for the day or night shift. Products with a model stock fill in by themselves.</li>
+        <li>Type what is still on the shelf; the program works out what to make, the batches and the ingredients.</li>
+        <li>Print the production sheet, the ingredient pull list and the recipe cards for the bakers. Mark the plan <b>Done</b> afterwards – that takes the ingredients off the stock.</li>
+      </ol></section>
+    <section class="card stack"><div class="when">When goods come in from suppliers</div><h2>📦 Stock</h2>
+      <ol class="steps">
+        <li><a href="{% url 'stock:grvs' %}">Goods received (GRV)</a>: type what really arrived and the invoice prices. Leave "update the ingredient prices" ticked to keep your costing right.</li>
+        <li>Order from the <a href="{% url 'stock:home' %}">stock levels</a> page – "Order what's low" fills in the order for you.</li>
+      </ol></section>
+    <section class="card stack"><div class="when">Every week – stock take day (e.g. Sunday night)</div><h2>📋 Stock take</h2>
+      <ol class="steps">
+        <li><a href="{% url 'stock:counts' %}">Stock take</a> → start, print the count sheet, count everything in the unit shown (kg, litre, each).</li>
+        <li>Type the counts and make it final – the stock value is saved.</li>
+        <li><a href="{% url 'reports:stock' %}">Reports → Stock results</a> shows the real GP between two stock takes, and the "unexplained loss".</li>
+      </ol></section>
+    <section class="card stack"><div class="when">Month end</div><h2>📊 Reports, payroll &amp; equipment</h2>
+      <ol class="steps">
+        <li><b>Payroll:</b> <a href="{% url 'staff:payruns' %}">Staff &amp; Payroll → Payroll</a> – start the pay run, type days, overtime and advances, make it final and print the payslips.</li>
+        <li><b>Equipment count:</b> <a href="{% url 'equipment:count' %}">Equipment → Monthly count</a> – walk around, count, save. Missing items turn red.</li>
+        <li><b>Month-end report:</b> <a href="{% url 'reports:month_end' %}">Reports</a> – profit &amp; loss, cash, VAT for the accountant. Check GP against the 60% target.</li>
+        <li><b>Lock the month</b> on the Month-end report, so the figures go into the Month archive and don't change any more.</li>
+        <li>Plug in the flash drive and click <b>Back up now</b>.</li>
+      </ol></section>
+  </div>
+  <aside class="aside">
+    <section class="card stack"><h2>🎨 Look, brand &amp; signs</h2>
+      <ol class="steps"><li><b>My look</b> (bottom of the menu): pick your own colours – Pondo Classic, Orange, Teal, Warm Orange, Bakery Cream or the dark Late Shift – the heading font and a bigger text size. Only you see it.</li>
+        {% if user.is_superuser %}<li><a href="{% url 'core:look_business' %}">Settings → Look &amp; feel</a>: the look for everybody and the log-in screen. Add the Pondo font file from your designer here.</li>{% endif %}
+        <li><a href="{% url 'core:brand' %}">Our Brand</a>: mission, values, the brand colours with their codes, fonts, and every logo to download for WhatsApp, signs and printing.</li>
+        <li><a href="{% url 'costing:cards' %}">Price cards &amp; posters</a>: shelf cards, display cards, “Today's special” posters and a price list in the brand colours.</li></ol></section>
+    <section class="card stack"><h2>When a supplier price changes</h2>
+      <ol class="steps"><li>Change it on the <a href="{% url 'costing:ingredients' %}">ingredient</a> (or let the GRV update it). Every recipe cost updates by itself.</li>
+        <li>Check <a href="{% url 'costing:recipes' %}">Recipes &amp; Prices</a> for GP turning warm orange or burgundy, and change the selling price.</li></ol></section>
+    <section class="card stack"><h2>Adding a new product</h2>
+      <ol class="steps"><li><a href="{% url 'costing:recipes' %}">Recipes</a> → New recipe (or Copy a similar one).</li>
+        <li>Pick ingredients from the list, type the quantities, method, baking temperature and selling price.</li>
+        <li>Add a photo on the recipe page.</li></ol></section>
+    <section class="card stack"><h2>Golden rules</h2>
+      <ol class="steps"><li>Sales, costs and stock values are excl. VAT.</li>
+        <li>An ingredient without a price counts as $0 – fix it straight away.</li>
+        <li>Back up to the flash drive every week.</li>
+        <li>Give each person their own login, with only the rights they need (Settings → Users &amp; rights).</li></ol></section>
+    <section class="card stack"><h2>Something looks wrong?</h2>
+      <ul class="steps" style="list-style:disc">
+        <li><b>GP is red or below 0:</b> the selling price is missing or too low, or a quantity is wrong (e.g. 5 instead of 0.005).</li>
+        <li><b>The dashboard shows $0:</b> no daily sales typed for that day.</li>
+        <li><b>Stock levels look wrong:</b> do a stock take; make sure production plans are marked Done.</li>
+        <li><b>The program does not open:</b> double-click "Start Pondo.bat" in the Pondo Bakery folder and send Claude a photo of the black window.</li>
+      </ul></section>
+  </aside>
+</div>
+{% endblock %}

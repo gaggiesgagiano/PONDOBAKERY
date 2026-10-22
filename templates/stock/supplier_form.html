@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Supplier{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'stock:suppliers' %}">Suppliers</a></div><h1>{% if s.pk %}{{ s.name }}{% else %}New supplier{% endif %}</h1></div></div>
+<form method="post" class="card stack">{% csrf_token %}
+  <div class="grid-form">{% for f in form %}{% include "_field.html" %}{% endfor %}</div>
+  <div class="actions"><button class="btn primary" type="submit">Save</button><a class="btn quiet" href="{% url 'stock:suppliers' %}">Cancel</a></div>
+</form>
+{% endblock %}

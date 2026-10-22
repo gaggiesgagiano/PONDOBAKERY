@@ -1,0 +1,18 @@
+{% extends "forms/_base.html" %}
+{% block css %}{% include "forms/_check_css.html" %}
+  table.ck td{height:13mm;vertical-align:top;padding-top:1mm}
+  @page{size:A4 landscape;margin:10mm 11mm}
+  @media screen{.page{width:297mm;min-height:210mm}}
+  @media print{.page{width:275mm!important}}
+  table.ck th{white-space:normal}
+{% endblock %}
+{% block fit %}.page:188{% endblock %}
+{% block letterhead %}{% load static %}<div class="slim"><img src="{% static 'brand/logo/primary_orange.svg' %}" alt=""><span><b>{{ current_shop.name|default:company.company_name|default:"Pondo Bakery" }}</b>{% if current_shop.address_line1 %} · {{ current_shop.address_line1 }}{% endif %}</span><span class="file">Keep in the file at the <b>counter</b> · checked daily by the Supervisor</span></div>{% endblock %}
+{% block subtitle %}<div class="sub">No food is exchanged once it has left the shop.<br>Refunds: Supervisor up to US$5 · more = manager.</div>{% endblock %}
+{% block content %}
+<table class="ck">
+  <colgroup><col style="width:20mm"><col style="width:36mm"><col style="width:30mm"><col><col style="width:22mm"><col style="width:56mm"><col style="width:20mm"></colgroup>
+  <thead><tr><th>Date &amp; time</th><th class="l">Customer &amp; phone</th><th class="l">Product</th><th class="l">What was wrong</th><th class="l">Taken by</th><th class="l">Action taken (replaced / refund $ / follow-up)</th><th>Checked (Supervisor)</th></tr></thead>
+  <tbody>{% for i in "1234567890" %}<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>{% endfor %}</tbody></table>
+<p class="legend">Serious complaints (somebody got sick, something found in the food): tell the Manager straight away and ask the customer to keep the product and the slip.</p>
+{% endblock %}

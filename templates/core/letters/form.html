@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}{% if letter %}Edit letter {{ letter.number }}{% else %}New letter{% endif %}{% endblock %}
+{% block head %}<style>
+  .letterform textarea, .rt-edit{font-family:"Arial Nova",Arial,sans-serif;font-size:15px;line-height:1.5}
+  .rt-store{display:none!important}
+  .rt-wrap{border:2px solid var(--input-line,#218d80);border-radius:12px;background:#fff;overflow:hidden}
+  .rt-bar{display:flex;gap:6px;align-items:center;padding:6px 8px;background:var(--peach,#fff3d7);border-bottom:1px solid var(--line,#f4e4c9)}
+  .rt-bar button{min-width:38px;height:34px;border-radius:8px;border:1px solid var(--line2,#ebd3b2);background:#fff;cursor:pointer;font-size:15px;color:#3b1d14}
+  .rt-bar button.on{background:#7a1315;color:#fff3d7;border-color:#7a1315}
+  .rt-bar .hint{margin-left:auto;font-size:12px;color:var(--muted,#7c5a4a)}
+  .rt-edit{min-height:440px;padding:16px 18px;outline:none;color:#2e1610}
+  .rt-edit p, .rt-edit div{margin:0}
+  .rt-edit:empty::before{content:attr(data-placeholder);color:#a88a7a;white-space:pre-line}
+</style>{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'core:letters' %}">Letters</a>{% if letter %} › {{ letter.number }}{% endif %}</div>
+  <h1>{% if letter %}Edit letter{% else %}New letter{% endif %}</h1>
+  <div class="small muted">Page 1 prints on the Pondo letterhead. A long letter carries on onto clean pages by itself.</div></div></div>
+<form method="post" class="stack letterform" id="letterform">{% csrf_token %}
+  <section class="card stack"><div class="grid-form">
+    {% include "_field.html" with f=form.date %}
+    {% include "_field.html" with f=form.subject %}
+    {% include "_field.html" with f=form.to wide=1 %}
+    <div class="field wide{% if form.body.errors %} bad{% endif %}">
+      <label for="rt-edit">{{ form.body.label }}</label>
+      <div class="rt-wrap">
+        <div class="rt-bar" role="toolbar" aria-label="Text style">
+          <button type="button" data-cmd="bold" title="Bold (Ctrl+B)" aria-label="Bold"><b>B</b></button>
+          <button type="button" data-cmd="italic" title="Italics (Ctrl+I)" aria-label="Italics"><i>I</i></button>
+          <button type="button" data-cmd="underline" title="Underline (Ctrl+U)" aria-label="Underline"><u>U</u></button>
+          <span class="hint">Ctrl+B bold · Ctrl+I italics · Ctrl+U underline · empty line = new paragraph</span>
+        </div>
+        <div class="rt-edit" id="rt-edit" contenteditable="true" role="textbox" aria-multiline="true" data-keep spellcheck="true" lang="en-ZA"
+             data-placeholder="Dear Mr Moyo&#10;&#10;Type your letter here …&#10;&#10;Yours sincerely"></div>
+      </div>
+      {{ form.body }}
+      {% for e in form.body.errors %}<div class="err">{{ e }}</div>{% endfor %}
+    </div>
+    {% include "_field.html" with f=form.sign_name %}
+    {% include "_field.html" with f=form.sign_title %}
+    {% if form.add_signature %}{% include "_field.html" with f=form.add_signature wide=1 %}{% endif %}
+  </div></section>
+  <div class="actions">
+    <button class="btn primary" type="submit" name="print" value="1">Save &amp; print</button>
+    <button class="btn" type="submit">Save</button>
+    <a class="btn quiet" href="{% if letter %}{% url 'core:letter' letter.pk %}{% else %}{% url 'core:letters' %}{% endif %}">Cancel</a>
+  </div>
+</form>
+{% if letter %}<form method="post" action="{% url 'core:letter_delete' letter.pk %}" onsubmit="return confirm('Delete letter {{ letter.number }}? This cannot be undone.')" style="margin-top:18px">{% csrf_token %}
+  <button class="btn danger small" type="submit">Delete this letter</button></form>{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  var ed = document.getElementById('rt-edit'), store = document.querySelector('textarea.rt-store'), form = document.getElementById('letterform');
+  try { document.execCommand('defaultParagraphSeparator', false, 'p'); document.execCommand('styleWithCSS', false, false); } catch (e) {}
+  ed.innerHTML = store.value || '';
+  if (!ed.textContent.trim()) ed.innerHTML = '';
+  var btns = document.querySelectorAll('.rt-bar button[data-cmd]');
+  function state(){ btns.forEach(function(b){ try { b.classList.toggle('on', document.queryCommandState(b.dataset.cmd)); } catch (e) {} }); }
+  btns.forEach(function(b){
+    b.addEventListener('mousedown', function(e){ e.preventDefault(); });           /* keep the cursor in the letter */
+    b.addEventListener('click', function(){ ed.focus(); document.execCommand(b.dataset.cmd); state(); });
+  });
+  ed.addEventListener('keydown', function(e){                                       /* Ctrl+B / I / U */
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    var k = e.key.toLowerCase(), cmd = {b: 'bold', i: 'italic', u: 'underline'}[k];
+    if (cmd){ e.preventDefault(); document.execCommand(cmd); state(); }
+  });
+  ed.addEventListener('keyup', state); ed.addEventListener('mouseup', state);
+  ed.addEventListener('paste', function(e){                                         /* paste as plain text – no strange fonts */
+    e.preventDefault(); var t = (e.clipboardData || window.clipboardData).getData('text/plain'); document.execCommand('insertText', false, t);
+  });
+  store.required = false;   /* the editor fills it – a hidden required box stops Chrome from saving */
+  function sync(){ store.value = ed.innerHTML; }
+  ed.addEventListener('input', sync);
+  form.addEventListener('submit', sync);
+})();
+
+</script>
+{% endblock %}

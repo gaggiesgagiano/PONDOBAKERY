@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}E-mail {{ k.what }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{{ back_url }}">Back</a> › E-mail</div><h1>E-mail {{ k.what }}</h1>
+  <div class="muted small">From {{ es.from_name }} &lt;{{ es.from_email }}&gt;{% if es.copy_me %} · a copy goes to {{ es.from_email }}{% endif %}</div></div></div>
+{% if not es.ready %}<div class="msg error">E-mail is not set up yet. {% if can.owner %}<a href="{% url 'core:email_settings' %}">Set it up under Settings › E-mail</a>.{% else %}Ask the Manager to set it up under Settings › E-mail.{% endif %}</div>{% endif %}
+<form method="post" class="stack" id="mailform">{% csrf_token %}
+  {% if form.errors %}<div class="msg error">Please fix the boxes marked in red.</div>{% endif %}
+  <section class="card stack"><div class="grid-form">
+    {% include "_field.html" with f=form.to wide=1 %}{% include "_field.html" with f=form.cc wide=1 %}{% include "_field.html" with f=form.subject wide=1 %}
+    {% include "_field.html" with f=form.body wide=1 %}</div>
+    <div class="small muted" style="white-space:pre-line;border-left:3px solid var(--line2);padding-left:10px">{{ es.signature }}</div></section>
+  <section class="card stack"><h2>Attached</h2>
+    {% for ext, name, make in k.files %}<label class="row" style="gap:8px"><input type="checkbox" name="att_{{ ext }}" value="1" checked> <b>{{ name }}</b> <span class="muted small">{% if ext == 'pdf' %}PDF – made from the print page{% else %}Excel{% endif %}</span></label>{% endfor %}
+    {% if k.mark_sent %}<label class="row" style="gap:8px"><input type="checkbox" name="mark_sent" value="1" checked> Mark the order as <b>sent to supplier</b></label>{% endif %}
+  </section>
+  <div class="actions"><button class="btn primary" type="submit" id="sendbtn"{% if not es.ready %} disabled{% endif %}>Send e-mail</button><a class="btn quiet" href="{{ back_url }}">Cancel</a>
+    <span class="small muted" id="busy" style="display:none">Making the PDF and sending – this takes a few seconds…</span></div>
+</form>
+<script>document.getElementById('mailform').addEventListener('submit',function(){var b=document.getElementById('sendbtn');b.disabled=true;b.textContent='Sending…';document.getElementById('busy').style.display='';});</script>
+{% endblock %}

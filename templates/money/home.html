@@ -1,0 +1,54 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Money & accounts{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Money &amp; people</div><h1>Money &amp; accounts</h1>
+  <div class="small muted">Where the money is, what we owe, VAT and the balance sheet – the books your accountant needs. Cash-ups, expenses, wages, advances and paid invoices come in by themselves; type only what Pondo can't know.</div></div>
+  {% if not setup and can.money_edit %}<div class="actions"><a class="btn" href="{% url 'money:pay' %}">Pay a supplier</a><a class="btn primary" href="{% url 'money:entry_new' %}">+ Money in / out</a></div>{% endif %}</div>
+{% include "money/_tabs.html" %}
+{% if setup %}
+<section class="card stack" style="max-width:760px"><h2 style="margin-top:0">First: set up the money accounts</h2>
+  <p>Tell Pondo where the business keeps money – usually <b>the safe</b> (cash), <b>the bank account</b> and <b>EcoCash</b> – with the day the books start and the balance on that day (on opening day the safe usually holds only the floats).</p>
+  {% if can.owner %}<div class="row"><a class="btn primary" href="{% url 'money:account_new' %}">+ Add an account</a></div>{% else %}<p class="muted">Ask the Manager to set them up.</p>{% endif %}
+</section>
+{% else %}
+<div class="cols">
+<section class="main stack">
+  <section class="card" id="accounts"><h2 style="margin-top:0">Money in the accounts today</h2>
+    <div class="tablebox"><table class="t"><thead><tr><th>Account</th><th class="r">Balance</th><th>Last statement check</th><th></th></tr></thead><tbody>
+    {% for r in rows %}<tr class="link" data-href="{% url 'money:book' r.a.pk %}"><td><b>{{ r.a.name }}</b> <span class="small muted">{{ r.a.get_kind_display }}{% if not r.a.active %} · not used{% endif %}</span></td>
+      <td class="r"><b>{{ r.bal|money }}</b></td>
+      <td class="small">{% if r.last %}{{ r.last.date|date:"d M Y" }} – {% if r.last.difference %}<span style="color:#c0392b">differs {{ r.last.difference|money }}</span>{% else %}agreed ✓{% endif %}{% elif r.a.kind != "safe" %}<span class="muted">never – check against the statement</span>{% else %}<span class="muted">count the safe</span>{% endif %}</td>
+      <td class="r"><a class="btn small quiet" href="{% url 'money:book' r.a.pk %}">Cash book</a> {% if can.money_edit %}<a class="btn small quiet" href="{% url 'money:bank_check' r.a.pk %}">{% if r.a.kind == "safe" %}Safe count{% else %}Check statement{% endif %}</a>{% endif %}</td></tr>
+    {% endfor %}<tr class="total"><td>Total</td><td class="r">{{ total|money }}</td><td colspan="2"></td></tr></tbody></table></div>
+  </section>
+  <section class="card"><h2 style="margin-top:0">Suppliers we owe</h2>
+    {% if cred %}<div class="tablebox"><table class="t"><thead><tr><th>Supplier</th><th class="r">Invoices</th><th class="r">Owe</th><th class="r">Overdue</th></tr></thead><tbody>
+    {% for c in cred %}<tr class="link" data-href="{% url 'money:statement' c.supplier.pk %}"><td><b>{{ c.supplier }}</b></td><td class="r">{{ c.n }}</td><td class="r"><b>{{ c.owing|money }}</b></td><td class="r">{% if c.overdue %}<span style="color:#c0392b"><b>{{ c.overdue|money }}</b></span>{% else %}–{% endif %}</td></tr>{% endfor %}
+    <tr class="total"><td colspan="2">Total</td><td class="r">{{ cred_total|money }}</td><td class="r">{{ cred_overdue|money }}</td></tr></tbody></table></div>
+    {% else %}<p class="muted" style="margin:0">We owe no supplier anything. 👍</p>{% endif %}
+    <div class="row" style="margin-top:10px"><a class="btn small quiet" href="{% url 'money:creditors' %}">All unpaid invoices</a>{% if can.money_edit %}<a class="btn small" href="{% url 'money:pay' %}">Pay a supplier</a>{% endif %}</div>
+  </section>
+  <section class="card"><h2 style="margin-top:0">Last money typed in</h2>
+    <div class="tablebox"><table class="t"><tbody>{% for e in entries %}<tr class="link" data-href="{% url 'money:entry_edit' e.pk %}"><td>{{ e.date|date:"d M" }}</td><td>{{ e.get_kind_display }}<div class="small muted">{{ e.account }}{% if e.to_account %} → {{ e.to_account }}{% endif %}{% if e.description %} · {{ e.description }}{% endif %}</div></td><td class="r"><b>{{ e.amount|money }}</b></td></tr>
+    {% empty %}<tr><td class="muted">Nothing yet. Owner / boss money in, loans, ZIMRA and NSSA payments, bank charges and banking the safe cash are typed under <b>+ Money in / out</b>.</td></tr>{% endfor %}</tbody></table></div>
+  </section>
+</section>
+<aside class="aside stack">
+  <section class="card stack"><h2 style="margin:0">Owed to ZIMRA &amp; NSSA</h2>
+    <div class="row" style="justify-content:space-between"><span>VAT ({{ today|date:"F" }} so far)</span><b>{{ vat_m.payable|money }}</b></div>
+    <div class="row" style="justify-content:space-between"><span>VAT not yet paid</span><b>{{ vat_owed|money }}</b></div>
+    <div class="row" style="justify-content:space-between"><span>PAYE &amp; AIDS levy</span><b>{{ pay.paye.owed|money }}</b></div>
+    <div class="row" style="justify-content:space-between"><span>NSSA</span><b>{{ pay.nssa.owed|money }}</b></div>
+    <div class="row" style="justify-content:space-between"><span>ZIMDEF</span><b>{{ pay.zimdef.owed|money }}</b></div>
+    <p class="small muted" style="margin:0">From the till, GRVs, expenses and final pay runs since {{ start|date:"d M Y" }}, less what was paid (type payments under <i>+ Money in / out</i>). Your accountant confirms the returns.</p>
+    <a class="btn small quiet" href="{% url 'money:vat' %}">VAT worksheet</a>
+  </section>
+  <section class="card stack"><h2 style="margin:0">Reports</h2>
+    <a href="{% url 'money:balance' %}">Balance sheet – what we own and owe</a>
+    <a href="{% url 'reports:month_end' %}">Month-end – profit &amp; loss</a>
+    <a href="{% url 'reports:accountant' %}">Accountant's month pack</a>
+  </section>
+</aside>
+</div>
+{% endif %}
+{% endblock %}

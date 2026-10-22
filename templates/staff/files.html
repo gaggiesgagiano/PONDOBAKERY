@@ -1,0 +1,52 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Staff files{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Staff &amp; Payroll</div><h1>Staff files</h1>
+  <div class="muted small">Who has which papers – on the laptop and in the paper file</div></div>
+  <div class="actions"><a class="btn" href="{% url 'staff:files_print' %}" target="_blank">Print all file sheets</a><a class="btn" href="{% url 'staff:cards_print' %}" target="_blank">Print staff cards</a></div></div>
+{% include "staff/_tabs.html" %}
+<div class="stats">
+  <div class="card stat dark"><div class="lbl">Complete staff files</div><div class="val">{{ n_complete }} of {{ rows|length }}</div><div class="sub">photo + every paper, on the laptop and in the file</div></div>
+  <div class="card stat"><div class="lbl">Papers running out</div><div class="val">{{ expiring|length }}</div><div class="sub">ran out, or run out in the next 30 days</div></div>
+  <div class="card stat"><div class="lbl">No photo yet</div><div class="val">{{ n_photo }}</div></div>
+  <div class="card stat"><div class="lbl">No staff number</div><div class="val">{{ no_number|length }}</div></div>
+</div>
+{% if expiring %}<section class="card stack"><h2>Papers running out</h2>
+  <div class="tablebox"><table class="t"><thead><tr><th>Who</th><th>Paper</th><th>Runs out</th><th></th></tr></thead><tbody>
+  {% for p in expiring %}<tr><td><a href="{% url 'staff:person' p.employee_id %}#papers">{{ p.employee.name }}</a> <span class="small muted">{{ p.employee.code }}</span></td><td>{{ p.get_kind_display }}{% if p.title %} – {{ p.title }}{% endif %}</td>
+    <td><span class="pill {% if p.expires < today %}gp-low{% else %}gp-mid{% endif %}">{% if p.expires < today %}ran out {% endif %}{{ p.expires|date:"d M Y" }}</span></td><td class="small muted">Ask for the new one and add it to the file.</td></tr>{% endfor %}
+  </tbody></table></div></section>{% endif %}
+<section class="card stack"><div class="row" style="justify-content:space-between;align-items:baseline"><h2>Everybody working here</h2>
+  <span class="small"><span class="fm both">✓ both</span> on the laptop and in the file · <span class="fm soft">laptop</span> / <span class="fm hard">paper</span> only one of the two · <span class="fm none">missing</span></span></div>
+  <div class="tablebox"><table class="t"><thead><tr><th>Staff no.</th><th>Name</th><th>Photo</th>{% for k, label in columns %}<th>{{ label }}</th>{% endfor %}<th>Other papers</th></tr></thead><tbody>
+  {% for r in rows %}<tr class="link" data-href="{% url 'staff:person' r.e.pk %}#papers">
+    <td>{% if r.e.code %}<span class="staffno">{{ r.e.code }}</span>{% else %}<span class="staffno none">no number</span>{% endif %}</td>
+    <td><div class="who-cell">{% include "staff/_ava.html" with e=r.e %}<a class="rowlink" href="{% url 'staff:person' r.e.pk %}#papers">{{ r.e.name }}</a></div></td>
+    <td>{% if r.e.photo %}<span class="fm both">✓</span>{% else %}<span class="fm none">missing</span>{% endif %}</td>
+    {% for c in r.cells %}<td><span class="fm {% if c.exp == 'expired' %}expired{% else %}{{ c.state }}{% endif %}">{% if c.exp == 'expired' %}ran out{% elif c.state == 'both' %}✓ both{% elif c.state == 'soft' %}laptop{% elif c.state == 'hard' %}paper{% else %}missing{% endif %}</span></td>{% endfor %}
+    <td class="small">{% for i in r.extra %}{{ i.label }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="muted">–</span>{% endfor %}</td></tr>
+  {% empty %}<tr class="emptyrow"><td colspan="{{ columns|length|add:4 }}" class="muted">Nobody working here yet.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% if form %}
+<div class="cols">
+  <section class="card stack main" id="numbers"><h2>Staff numbers</h2>
+    <p style="margin:0">Every person gets their own number: the year they started and a running number, like <b>26001</b>. It goes on payslips, the staff card and the file sheet, and is never given to anybody else – also not after someone leaves. Use the same number for the person on the fingerprint machine.</p>
+    <form method="post" action="{% url 'staff:file_settings' %}" class="stack">{% csrf_token %}
+      <div class="field"><label>{{ form.staff_no_style.label }}</label><div class="needs-grid" style="grid-template-columns:1fr">{% for c in form.staff_no_style %}<label>{{ c.tag }} {{ c.choice_label }}</label>{% endfor %}</div></div>
+      <div class="grid-form">{% include "_field.html" with f=form.staff_no_prefix %}{% include "_field.html" with f=form.staff_no_digits %}</div>
+      <p class="small muted" style="margin:0">Somebody new starting today gets <b>{{ next_no }}</b>. Changing this only changes new numbers – numbers already given stay as they are (change one on the person's <b>Edit</b> page).</p>
+      <h3>Every staff file should have</h3>
+      <div class="needs-grid">{% for c in form.needs %}<label>{{ c.tag }} {{ c.choice_label }}</label>{% endfor %}</div>
+      <p class="small muted" style="margin:0">These show as the checklist on each person's page and on the file sheet. Papers that are not ticked can still be added – they show as "other papers".</p>
+      <div class="row"><button class="btn primary" type="submit">Save</button></div>
+    </form>
+  </section>
+  <aside class="aside"><section class="card stack"><h2>Give everybody a number</h2>
+    {% if no_number %}<p style="margin:0">{{ no_number|length }} {{ no_number|length|pluralize:"person has,people have" }} no number yet. They get the year they started and the next free number for that year – the longest-serving first, then in the order they were added.</p>
+      <form method="post" action="{% url 'staff:give_numbers' %}">{% csrf_token %}<button class="btn primary" type="submit">Give them numbers</button></form>
+      <p class="small muted" style="margin:0">Want a certain person to get a certain number? Type it on their <b>Edit</b> page first.</p>
+    {% else %}<p class="small muted" style="margin:0">Everybody working here has a number.</p>{% endif %}
+  </section></aside>
+</div>{% endif %}
+{% endblock %}

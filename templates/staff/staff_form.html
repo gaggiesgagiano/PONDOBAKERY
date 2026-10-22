@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{% if e.pk %}{{ e.name }}{% else %}New staff member{% endif %}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'staff:people' %}">Staff</a>{% if e.pk %} › <a href="{% url 'staff:person' e.pk %}">{{ e.name }}</a>{% endif %}</div>
+  <h1>{% if e.pk %}Change {{ e.short }}{% else %}New staff member{% endif %}</h1></div></div>
+<form method="post" class="stack">{% csrf_token %}
+  {% if form.errors %}<div class="msg error">Please fix the boxes marked in red.</div>{% endif %}
+  <section class="card stack"><h2>Person</h2><div class="grid-form">
+    {% include "_field.html" with f=form.first_name %}{% include "_field.html" with f=form.middle_name %}{% include "_field.html" with f=form.last_name %}{% include "_field.html" with f=form.known_as %}{% include "_field.html" with f=form.code %}{% include "_field.html" with f=form.id_number %}
+    {% include "_field.html" with f=form.date_of_birth %}{% include "_field.html" with f=form.gender %}{% include "_field.html" with f=form.phone %}{% include "_field.html" with f=form.next_of_kin %}
+    {% include "_field.html" with f=form.address wide=1 %}
+  </div></section>
+  <section class="card stack"><h2>Job</h2><div class="grid-form">
+    {% include "_field.html" with f=form.job_title %}{% include "_field.html" with f=form.department %}{% include "_field.html" with f=form.start_date %}{% include "_field.html" with f=form.end_date %}
+    {% include "_field.html" with f=form.leave_days %}{% include "_field.html" with f=form.active %}
+  </div></section>
+  <section class="card stack"><h2>Pay</h2><div class="grid-form">
+    {% include "_field.html" with f=form.pay_type %}{% include "_field.html" with f=form.rate %}{% include "_field.html" with f=form.transport_allowance %}{% include "_field.html" with f=form.other_allowance %}
+    {% include "_field.html" with f=form.paid_by %}{% include "_field.html" with f=form.bank_details %}{% include "_field.html" with f=form.nssa_no %}{% include "_field.html" with f=form.tax_no %}
+    {% include "_field.html" with f=form.pays_nssa %}{% include "_field.html" with f=form.pays_paye %}
+  </div></section>
+  <section class="card stack"><div class="grid-form">{% include "_field.html" with f=form.notes wide=1 %}</div></section>
+  {% if not e.pk %}<p class="small muted" style="margin:0">After saving you can add a photo and the papers for the staff file (ID or passport, CV, certificates, fingerprints …).</p>{% endif %}
+  <div class="actions"><button class="btn primary" type="submit">Save</button><a class="btn quiet" href="{% if e.pk %}{% url 'staff:person' e.pk %}{% else %}{% url 'staff:people' %}{% endif %}">Cancel</a></div>
+</form>
+{% endblock %}

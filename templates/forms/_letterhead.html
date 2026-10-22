@@ -1,0 +1,2 @@
+{% load static %}<div class="lh"><img src="{% static 'brand/logo/primary_orange.svg' %}" alt="Pondo Bakery">
+  <div class="shop"><b>{{ current_shop.name|default:company.company_name|default:"Pondo Bakery" }}</b>{% if current_shop.address_line1 %}<br>{{ current_shop.address_line1 }}{% endif %}{% if current_shop.address_line2 %}<br>{{ current_shop.address_line2 }}{% endif %}{% if current_shop.phone %}<br>Cell: {{ current_shop.phone }}{% endif %}{% if current_shop.email %}<br>{{ current_shop.email }}{% endif %}</div></div>

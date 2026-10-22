@@ -1,0 +1,29 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Equipment{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Equipment</div><h1>Equipment register</h1>
+  <div class="small muted">Every oven, mixer, tray and chair the bakery owns. Costs in US$ excl. VAT.</div></div>
+  {% if can.equipment_edit %}<div class="actions"><a class="btn xl" href="{% url 'core:excel_file' 'equipment' %}" title="Download this list as an Excel file">Excel</a><a class="btn" href="{% url 'equipment:count' %}">Monthly count</a><a class="btn primary" href="{% url 'equipment:item_new' %}">+ New item</a></div>{% endif %}</div>
+{% include "equipment/_tabs.html" %}
+<div class="stats">
+  <div class="card stat"><div class="lbl">Items shown</div><div class="val">{{ rows|length }}</div><div class="sub">{{ pieces }} pieces</div></div>
+  {% if can.costs %}<div class="card stat"><div class="lbl">Bought for</div><div class="val">{{ cost|money:0 }}</div></div>
+  <div class="card stat dark"><div class="lbl">Book value now</div><div class="val">{{ book|money:0 }}</div><div class="sub">after depreciation</div></div>
+  <div class="card stat"><div class="lbl">Depreciation this month</div><div class="val">{{ dep|money:0 }}</div><div class="sub">a cost on the month-end report</div></div>{% endif %}
+</div>
+{% if no_loc %}<div class="banner"><span>{{ no_loc }} item{{ no_loc|pluralize }} have no place yet – set the place so the monthly count sheet groups them by area.</span><a class="btn small" href="?loc=none">Show them</a></div>{% endif %}
+<form class="filters" method="get">
+  <input type="search" name="q" value="{{ q }}" placeholder="Search item, asset no., serial, supplier" aria-label="Search">
+  <select name="cat" onchange="this.form.submit()" aria-label="Category"><option value="">All categories</option>{% for c in cats %}<option value="{{ c.pk }}" {% if cat == c.pk|stringformat:'s' %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select>
+  <select name="loc" onchange="this.form.submit()" aria-label="Place"><option value="">All places</option><option value="none" {% if loc == 'none' %}selected{% endif %}>No place set</option>{% for l in locs %}<option value="{{ l.pk }}" {% if loc == l.pk|stringformat:'s' %}selected{% endif %}>{{ l.name }}</option>{% endfor %}</select>
+  <label class="row small" style="font-weight:700"><input type="checkbox" name="show" value="all" {% if show == 'all' %}checked{% endif %} onchange="this.form.submit()" style="width:20px;height:20px"> Also sold / scrapped</label>
+  <button class="btn small quiet" type="submit">Search</button>
+</form>
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>Asset no.</th><th>Item</th><th>Category</th><th>Place</th><th>Bought</th><th class="r">Qty</th>{% if can.costs %}<th class="r">Cost</th><th class="r">Per month</th><th class="r">Book value</th>{% endif %}</tr></thead>
+  <tbody>{% for i, bv, dep in rows %}<tr class="link" data-href="{% url 'equipment:item' i.pk %}"{% if i.disposed_on %} style="opacity:.55"{% endif %}>
+    <td class="small"><b>{{ i.asset_no }}</b></td><td><a class="rowlink" href="{% url 'equipment:item' i.pk %}">{{ i.description }}</a>{% if i.disposed_on %} <span class="pill gp-none">gone {{ i.disposed_on|date:"M Y" }}</span>{% endif %}<div class="small muted">{{ i.supplier }}</div></td>
+    <td class="small">{{ i.category }}</td><td class="small">{{ i.location|default:"–" }}</td><td class="small">{{ i.purchase_date|date:"d M Y" }}</td><td class="r">{{ i.qty }}</td>
+    {% if can.costs %}<td class="r">{{ i.total_cost|money }}</td><td class="r small">{{ dep|money }}</td><td class="r"><b>{{ bv|money }}</b></td>{% endif %}</tr>
+  {% empty %}<tr class="emptyrow"><td colspan="9" class="muted">Nothing here.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

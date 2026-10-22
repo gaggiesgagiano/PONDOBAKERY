@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Check {{ acc.name }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'money:book' acc.pk %}">{{ acc.name }}</a></div><h1>{% if acc.kind == "safe" %}Safe count{% else %}Check against the statement{% endif %} – {{ acc.name }}</h1>
+  <div class="small muted">{% if acc.kind == "safe" %}Count the cash in the safe (a manager and one other person) and type the total. {% else %}Take the closing balance on the {{ acc.get_kind_display|lower }} statement for a day and type it. {% endif %}Pondo compares it with its own figure for that day. Do this at least at every month end.</div></div></div>
+{% include "money/_tabs.html" %}
+<div class="cols"><form class="card stack main" method="post" style="max-width:620px">{% csrf_token %}
+  {% for f in form %}<div class="field"><label for="{{ f.id_for_label }}">{% if f.name == "statement_balance" and acc.kind == "safe" %}Cash counted in the safe ($){% else %}{{ f.label }}{% endif %}</label>{{ f }}{% for e in f.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>{% endfor %}
+  <div class="row"><button class="btn primary" type="submit">Compare</button><a class="btn quiet" href="{% url 'money:book' acc.pk %}">Back</a></div>
+</form>
+<aside class="aside"><section class="card stack"><h2 style="margin:0">When it differs</h2>
+<p class="small" style="margin:0">Look for: bank charges or interest not typed · cash taken to the bank but not typed as a move · a supplier paid but not typed (or typed twice) · a cash-up with a wrong amount · money the owner / boss put in. Type what is missing under <i>+ Money in / out</i>, then compare again. Write what you found in the notes.</p></section></aside></div>
+<section class="card"><h2 style="margin-top:0">Earlier checks</h2><div class="tablebox"><table class="t"><thead><tr><th>Date</th><th class="r">Statement / count</th><th class="r">Pondo</th><th class="r">Difference</th><th>Notes</th><th>By</th></tr></thead><tbody>
+{% for c in checks %}<tr><td>{{ c.date|date:"d M Y" }}</td><td class="r">{{ c.statement_balance|money }}</td><td class="r">{{ c.pondo_balance|money }}</td><td class="r">{% if c.difference %}<b style="color:#c0392b">{{ c.difference|money }}</b>{% else %}✓{% endif %}</td><td class="small">{{ c.notes }}</td><td class="small">{{ c.checked_by|default:"" }}</td></tr>
+{% empty %}<tr><td colspan="6" class="muted">None yet.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

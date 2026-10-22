@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Tax &amp; NSSA rates{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Staff &amp; Payroll</div><h1>Tax &amp; NSSA rates</h1></div></div>
+{% include "staff/_tabs.html" %}
+<form method="post" class="stack">{% csrf_token %}
+  <section class="card stack"><h2>PAYE tax table (per month, US$)</h2>
+    <p class="small muted" style="margin:0">Tax = taxable pay × rate − deduct, using the first band the pay fits in. Copy the rows from ZIMRA's monthly USD table when it changes. The top band has an empty "Pay up to".</p>
+    {{ bf.management_form }}
+    {% if bf.non_form_errors %}<div class="msg error">{{ bf.non_form_errors }}</div>{% endif %}
+    <div class="tablebox"><table class="t lines" style="min-width:520px"><thead><tr><th>Pay up to ($)</th><th>Rate %</th><th>Deduct ($)</th><th>Remove</th></tr></thead><tbody>
+    {% for f in bf %}<tr{% if f.errors %} class="has-error"{% endif %}>{{ f.id }}<td class="qty">{{ f.up_to }}</td><td class="qty">{{ f.rate_pct }}</td><td class="qty">{{ f.deduct }}</td><td style="text-align:center">{{ f.DELETE }}</td></tr>
+      {% if f.errors %}<tr><td colspan="4" style="color:var(--low);font-weight:700">{% for fld in f %}{% for e in fld.errors %}{{ fld.label }}: {{ e }} {% endfor %}{% endfor %}</td></tr>{% endif %}{% endfor %}
+    </tbody></table></div>
+    <div class="grid-form">{% include "_field.html" with f=sf.tax_table_note %}</div>
+  </section>
+  <section class="card stack"><h2>NSSA, AIDS levy, ZIMDEF</h2>
+    <div class="grid-form">{% include "_field.html" with f=sf.nssa_pct %}{% include "_field.html" with f=sf.nssa_er_pct %}{% include "_field.html" with f=sf.nssa_ceiling %}{% include "_field.html" with f=sf.aids_pct %}{% include "_field.html" with f=sf.zimdef_pct %}</div>
+  </section>
+  <section class="card stack"><h2>Working time</h2>
+    <div class="grid-form">{% include "_field.html" with f=sf.normal_days %}{% include "_field.html" with f=sf.normal_hours %}{% include "_field.html" with f=sf.day_hours %}{% include "_field.html" with f=sf.overtime_rate %}{% include "_field.html" with f=sf.holiday_rate %}</div>
+  </section>
+  <p class="small muted">Saving works out every draft pay run again. Final pay runs keep the figures they were paid with.</p>
+  <div class="actions"><button class="btn primary" type="submit">Save rates</button></div>
+</form>
+{% endblock %}

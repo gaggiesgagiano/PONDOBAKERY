@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}{% if c.pk %}{{ c.name }}{% else %}New customer{% endif %}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'invoices:customers' %}">Customers</a></div><h1>{% if c.pk %}{{ c.name }}{% else %}New customer{% endif %}</h1></div>
+  {% if c.pk and can.invoices_edit %}<div class="actions"><a class="btn primary" href="{% url 'invoices:new' %}?customer={{ c.pk }}">New invoice</a><a class="btn" href="{% url 'invoices:new' %}?customer={{ c.pk }}&kind=quote">New quotation</a></div>{% endif %}</div>
+<div class="cols">
+  <form method="post" class="main stack">{% csrf_token %}
+    <section class="card stack"><div class="grid-form">{% for f in form %}{% include "_field.html" %}{% endfor %}</div></section>
+    {% if can.invoices_edit %}<div class="actions"><button class="btn primary" type="submit">Save</button><a class="btn quiet" href="{% url 'invoices:customers' %}">Cancel</a></div>{% endif %}
+  </form>
+  {% if c.pk %}<aside class="aside"><section class="card stack"><h2>Documents</h2>
+    {% for d in docs %}<div class="row" style="justify-content:space-between"><a href="{% url 'invoices:doc' d.pk %}">{{ d.number }}</a><span class="small">{{ d.date|date:"d M Y" }}</span><b>{{ d.total|money }}</b></div>{% empty %}<p class="small muted" style="margin:0">None yet.</p>{% endfor %}
+  </section></aside>{% endif %}
+</div>
+{% endblock %}

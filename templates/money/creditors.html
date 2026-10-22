@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Suppliers we owe{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'money:home' %}">Money &amp; accounts</a></div><h1>Suppliers we owe</h1>
+  <div class="small muted">Every supplier invoice (GRV) that is not fully paid on {{ as_at|date:"d M Y" }}. The due date comes from the supplier's payment terms (Stock › Suppliers).</div></div>
+  <div class="actions no-print"><form method="get" class="row"><input type="date" name="date" value="{{ as_at|date:'Y-m-d' }}" onchange="this.form.submit()" aria-label="Owed on"></form>
+    <button class="btn quiet" onclick="window.print()">Print</button>{% if can.money_edit %}<a class="btn primary" href="{% url 'money:pay' %}">Pay a supplier</a>{% endif %}</div></div>
+{% include "money/_tabs.html" %}
+<section class="card"><h2 style="margin-top:0">Per supplier</h2><div class="tablebox"><table class="t"><thead><tr><th>Supplier</th><th class="r">Not due yet</th><th class="r">1–30 days late</th><th class="r">31–60 days</th><th class="r">Over 60 days</th><th class="r">Total owed</th></tr></thead><tbody>
+{% for s in per %}<tr class="link" data-href="{% url 'money:statement' s.supplier.pk %}"><td><b>{{ s.supplier }}</b> <span class="small muted">{{ s.n }} invoice{{ s.n|pluralize }}</span></td><td class="r">{{ s.b0|money }}</td><td class="r">{{ s.b30|money }}</td><td class="r">{{ s.b60|money }}</td><td class="r">{% if s.b90 %}<b style="color:#c0392b">{{ s.b90|money }}</b>{% else %}{{ s.b90|money }}{% endif %}</td><td class="r"><b>{{ s.owing|money }}</b></td></tr>
+{% empty %}<tr><td colspan="6" class="muted">Nothing owed.</td></tr>{% endfor %}
+{% if per %}<tr class="total"><td colspan="5">Total owed · of which overdue {{ overdue|money }}</td><td class="r">{{ total|money }}</td></tr>{% endif %}</tbody></table></div></section>
+<section class="card"><h2 style="margin-top:0">Unpaid invoices</h2><div class="tablebox"><table class="t"><thead><tr><th>Received</th><th>Supplier</th><th>Invoice</th><th class="r">Amount</th><th class="r">Paid</th><th class="r">Owe</th><th>Due</th></tr></thead><tbody>
+{% for r in rows %}<tr class="link" data-href="{% url 'stock:grv' r.grv.pk %}"><td>{{ r.grv.date|date:"d M Y" }}</td><td>{{ r.supplier }}</td><td>{{ r.grv.invoice_no|default:"–" }} <span class="small muted">{{ r.grv.number }}</span></td><td class="r">{{ r.amount|money }}</td><td class="r">{{ r.paid|money }}</td><td class="r"><b>{{ r.owing|money }}</b></td>
+  <td>{{ r.due|date:"d M" }}{% if r.late %} <span class="chip due">{{ r.late }} day{{ r.late|pluralize }} late</span>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="7" class="muted">None.</td></tr>{% endfor %}</tbody></table></div></section>
+<section class="card no-print"><h2 style="margin-top:0">Last payments</h2><div class="tablebox"><table class="t"><tbody>
+{% for p in payments %}<tr class="link" data-href="{% url 'money:payment' p.pk %}"><td>{{ p.date|date:"d M Y" }}</td><td><b>{{ p.supplier }}</b> <span class="small muted">{{ p.number }}{% if p.ref %} · {{ p.ref }}{% endif %}</span></td><td>{{ p.account|default:"Owner paid" }}</td><td class="r">{{ p.amount|money }}</td></tr>
+{% empty %}<tr><td class="muted">No payments yet.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}SOPs – who still has to read{% endblock %}
+{% block head %}<style>.codes a{display:inline-block;margin:1px 4px 1px 0;font-size:12px;font-weight:700;border-radius:6px;padding:1px 6px;background:#f4e4c9;color:#7a1315;text-decoration:none}
+.codes a.again{background:#fde3c9;color:#9c3d17}</style>{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'core:sops' %}">SOP file</a></div><h1>Who still has to read</h1>
+  <div class="small muted">Every staff member and the SOPs they must still read and sign. <b>Orange</b> = signed an older version – must read the new one again. Only approved SOPs count once you start signing; drafts show too, so you can plan.</div></div>
+  <div class="actions"><button class="btn" type="button" onclick="window.print()">Print</button></div></div>
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>Staff no.</th><th>Name</th><th>Department / job</th><th class="r">Signed</th><th>Still to read</th></tr></thead>
+  <tbody>{% for r in rows %}<tr><td class="small muted">{{ r.e.code }}</td><td><b>{{ r.e.name }}</b></td><td class="small">{{ r.dept }}{% if r.e.job_title %} · {{ r.e.job_title }}{% endif %}</td>
+    <td class="r">{{ r.done }} / {{ r.n }}</td>
+    <td class="codes">{% for s in r.again %}<a class="again" href="{% url 'core:sop' s.pk %}" title="{{ s.title }} – read again">{{ s.code }}</a>{% endfor %}{% for s in r.todo %}<a href="{% url 'core:sop' s.pk %}" title="{{ s.title }}">{{ s.code }}</a>{% endfor %}{% if not r.todo and not r.again %}<span style="color:#218d80;font-weight:800">✓ all signed</span>{% endif %}</td></tr>
+  {% empty %}<tr class="emptyrow"><td colspan="5" class="muted">No staff yet – add them under Staff &amp; Payroll.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

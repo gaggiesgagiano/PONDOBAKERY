@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Users & rights{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'core:settings' %}">Settings</a> › Users</div><h1>Users &amp; rights</h1></div><div class="actions"><a class="btn" href="{% url 'core:cards' %}">Staff cards (barcodes)</a></div></div>
+<div class="cols">
+  <section class="card main stack"><h2>Who can log in</h2>
+    <div class="tablebox"><table class="t"><thead><tr><th>Username</th><th>Name</th><th>Rights</th><th>Status</th><th>Last login</th><th></th></tr></thead><tbody>
+    {% for u, acc in users %}<tr><td><b>{{ u.username }}</b></td><td>{{ u.first_name }}</td>
+      <td>{% if u.is_superuser %}<span class="pill gp-ok">Manager – everything</span>{% else %}
+        <a class="btn small" href="{% url 'core:user_rights' u.pk %}">{% for k, p in presets.items %}{% if acc.role == k %}{{ p.label }}{% endif %}{% endfor %}{% if acc.role not in presets %}Custom{% endif %} · change rights</a>{% endif %}</td>
+      <td>{% if u.is_active %}<span class="pill gp-ok">Active</span>{% else %}<span class="pill gp-low">Switched off</span>{% endif %}</td>
+      <td class="small">{{ u.last_login|date:"d M Y H:i"|default:"never" }}</td>
+      <td>{% if u != user %}<div class="row">
+        <form method="post" action="{% url 'core:user_password' u.pk %}" class="row">{% csrf_token %}<label class="visually-hidden" for="pw{{ u.pk }}">New password for {{ u.username }}</label><input id="pw{{ u.pk }}" class="text" type="password" name="password" placeholder="New password" style="width:150px;min-height:36px"><button class="btn small quiet">Set</button></form>
+        <form method="post" action="{% url 'core:user_toggle' u.pk %}">{% csrf_token %}<button class="btn small {% if u.is_active %}danger{% endif %}">{% if u.is_active %}Switch off{% else %}Switch on{% endif %}</button></form>
+      </div>{% endif %}</td></tr>{% endfor %}
+    </tbody></table></div>
+    <p class="small muted">"Switch off" stops someone logging in (for example when they leave) without losing the record of what they did.</p>
+  </section>
+  <aside class="aside"><form class="card stack" method="post">{% csrf_token %}<h2>Add a person</h2>
+    {% for f in form %}{% include "_field.html" %}{% endfor %}
+    <button class="btn primary" type="submit">Add person</button>
+    <div class="small muted stack" style="gap:4px">{% for k, p in presets.items %}<div><b>{{ p.label }}:</b> {{ p.help }}</div>{% endfor %}</div>
+  </form></aside>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Sales {{ d|date:"d M" }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'sales:daily' %}?month={{ d|date:'Y-m' }}">Daily sales</a> › {{ d|date:"d M Y" }}</div>
+  <h1>Sales · {{ d|date:"l d F" }}</h1>
+  <div class="small muted">Type the sales per category from the till's end-of-day report, <b>excl. VAT</b>. Day and night shift together.</div></div>
+  <div class="actions"><a class="btn quiet" href="{% url 'sales:daily_edit' prev|date:'Y-m-d' %}">← {{ prev|date:"D d" }}</a><a class="btn quiet" href="{% url 'sales:daily_edit' next|date:'Y-m-d' %}">{{ next|date:"D d" }} →</a></div></div>
+{% if is_future %}<div class="banner">This day is still to come.</div>{% endif %}
+{% if errors %}<div class="msg error">{% for e in errors %}{{ e }}<br>{% endfor %}</div>{% endif %}
+<form method="post" class="cols" id="ds-form">{% csrf_token %}
+  <section class="card main stack">
+    <div class="row" style="justify-content:space-between"><h2>Sales per category</h2>
+      {% if has_products %}<a class="btn small quiet" href="?fill=products">Fill in from product sales</a>{% endif %}</div>
+    <div class="tablebox"><table class="t lines" style="min-width:420px">
+      <thead><tr><th>Category</th><th>Sales excl. VAT ($)</th></tr></thead>
+      <tbody>{% for c, v in rows %}<tr><td><label for="c{{ c.pk }}"><b>{{ c.name }}</b></label></td>
+        <td class="qty" style="width:200px"><input id="c{{ c.pk }}" name="c{{ c.pk }}" type="number" step="any" min="0" inputmode="decimal" data-amt value="{{ v }}"{% if forloop.first %} autofocus{% endif %}></td></tr>{% endfor %}
+      <tr class="total"><td>Total sales excl. VAT</td><td class="r" id="tot" style="font-size:18px">$0.00</td></tr></tbody>
+    </table></div>
+  </section>
+  <aside class="aside">
+    <section class="card stack">
+      {% if till is not None %}<div><div class="small muted">Till total (cash-up, incl. VAT)</div><div class="big" style="font-size:26px">{{ till|money }}</div>{% if till_excl %}<div class="small muted">≈ {{ till_excl|money }} excl. VAT</div>{% endif %}</div>{% else %}<p class="small muted" style="margin:0">No cash-up for this day yet.</p>{% endif %}
+      {% if can.costs %}<div class="field"><label for="gp">GP % of the day (optional)</label><input id="gp" name="gp" type="number" step="0.1" min="0" max="99" value="{{ gp_val }}" inputmode="decimal">
+        <div class="help">From the till report, if it shows one. Empty = worked out from your recipes per category.</div></div>{% endif %}
+      <div class="field"><label for="notes">Notes</label><textarea id="notes" name="notes" rows="3">{{ notes }}</textarea></div>
+    </section>
+    <div class="stack"><button class="btn primary" type="submit" name="go" value="next">Save &amp; next day →</button>
+      <button class="btn" type="submit" name="go" value="dashboard">Save &amp; see the dashboard</button>
+      <button class="btn quiet" type="submit" name="go" value="list">Save</button></div>
+    {% if rec %}<p class="small muted" style="margin:0">To remove this day's sales, empty all the boxes and save.</p>{% endif %}
+  </aside>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  var f = document.getElementById('ds-form');
+  function calc(){ var t = 0; f.querySelectorAll('input[data-amt]').forEach(function(i){ var v = parseFloat(i.value); if (!isNaN(v)) t += v; });
+    document.getElementById('tot').textContent = '$' + t.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  f.addEventListener('input', calc); calc();
+  // Enter moves to the next box instead of saving
+  f.querySelectorAll('input[data-amt]').forEach(function(i, n, all){ i.addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); (all[n + 1] || document.getElementById('gp') || i).focus(); } }); });
+})();
+</script>
+{% endblock %}

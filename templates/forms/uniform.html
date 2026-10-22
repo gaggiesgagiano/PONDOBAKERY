@@ -1,0 +1,37 @@
+{% extends "forms/_base.html" %}
+{% block css %}{% include "forms/_check_css.html" %}
+  table.ck td{height:7mm}
+  .key{display:flex;flex-wrap:wrap;gap:1.5mm 4mm;font-size:8.2pt;color:#5a3a2c}
+  .key span{display:inline-flex;align-items:center;gap:1.4mm}
+  .key i{width:3.6mm;height:3.6mm;border-radius:.8mm;border:.3mm solid #b9977f;display:inline-block}
+{% endblock %}
+{% block letterhead %}{% load static %}<div class="slim"><img src="{% static 'brand/logo/primary_orange.svg' %}" alt=""><span><b>{{ current_shop.name|default:company.company_name|default:"Pondo Bakery" }}</b>{% if current_shop.address_line1 %} · {{ current_shop.address_line1 }}{% endif %}</span><span class="file">File in: <b>the staff member's file</b></span></div>{% endblock %}
+{% block subtitle %}<div class="sub">Two sets per person, signed for.<br>Keep in the staff member's file.</div>{% endblock %}
+{% block content %}
+<div class="sec"><div class="sh"><span class="n">1</span><h2>Staff member</h2></div>
+  <div class="g g3">
+    <div class="f span2"><span>Full name</span><i></i></div><div class="f"><span>Staff no.</span><i></i></div>
+    <div class="f"><span>Job title</span><i></i></div><div class="f"><span>Section</span><i></i></div><div class="f"><span>Start date</span><i></i></div>
+  </div>
+  <div class="ticks g4" style="margin-top:1mm"><span class="tk">Shirt: White</span><span class="tk">Shirt: Brown</span><span class="tk">Shirt: Orange</span><span class="tk">Shirt: Maroon</span><span class="tk">Shirt: Teak green</span><span class="tk">Chef jacket: White</span><span class="tk">Chef jacket: Brown</span><span class="tk">Chef jacket: Maroon</span></div>
+  <div class="key"><span><i style="background:#fff"></i>White – supervisors &amp; management</span><span><i style="background:#7E350E"></i>Brown – confectioners, pie chefs, night shift, security</span><span><i style="background:#FF751F"></i>Orange – counterhands</span><span><i style="background:#981C00"></i>Maroon – grillers &amp; chefs</span><span><i style="background:#2F5D3A"></i>Teak green – cashiers</span></div></div>
+<div class="sec"><div class="sh"><span class="n">2</span><h2>Items issued &amp; returned</h2><span class="hint">replacements on the empty lines</span></div>
+<table class="ck">
+  <colgroup><col style="width:34mm"><col style="width:13mm"><col style="width:13mm"><col style="width:20mm"><col><col style="width:13mm"><col style="width:20mm"><col style="width:22mm"></colgroup>
+  <thead><tr><th class="l">Item</th><th>Size</th><th>Qty issued</th><th>Date issued</th><th class="l">Staff signature</th><th>Qty returned</th><th>Date returned</th><th>Checked by</th></tr></thead>
+  <tbody>
+  <tr><td>Pants</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Golf T-shirt</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Chef jacket</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Half-moon cap</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Chef's hat</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Safety shoes (pair)</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Winter jacket</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Name badge</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  {% for i in "1234" %}<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>{% endfor %}
+  </tbody></table></div>
+<div class="sec"><div class="sh"><span class="n">3</span><h2>Declaration</h2></div>
+  <p class="decl">I received the items above. I understand that: the uniform stays the property of the company; I must wear the <b>full, clean uniform of my section with my name badge</b> every day and may not work in my own clothing or swap shirt colours; if I come to work without the proper uniform I will be sent home and the day is <b>unpaid leave</b>; lost, stolen or damaged items are re-ordered and <b>paid for by me</b>; when I leave I must return the full uniform and name badge <b>before any money is paid to me</b>, and items not returned are deducted from that payment.</p>
+  <div class="sig"><div class="f"><span>Staff member signature</span><i></i></div><div class="f"><span>Date</span><i></i></div>
+    <div class="f"><span>Issued by (name &amp; signature)</span><i></i></div><div class="f"><span>Date</span><i></i></div></div></div>
+{% endblock %}

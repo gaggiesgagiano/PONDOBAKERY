@@ -1,0 +1,25 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Waste summary{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'production:waste_list' %}">Waste</a> › Summary</div>
+  <h1>Waste – {{ month|date:"F Y" }}</h1></div>
+  <div class="actions"><a class="btn quiet" href="?month={{ prev|date:'Y-m' }}">← {{ prev|date:"M" }}</a>{% if next %}<a class="btn quiet" href="?month={{ next|date:'Y-m' }}">{{ next|date:"M" }} →</a>{% endif %}<button class="btn" type="button" onclick="window.print()">Print</button></div></div>
+<div class="stats">
+  <div class="card stat dark"><div class="lbl">Waste this month (at cost)</div><div class="val">{{ total|money }}</div></div>
+  <div class="card stat"><div class="lbl">Days with waste</div><div class="val">{{ logged_days }}</div></div>
+  <div class="card stat"><div class="lbl">Biggest reason</div><div class="val" style="font-size:22px">{% if reasons %}{{ reasons.0.0 }}{% else %}–{% endif %}</div></div>
+</div>
+<div class="cols">
+  <section class="card main stack"><h2>Most wasted products</h2>
+    <div class="tablebox"><table class="t"><thead><tr><th>Product</th><th class="r">Qty</th><th class="r">Cost</th></tr></thead><tbody>
+    {% for r, v in top %}<tr><td>{{ r.name }}</td><td class="r">{{ v.0|num:2 }}</td><td class="r"><b>{{ v.1|money }}</b></td></tr>{% empty %}<tr class="emptyrow"><td colspan="3" class="muted">No waste logged this month.</td></tr>{% endfor %}
+    </tbody></table></div>
+    <h2>By reason</h2>
+    {% for reason, v in reasons %}<div class="row"><span style="width:160px">{{ reason }}</span><div class="bar" style="width:{% widthratio v total 300 %}px"></div><b>{{ v|money }}</b></div>{% empty %}<p class="muted small">–</p>{% endfor %}
+  </section>
+  <aside class="aside"><section class="card stack"><h2>Day by day</h2>
+    {% for d, v in days %}<div class="row small" style="gap:8px"><span style="width:70px">{{ d|date:"D d" }}</span><div class="bar" style="width:{% widthratio v biggest 140 %}px;{% if not v %}background:var(--line2);width:4px{% endif %}"></div><span>{% if v %}{{ v|money }}{% endif %}</span></div>{% endfor %}
+  </section></aside>
+</div>
+<p class="small muted">{% if waste_pct is not None %}Waste at cost is <b>{{ waste_pct|pct }}</b> of sales excl. VAT ({{ sales_excl|money }}) this month.{% else %}Waste % of sales shows here once cash-ups are done for this month.{% endif %}</p>
+{% endblock %}

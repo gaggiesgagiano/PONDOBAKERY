@@ -1,0 +1,42 @@
+{% extends "forms/_base.html" %}
+{% block css %}{% include "forms/_check_css.html" %}{% endblock %}
+{% block letterhead %}{% include "forms/_slimhead.html" %}{% endblock %}
+{% block subtitle %}<div class="sub">One sheet per shift per week.<br>Tick ✓ and initial when done.</div>{% endblock %}
+{% block content %}
+<div class="g g4">
+  <div class="f span2"><span>Week starting (Sunday)</span><i></i></div>
+  <div class="tk">Day shift</div><div class="tk">Night shift</div>
+  <div class="f span2"><span>Supervisor</span><i></i></div>
+  <div class="f span2"><span>Area / section</span><i></i></div>
+</div>
+<p class="legend">The Day and Night Supervisor make sure everything is done exactly as the SOP “Clean as you go &amp; end-of-shift cleaning” says. The <b>incoming</b> supervisor checks that the place was left clean and signs the last line.</p>
+<table class="ck">
+  <colgroup><col style="width:66mm"><col><col><col><col><col><col><col></colgroup>
+  <thead><tr><th class="l">Task</th><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr></thead>
+  <tbody>
+  <tr class="grp"><td colspan="8">Bakery</td></tr>
+  <tr><td>Mixers, dividers, slicers – off, unplugged, cleaned</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Work tables &amp; shelves washed and sanitised</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Scales cleaned</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Ovens &amp; proofers wiped (when cool)</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Trays, tins &amp; utensils washed, dried, stored</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Flour &amp; sugar bins closed, spills cleaned</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Floor swept and mopped</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Bins emptied, washed, new bags</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Hand basins: soap, paper towels, bin</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Stock under tables neat, closed, off the floor</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Walk-in fridge &amp; freezer: floor clean, doors closed</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="grp"><td colspan="8">Shop</td></tr>
+  <tr><td>Display &amp; glass cleaned</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Counters &amp; tills wiped</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Shop floor swept and mopped</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Toilets cleaned and stocked</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>Rubbish taken out, bins closed</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="grp"><td colspan="8">Sign-off</td></tr>
+  <tr class="sign"><td>Supervisor of this shift (initials)</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr class="sign"><td>Incoming supervisor: place left clean (initials)</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  </tbody></table>
+<div class="sec"><div class="sh"><span class="n">!</span><h2>Problems &amp; things missing</h2><span class="hint">e.g. no soap, broken mop, chemical running low</span></div>
+  <div class="lines"><i></i><i></i><i></i></div></div>
+<div class="g g2 signrow"><div class="f"><span>Checked by Manager</span><i></i></div><div class="f"><span>Date</span><i></i></div></div>
+{% endblock %}

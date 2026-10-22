@@ -1,0 +1,19 @@
+{% load static %}<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Welcome · Pondo Bakery</title><link rel="icon" type="image/svg+xml" href="{% static 'brand/logo/mark_orange.svg' %}"><link rel="stylesheet" href="{% static 'css/app.css' %}?v=29"></head>
+<body>
+<div class="login">
+  <div class="hero"><div class="small">PONDO BAKERY · FRESH SINCE ’26</div>
+    <img class="mark" src="{% static 'brand/logo/mark_cream.svg' %}" alt=""><div class="say">Easy to enjoy</div></div>
+  <div class="side-form">
+  <form class="box" method="post" style="width:440px">{% csrf_token %}
+    <img class="logo" src="{% static 'brand/logo/primary_orange.svg' %}" alt="Pondo Bakery">
+    <h1 style="font-size:28px;text-align:center">Welcome to your program!</h1>
+    <p class="small muted" style="margin:0;text-align:center">First time only: choose the Manager login. You can add the other people afterwards under Settings.</p>
+    {% if form.non_field_errors %}<div class="msg error">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+    {% for f in form %}{% include "_field.html" %}{% endfor %}
+    <button class="btn primary" type="submit">Create my login</button>
+  </form>
+  </div>
+</div>
+</body></html>

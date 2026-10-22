@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Fiscal setup{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'fiscal:home' %}">Fiscal (ZIMRA)</a></div><h1>Fiscal setup</h1>
+  <div class="small muted">Connects the Pondo till to ZIMRA through the FiscalStackZW engine. Do everything on the ZIMRA <b>TEST</b> server first: register, open a day, sell, refund, close the day. Only then switch to LIVE.</div></div></div>
+
+{% if demo %}<div class="msg warning">This is the DEMO copy of Pondo – it never fiscalises, whatever is set here.</div>{% endif %}
+{% if not installed %}<div class="msg error">The engine is not installed: copy the FiscalStackZW files into <code>{{ folder }}</code>.</div>{% endif %}
+
+{% if raw %}<section class="card stack"><h2 style="margin:0">Engine answer{% if raw.tool %} · {{ raw.tool }}{% endif %}</h2>
+  <div><b>{% if raw.Code == "1" %}OK{% else %}Not OK{% endif %}</b> – {{ raw.Message }}</div>
+  {% if raw.Data %}<pre style="white-space:pre-wrap;max-height:420px;overflow:auto;background:#fff;border-radius:10px;padding:10px;font-size:12px">{{ raw.Data }}</pre>{% endif %}</section>{% endif %}
+
+<form class="card stack" method="post">{% csrf_token %}<input type="hidden" name="do" value="save">
+  <h2 style="margin:0">1 · Mode</h2>
+  {% for v, label in modes %}<label class="row" style="gap:8px;align-items:center"><input type="radio" name="mode" value="{{ v }}" {% if s.mode == v %}checked{% endif %}> {{ label }}</label>{% endfor %}
+  <div class="field" style="max-width:380px"><label for="sure">To switch to LIVE, type LIVE here</label><input id="sure" name="sure" autocomplete="off"></div>
+  <div class="grid-form">
+    {% for k, label, v in fields %}<div class="field"><label for="{{ k }}">{{ label }}</label><input id="{{ k }}" name="{{ k }}" value="{{ v }}"></div>{% endfor %}
+    <div class="field"><label for="hs_code">HS code for the products</label><input id="hs_code" name="hs_code" value="{{ s.hs_code }}" inputmode="numeric" maxlength="8" placeholder="e.g. 19059000 – ask your accountant"></div>
+    <div class="field"><label for="qr_base">QR link starts with</label><input id="qr_base" name="qr_base" value="{{ qr_now }}"><span class="small muted">TEST: https://fdmstest.zimra.co.zw · LIVE: https://fdms.zimra.co.zw</span></div>
+  </div>
+  <label class="row" style="gap:8px;align-items:center"><input type="checkbox" name="auto_open_day" {% if s.auto_open_day %}checked{% endif %}> Open the fiscal day by itself at the first sale of the day</label>
+  <div class="small muted">Saving writes the ZIMRA server, tax codes (TEST 517/2/3 · LIVE 515/2/1) and the shop address into the engine's config.ini and restarts the engine.
+    Now: server <code>{{ cfg.ZIMRASERVER|default:"–" }}</code> · {{ cfg.POSENVIRONMENT|default:"–" }} · taxpayer <b>{{ cfg.TAXPAYERNAME|default:"–" }}</b> · TIN {{ cfg.TAXPAYERTIN|default:"–" }} · VAT {{ cfg.VATNUMBER|default:"–" }} · device {{ cfg.DEVICEID|default:"–" }} / {{ cfg.SERIALNUMBER|default:"–" }}</div>
+  <div><button class="btn primary" type="submit">Save</button></div>
+</form>
+
+<form class="card stack" method="post" style="max-width:720px">{% csrf_token %}<input type="hidden" name="do" value="license">
+  <h2 style="margin:0">2 · Licence (before the device step)</h2>
+  <p class="small muted" style="margin:0">The FiscalStackZW licence key (from the FiscalStackZW team). A key belongs to one device serial number – type that serial and the ZIMRA device ID with it. Without a licence every fiscal call is refused.</p>
+  <div class="grid-form">
+    <div class="field"><label for="lserial">Device serial number</label><input id="lserial" name="serial" value="{{ dev_serial }}" required></div>
+    <div class="field"><label for="ldevice">ZIMRA device ID</label><input id="ldevice" name="device" inputmode="numeric" value="{{ dev_id }}"></div>
+  </div>
+  <div class="field"><label for="license">Licence key</label><textarea id="license" name="license" rows="3" autocomplete="off"></textarea></div>
+  <div><button class="btn" type="submit">Apply licence</button></div>
+</form>
+
+<form class="card stack" method="post">{% csrf_token %}
+  <h2 style="margin:0">3 · Device (once per ZIMRA environment)</h2>
+  <p class="small muted" style="margin:0">From ZIMRA's device registration: the device ID, the serial number and the activation key. Use a fresh device for TEST and another for LIVE.
+    Order: <b>Make certificates</b> → <b>Check</b> → <b>Register with ZIMRA</b> → <b>Apply</b>. For LIVE with a certificate folder you received, only <b>Apply</b> with that folder.</p>
+  <div class="grid-form">
+    <div class="field"><label for="device">Device ID</label><input id="device" name="device" inputmode="numeric" value="{{ dev_id }}"></div>
+    <div class="field"><label for="serial">Serial number</label><input id="serial" name="serial" value="{{ dev_serial }}"></div>
+    <div class="field"><label for="activation">Activation key</label><input id="activation" name="activation" autocomplete="off"></div>
+    <div class="field wide"><label for="folder">Certificate folder (only for Check / Apply – empty = the usual place)</label><input id="folder" name="folder" placeholder="{{ cert_folder }}\{device ID}"></div>
+  </div>
+  <div class="row" style="flex-wrap:wrap;gap:10px">
+    <button class="btn" name="do" value="generate">Make certificates (TEST)</button>
+    <button class="btn" name="do" value="verify">Check certificates</button>
+    <button class="btn" name="do" value="register" onclick="return confirm('Register this device with ZIMRA now?')">Register with ZIMRA</button>
+    <button class="btn primary" name="do" value="apply">Apply device settings</button>
+  </div>
+</form>
+
+<form class="card stack" method="post">{% csrf_token %}<input type="hidden" name="do" value="tool">
+  <h2 style="margin:0">Support tools</h2>
+  <div class="row" style="flex-wrap:wrap;gap:8px">{% for t in tools %}<button class="btn small quiet" name="tool" value="{{ t }}">{{ t }}</button>{% endfor %}</div>
+</form>
+<form class="card stack" method="post" style="max-width:720px">{% csrf_token %}<input type="hidden" name="do" value="lookup">
+  <div class="field"><label for="invoice">Look up a slip in the engine (invoice number, e.g. T1-00012)</label><input id="invoice" name="invoice"></div>
+  <div class="row" style="gap:10px"><button class="btn small">Look up</button>
+    <button class="btn small quiet" name="do" value="restart" formnovalidate>Restart the engine</button></div>
+  <div class="small muted">Engine folder: <code>{{ folder }}</code>{% if engine_info.engineVersion %} · engine {{ engine_info.engineVersion }}{% endif %} · its log: data\fiscal_engine_log.txt</div>
+</form>
+{% endblock %}

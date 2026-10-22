@@ -1,0 +1,162 @@
+{% load static pondo %}<!doctype html>
+<html lang="en" data-font="{{ look.biz_font }}"><head><meta charset="utf-8">
+<title>{% if layout == 'poster' %}Posters{% elif layout == 'menu' %}Price list{% else %}Price cards{% endif %} · Pondo Bakery</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=29">{% include "_brand_font.html" %}
+<style>
+  @page{size:A4 portrait;margin:8mm}
+  html,body{background:#ddd;margin:0}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .bar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:9}
+  .page{width:194mm;height:280mm;margin:10mm auto;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.15);display:grid;gap:4mm;page-break-after:always;break-after:page;overflow:hidden;position:relative}
+  .page:last-child{page-break-after:auto;break-after:auto}
+  @media print{html,body{background:#fff}.bar{display:none}.page{margin:0;box-shadow:none}}
+  .page.shelf{grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,1fr)}
+  .page.big{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+  .page.poster,.page.menu{grid-template-columns:1fr;grid-template-rows:1fr}
+
+  /* ---------- every card ---------- */
+  .pc{position:relative;overflow:hidden;isolation:isolate;border-radius:5mm;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;padding:5mm 6mm;min-width:0;min-height:0}
+  /* the pattern never runs behind a logo (brand do's & don'ts) */
+  .pc::before{content:"";position:absolute;inset:0;background-image:var(--pat);background-size:55mm;opacity:var(--op);z-index:-2;
+    -webkit-mask-image:linear-gradient(180deg,transparent 0 19mm,#000 27mm);mask-image:linear-gradient(180deg,transparent 0 19mm,#000 27mm)}
+  /* a thin line inside the edge, like a shop ticket */
+  .pc::after{content:"";position:absolute;inset:2.2mm;border:.5mm solid var(--ink);border-radius:3.6mm;opacity:.45;pointer-events:none;z-index:3}
+  .pc.cream{outline:.3mm solid #ecd3ad;outline-offset:-.3mm}
+  .pc .logo{width:30mm;flex:0 0 auto;display:block}
+  .pc .nm{font-family:var(--head);text-transform:var(--head-case);font-weight:var(--head-weight);line-height:.98;max-width:100%;overflow-wrap:break-word}
+  .pc .tag{font-family:Nunito;font-weight:800;font-size:7.5pt;letter-spacing:.12em;text-transform:uppercase;opacity:.9;color:inherit}
+  .pc .chip{display:inline-block;align-self:flex-start;font-family:Nunito;font-weight:900;font-size:7pt;letter-spacing:.1em;text-transform:uppercase;
+    background:var(--chip);color:#fff3d7;border-radius:999px;padding:.8mm 2.6mm;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  .pc .price{font-family:Nunito;font-weight:900;font-size:26pt;line-height:1}
+
+  /* the picture window: the product photo, or a brand illustration on sunburst rays */
+  .win{position:relative;overflow:hidden;isolation:isolate;background:var(--win);border:1.1mm solid var(--ink);display:flex;align-items:center;justify-content:center}
+  .win::before{content:"";position:absolute;inset:-60%;z-index:-1;
+    background:repeating-conic-gradient(from 0deg at 50% 50%,var(--win2) 0deg 9deg,var(--win) 9deg 18deg)}
+  .win .ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .win .art{width:66%;height:66%;object-fit:contain;transform:rotate(-7deg);filter:drop-shadow(.6mm .8mm 0 rgba(0,0,0,.12))}
+
+  .burst{--bs:30mm;z-index:4}
+  .burst.teal{--bc:#218d80}.burst.orange{--bc:#e56026}.burst.burgundy{--bc:#7a1315}
+  .burst b{font-family:Nunito;font-weight:900;text-transform:none;letter-spacing:-.03em;font-size:1.6em;margin-top:.5mm}
+  .burst.long b{font-size:1.3em}
+  .burst{transform:rotate(-8deg)}
+
+  /* ---------- shelf: 8 per page – round window left, name right ---------- */
+  .shelf .pc{display:grid;grid-template-columns:40mm minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;column-gap:4mm;row-gap:1.5mm;padding:4.5mm 5.5mm}
+  .shelf .win{grid-column:1;grid-row:1/4;align-self:center;width:40mm;height:40mm;border-radius:50%;box-shadow:0 0 0 1.4mm var(--bg),0 0 0 1.9mm var(--ink)}
+  .shelf .pc .logo{grid-column:2;grid-row:1;width:24mm;justify-self:center}
+  .shelf .txt{grid-column:2;grid-row:2;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:1.8mm;min-width:0;min-height:0;overflow:hidden;padding:0 1mm}
+  .shelf .pc .tag{grid-column:2;grid-row:3;font-size:6.5pt;justify-self:center}
+  .shelf .pc>.burst{position:absolute;left:1.5mm;bottom:1.5mm;--bs:23mm}
+  .shelf .pc .price{font-size:22pt}
+  .shelf .nm.xl{font-size:30pt}.shelf .nm.l{font-size:24pt}.shelf .nm.m{font-size:19pt}.shelf .nm.s{font-size:15pt}
+  .shelf .nm{line-height:1.02;overflow-wrap:normal;word-break:normal;hyphens:none}
+
+  /* ---------- big: 4 per page – arched shop window on top ---------- */
+  .big .pc{padding:6mm 6.5mm;gap:3mm}
+  .big .pc .top{display:flex;justify-content:space-between;align-items:center;gap:3mm}
+  .big .pc .top .logo{width:30mm}
+  .big .win{width:100%;height:64mm;border-radius:40mm 40mm 4mm 4mm;flex:0 0 auto}
+  .big .win .art{width:60%;height:70%}
+  .big .pc .nm{margin-top:1mm;max-height:26mm;flex:0 0 auto;overflow:hidden;line-height:1.02;overflow-wrap:normal}
+  .big .pc .bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:3mm;margin-top:auto}
+  .big .pc .burst{--bs:30mm;position:absolute;right:-2mm;top:-35mm;margin:0}
+  .big .pc .wrap{position:relative;display:flex;flex-direction:column;gap:3mm;flex:1;min-height:0}
+  .big .nm.xl{font-size:32pt}.big .nm.l{font-size:25pt}.big .nm.m{font-size:20pt}.big .nm.s{font-size:15pt}
+
+  /* ---------- poster: 1 per page ---------- */
+  .poster .pc{padding:12mm;align-items:center;text-align:center;gap:4.5mm}
+  .poster .pc::after{inset:4mm;border-width:.8mm;border-radius:6mm}
+  .poster .pc .logo{width:66mm}
+  .poster .ribbon{position:relative;background:var(--chip);color:#fff3d7;font-family:var(--head);text-transform:var(--head-case);font-weight:var(--head-weight);
+    font-size:42pt;line-height:1;padding:4mm 18mm 5mm;clip-path:polygon(0 0,100% 0,94% 50%,100% 100%,0 100%,6% 50%);max-width:100%}
+  .poster .pc .sub{font-family:Nunito;font-weight:800;font-size:15pt}
+  .poster .stage{position:relative;width:100%;flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+  .poster .win{width:128mm;height:128mm;max-height:100%;aspect-ratio:1;border-radius:50%;border-width:2mm;box-shadow:0 0 0 3mm var(--bg),0 0 0 4mm var(--ink)}
+  .poster .win .art{width:72%;height:72%}
+  .poster .stage .burst{position:absolute;right:6mm;bottom:2mm;--bs:54mm}
+  .poster .pc .nm{font-size:30pt}
+  .poster .pc .foot{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:auto}
+  .poster .pc .foot img{width:30mm}
+  .poster .pc .price{font-size:44pt}
+
+  /* ---------- menu ---------- */
+  .menu .pc{padding:12mm 13mm}
+  .menu .pc::after{inset:4mm;border-radius:6mm}
+  .menu .pc::before{-webkit-mask-image:linear-gradient(180deg,transparent 0 46mm,#000 56mm,#000 calc(100% - 46mm),transparent calc(100% - 36mm));
+    mask-image:linear-gradient(180deg,transparent 0 46mm,#000 56mm,#000 calc(100% - 46mm),transparent calc(100% - 36mm))}
+  .menu .pc .top{display:flex;align-items:center;justify-content:space-between;gap:6mm;margin-bottom:6mm}
+  .menu .pc .top .logo{width:62mm}
+  .menu .pc .hd{font-family:var(--head);text-transform:var(--head-case);font-weight:var(--head-weight);font-size:40pt;line-height:.9;text-align:right}
+  .menu .mcols{columns:2;column-gap:12mm;flex:1;min-height:0;overflow:hidden}
+  .menu .grp{margin-bottom:5mm}
+  .menu .grp h3{break-after:avoid}
+  .menu .it{break-inside:avoid}
+  .menu .grp h3{font-family:var(--head);text-transform:var(--head-case);font-weight:var(--head-weight);color:var(--ink);font-size:17pt;margin:0 0 1.5mm;border-bottom:.6mm solid var(--ink);padding-bottom:1mm}
+  .menu .it{display:flex;align-items:baseline;gap:2mm;font-family:Nunito;font-size:11.5pt;font-weight:700;padding:1mm 0}
+  .menu .it .dots{flex:1;border-bottom:.4mm dotted currentColor;opacity:.55;transform:translateY(-1mm)}
+  .menu .it b{font-weight:900}
+  .menu .foot{display:flex;justify-content:space-between;align-items:center;font-family:Nunito;font-weight:800;font-size:9pt;margin-top:4mm}
+  .menu .foot img{width:24mm}
+</style>
+<script>
+/* every product name as BIG as its space allows: start large, step down until it fits (no words cut in half) */
+(function(){
+  function fitAll(){
+    document.querySelectorAll('.page.shelf .nm, .page.big .nm').forEach(function(nm){
+      var big = nm.closest('.page.big'), box = big ? nm : nm.closest('.txt');
+      var size = big ? 36 : 34, min = big ? 14 : 11;
+      nm.style.fontSize = size + 'pt';
+      function over(){ return nm.scrollWidth > nm.clientWidth + 1 || box.scrollHeight > box.clientHeight + 6; }
+      while (over() && size > min) { size -= 0.5; nm.style.fontSize = size + 'pt'; }
+    });
+  }
+  window.addEventListener('load', function(){ (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(fitAll); });
+  window.addEventListener('beforeprint', fitAll);
+})();
+</script></head>
+<body>
+<div class="bar"><button class="btn primary" onclick="window.print()">Print / save as PDF</button><button class="btn quiet" onclick="window.close()">Close</button></div>
+{% if not n %}<div class="page poster"><div class="pc" style="--bg:#fff3d7;--ink:#7a1315"><div class="empty">Nothing chosen. Close this tab, tick some products and try again.</div></div></div>{% endif %}
+
+{% if layout == 'menu' and n %}
+{% for mp in menu %}<div class="page menu"><div class="pc {% if ms.bg == '#fff3d7' %}cream{% endif %}" style="--bg:{{ ms.bg }};--ink:{{ ms.ink }};--pat:url({% static 'brand/art/' %}pattern_{{ ms.pattern }}.svg);--op:{{ ms.op }}">
+  <div class="top"><img class="logo" src="{% static 'brand/logo/' %}{{ ms.logo }}.svg" alt="Pondo Bakery"><div class="hd">Price<br>list</div></div>
+  <div class="mcols">{% for cat, items in mp %}<div class="grp"><h3>{{ cat }}</h3>
+    {% for r in items %}<div class="it"><span>{{ r.name }}</span><span class="dots"></span><b>{{ r.sell_price|money }}</b></div>{% endfor %}</div>{% endfor %}</div>
+  <div class="foot"><span>Prices include VAT · {{ company.tagline|default:"Easy to enjoy" }}{% if current_shop.phone %} · {{ current_shop.phone }}{% endif %}{% if menu|length > 1 %} · page {{ forloop.counter }} of {{ menu|length }}{% endif %}</span>
+    <img src="{% static 'brand/logo/' %}{{ ms.badge }}.svg" alt=""></div>
+</div></div>{% endfor %}
+{% elif n %}
+{% for page in pages %}<div class="page {{ layout }}">
+  {% for c in page %}{% with s=c.s r=c.r %}
+  <div class="pc {{ c.key }}{% if photos and r.photo %} hasph{% endif %}" style="--bg:{{ s.bg }};--ink:{{ s.ink }};--pat:url({% static 'brand/art/' %}pattern_{{ s.pattern }}.svg);--op:{{ s.op }};--win:{{ s.win }};--win2:{{ s.win2 }};--chip:{{ s.chip }}">
+    {% if layout == 'shelf' %}
+      <div class="win">{% if photos and r.photo %}<img class="ph" src="{{ r.photo.url }}" alt="">{% else %}<img class="art" src="{% static 'brand/' %}{% if c.art %}art/{{ c.art }}_{{ s.wart }}{% else %}logo/mark_{{ s.wart }}{% endif %}.svg" alt="">{% endif %}</div>
+      <img class="logo" src="{% static 'brand/logo/' %}{{ s.logo }}.svg" alt="Pondo Bakery">
+      <div class="txt">
+        <div class="nm {{ c.size }}">{{ r.name }}</div>
+        {% if not only %}<div class="price">{{ r.sell_price|money }}</div>{% endif %}</div>
+      <div class="tag">{{ company.tagline|default:"Easy to enjoy" }}</div>
+      {% if only %}<div class="burst {{ s.burst }}{% if r.sell_price >= 10 %} long{% endif %}">Only<b>{{ r.sell_price|money }}</b></div>{% endif %}
+    {% elif layout == 'big' %}
+      <div class="top"><img class="logo" src="{% static 'brand/logo/' %}{{ s.logo }}.svg" alt="Pondo Bakery"></div>
+      <div class="win">{% if photos and r.photo %}<img class="ph" src="{{ r.photo.url }}" alt="">{% else %}<img class="art" src="{% static 'brand/' %}{% if c.art %}art/{{ c.art }}_{{ s.wart }}{% else %}logo/mark_{{ s.wart }}{% endif %}.svg" alt="">{% endif %}</div>
+      <div class="wrap"><div class="nm {{ c.size }}">{{ r.name }}</div>
+      <div class="bottom"><div class="tag">{{ company.tagline|default:"Easy to enjoy" }}</div>
+        {% if only %}<div class="burst {{ s.burst }}{% if r.sell_price >= 10 %} long{% endif %}">Only<b>{{ r.sell_price|money }}</b></div>{% else %}<div class="price">{{ r.sell_price|money }}</div>{% endif %}</div></div>
+    {% else %}
+      <img class="logo" src="{% static 'brand/logo/' %}{{ s.logo }}.svg" alt="Pondo Bakery">
+      <div class="ribbon">{{ head }}</div>
+      {% if sub %}<div class="sub">{{ sub }}</div>{% endif %}
+      <div class="stage"><div class="win">{% if photos and r.photo %}<img class="ph" src="{{ r.photo.url }}" alt="">{% else %}<img class="art" src="{% static 'brand/' %}{% if c.art %}art/{{ c.art }}_{{ s.wart }}{% else %}logo/mark_{{ s.wart }}{% endif %}.svg" alt="">{% endif %}</div>
+        {% if only %}<div class="burst {{ s.burst }}{% if r.sell_price >= 10 %} long{% endif %}">Only<b>{{ r.sell_price|money }}</b></div>{% endif %}</div>
+      <div class="nm">{{ r.name }}</div>
+      {% if not only %}<div class="price">{{ r.sell_price|money }}</div>{% endif %}
+      <div class="foot"><div class="tag" style="font-size:11pt">{{ company.tagline|default:"Easy to enjoy" }}</div><img src="{% static 'brand/logo/' %}{{ s.badge }}.svg" alt=""></div>
+    {% endif %}
+  </div>{% endwith %}{% endfor %}
+</div>{% endfor %}
+{% endif %}
+</body></html>

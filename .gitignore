@@ -1,0 +1,28 @@
+# Pondo Bakery – never commit data, secrets or machine-specific files
+data/
+python/
+*.lnk
+*.sqlite3
+*.sqlite3-journal
+secret.key
+*.log
+*_log.txt
+__pycache__/
+*.pyc
+
+# Fiscal engine: certificates, licence/config and the licensed FiscalStackZW binaries stay on the till PC
+fiscal_engine/config.ini
+fiscal_engine/certificates/
+fiscal_engine/*.pfx
+fiscal_engine/**/key.key
+fiscal_engine/*.dll
+fiscal_engine/*.dll.config
+fiscal_engine/*.exe
+fiscal_engine/*.exe.config
+fiscal_engine/x64/
+fiscal_engine/x86/
+fiscal_engine/NLog.config
+fiscal_engine/app.config
+!fiscal_engine/PondoFiscalBridge.exe.config
+*.bak
+fiscal_engine/config.ini*

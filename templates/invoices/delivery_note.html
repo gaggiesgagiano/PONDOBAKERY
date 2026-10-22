@@ -1,0 +1,68 @@
+{% load static pondo %}<!doctype html>
+<html lang="en" data-font="{{ look.biz_font }}"><head><meta charset="utf-8"><title>Delivery note {{ dl.number }} · Pondo Bakery</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=29">{% include "_brand_font.html" %}
+<style>
+  @page{size:A4 portrait;margin:9mm}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  html,body{background:#ddd;margin:0;font-size:12px;color:#2a1412}
+  .bar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:9}
+  .sheet{width:192mm;margin:10mm auto;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.15);padding:0}
+  @media print{html,body{background:#fff}.bar{display:none}.sheet{margin:0;box-shadow:none}}
+  .copy{padding:5mm 4mm;display:flex;flex-direction:column;gap:3mm;break-inside:avoid;page-break-inside:avoid}
+  .cut{border-top:0.4mm dashed #b9a28a;margin:2mm 0;position:relative;text-align:center;font-size:9px;color:#7c5a4a}
+  .cut span{background:#fff;padding:0 3mm;position:relative;top:-2.2mm}
+  .nh{display:flex;justify-content:space-between;align-items:center;border-bottom:1mm solid #e56026;padding-bottom:2mm}
+  .nh img{width:42mm}
+  .nh .r{text-align:right}
+  .nh h1{font-size:21px;color:#7a1315;margin:0}
+  .who{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#e56026}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:5mm}
+  .box{border:0.3mm solid #ebd3b2;border-radius:2.5mm;padding:2.5mm 3.5mm;display:flex;flex-direction:column;gap:1mm}
+  .box h3{margin:0;font-size:11px;color:#7a1315;text-transform:uppercase;letter-spacing:.04em;font-family:Nunito}
+  .bn{font-size:15px;font-weight:800;font-family:Nunito,sans-serif}
+  .plate{font-size:15px}
+  table.g{width:100%;border-collapse:collapse}
+  table.g th{background:#fff3d7;color:#7a1315;text-align:left;font-size:10.5px;padding:1.4mm 2mm}
+  table.g td{padding:1.4mm 2mm;border-bottom:0.25mm solid #ebd3b2}
+  table.g .r{text-align:right}
+  .pay{display:grid;grid-template-columns:repeat(3,1fr);gap:3mm}
+  .pay div{border-radius:2.5mm;padding:2mm 3mm;background:#fff3d7}
+  .pay div span{display:block;font-size:10px;font-weight:700;color:#7c5a4a}
+  .pay div b{font-size:16px;font-family:Nunito;font-weight:900}
+  .pay .main{background:#7a1315;color:#fff3d7}.pay .main span{color:#ffd2b0}
+  .pay .back{background:#218d80;color:#fff3d7}.pay .back span{color:#d6f0eb}
+  .dbox{display:grid;grid-template-columns:auto 1fr;gap:3mm;align-items:start}
+  .dph{width:17mm;height:22mm;border-radius:1.5mm;object-fit:cover;object-position:50% 30%;display:block}
+  .cashstamp{display:inline-block;background:#e56026;color:#fff3d7;border-radius:1.5mm;padding:0.6mm 2.4mm;font-family:var(--head);font-weight:var(--head-weight);text-transform:var(--head-case);font-size:12px;letter-spacing:0}
+  .sig{display:grid;grid-template-columns:1fr 1fr;gap:8mm;margin-top:3mm}
+  .sig div{border-top:0.3mm solid #2a1412;padding-top:1mm;font-size:10px;color:#7c5a4a}
+</style></head>
+<body>
+<div class="bar"><button class="btn primary" onclick="window.print()">Print</button><button class="btn quiet" onclick="window.close()">Close</button></div>
+<div class="sheet">
+{% for c in copies %}
+  {% if not forloop.first %}<div class="cut"><span>✂ cut here</span></div>{% endif %}
+  <section class="copy">
+    <div class="nh"><img src="{% static 'brand/logo/primary_orange.svg' %}" alt="Pondo Bakery">
+      <div class="r"><div class="who">{{ c }}</div><h1>Delivery note {{ dl.number }}</h1><span class="cashstamp">Cash only</span>
+        <div class="small">{{ dl.sent_at|date:"D d M Y, H:i" }} · invoice {{ doc.number }}</div></div></div>
+    <div class="two">
+      <div class="box"><h3>Deliver to</h3><div class="bn">{{ doc.name }}</div>{% if doc.phone %}<div>Cell: <b>{{ doc.phone }}</b></div>{% endif %}
+        <div>{{ doc.address1 }}{% if doc.address2 %}, {{ doc.address2 }}{% endif %}</div>{% if dl.directions %}<div class="small">{{ dl.directions }}</div>{% endif %}</div>
+      <div class="box dbox">{% if dl.driver.photo %}<img class="dph" src="{% url 'invoices:driver_photo' dl.driver.pk 'driver' %}?v={{ dl.driver.photo_v }}" alt="">{% endif %}<div><h3>Driver{% if dl.driver %} · {{ dl.driver.number }}{% endif %}</h3><div class="bn">{{ dl.driver_name }}</div>{% if dl.driver_phone %}<div>Cell: <b>{{ dl.driver_phone }}</b></div>{% endif %}
+        <div><span class="plate">{{ dl.car_reg }}</span> {{ dl.car }}</div></div></div>
+    </div>
+    <table class="g"><thead><tr><th>Product</th><th class="r">Qty</th><th class="r">Price incl. VAT</th><th class="r">Total</th></tr></thead><tbody>
+      {% for ln in goods_lines %}<tr><td>{{ ln.description }}</td><td class="r">{{ ln.qty|num:2 }}</td><td class="r">{{ ln.price|money }}</td><td class="r">{{ ln.total|money }}</td></tr>{% endfor %}
+    </tbody></table>
+    <div class="pay">
+      <div><span>Goods</span><b>{{ dl.goods|money }}</b></div>
+      <div><span>Delivery fee (driver keeps)</span><b>{{ dl.fee|money }}</b></div>
+      {% if dl.by_driver %}<div class="main"><span>Driver collects from the customer</span><b>{{ dl.collect|money }}</b></div>{% else %}<div class="main"><span>{% if dl.pay == "account" %}On account – the customer pays the invoice later{% else %}Paid to the bakery ({{ dl.pay_short }}){% endif %} – driver collects</span><b>$0.00</b></div>{% endif %}
+    </div>
+    {% if dl.by_driver %}<div class="pay"><div class="back" style="grid-column:1/-1"><span>The driver brings back to the bakery</span><b>{{ dl.expected_back|money }}</b></div></div>{% endif %}
+    <div class="sig"><div>Order handed to the driver – driver's signature</div><div>Received in good order – customer's signature &amp; time</div></div>
+  </section>
+{% endfor %}
+</div>
+</body></html>

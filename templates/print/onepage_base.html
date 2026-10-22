@@ -1,0 +1,74 @@
+{% load static %}<!doctype html>
+<html lang="en" data-font="{{ look.biz_font }}"><head><meta charset="utf-8"><title>{% block title %}{% endblock %}</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=29">{% include "_brand_font.html" %}
+<style>
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A4 portrait;margin:8mm}
+  html,body{background:#fff;font-size:10px;margin:0}
+  body{padding:12px 0}
+  .page{width:194mm;margin:0 auto}
+  #fit{width:194mm;display:flex;flex-direction:column;gap:6px}
+  .ph{display:flex;justify-content:space-between;align-items:center;border-bottom:2.5px solid var(--orange);padding-bottom:5px}
+  .ph img{width:120px}
+  .ph .t{text-align:right}
+  .ph h1{font-size:20px;line-height:1.1}
+  .ph .s{font-size:9.5px;color:var(--muted)}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+  .kpi{border:1.2px solid var(--line2);border-radius:8px;padding:4px 8px}
+  .kpi.dark{background:var(--maroon);color:#FFF4EA;border-color:var(--maroon)}
+  .kpi .l{font-size:8.5px;font-weight:800;color:var(--muted)} .kpi.dark .l,.kpi.dark .u{color:#FFD6BF}
+  .kpi .v{font-family:Nunito;font-size:17px;font-weight:900;line-height:1.15}
+  .kpi .u{font-size:8.5px;color:var(--muted)}
+  .say{border-radius:8px;padding:5px 9px;font-weight:800;font-size:11px}
+  .say.ok{background:var(--ok-bg);color:var(--ok)} .say.mid{background:var(--mid-bg);color:var(--mid)}
+  .say.low{background:var(--low-bg);color:var(--low)} .say.none{background:#F3EDE6;color:var(--muted)}
+  .grid{display:grid;grid-template-columns:1.15fr 1fr;gap:8px;align-items:start}
+  .col{display:flex;flex-direction:column;gap:6px}
+  .box{border:1.2px solid var(--line2);border-radius:8px;padding:4px 7px 5px}
+  .box h2{font-size:11.5px;margin:0 0 2px}
+  table.p{width:100%;border-collapse:collapse}
+  table.p th{font-size:8px;color:var(--muted);text-align:right;font-weight:800;padding:1px 3px;white-space:nowrap}
+  table.p th:first-child{text-align:left}
+  table.p td{padding:1.5px 3px;border-top:1px solid var(--line);text-align:right;white-space:nowrap;font-size:9.5px}
+  table.p td:first-child{text-align:left;white-space:normal}
+  table.p tr.tot td{border-top:1.5px solid var(--maroon);font-weight:800;background:var(--peach)}
+  table.p tr.b td{font-weight:800}
+  .neg{color:var(--low)!important} .pos{color:var(--ok)}
+  .note{font-size:8.5px;color:var(--muted)}
+  .foot{display:flex;justify-content:space-between;font-size:8.5px;color:var(--muted);border-top:1px solid var(--line2);padding-top:3px}
+  .bar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:5}
+  @media print{.bar{display:none} body{padding:0}}
+  @media screen{.page{box-shadow:0 0 0 1px #eee, 0 4px 18px rgba(0,0,0,.08);padding:8mm;min-height:281mm;box-sizing:content-box}}
+  @media print{.page{width:auto;max-height:280mm;overflow:hidden}}
+</style></head>
+<body>
+<div class="bar"><button class="btn primary" onclick="window.print()">Print / save as PDF</button><button class="btn quiet" onclick="window.close()">Close</button></div>
+<div class="page"><div id="fit">
+  <div class="ph"><img src="{% static 'brand/logo/primary_orange.svg' %}" alt="Pondo Bakery"><div class="t"><h1>{% block heading %}{% endblock %}</h1><div class="s">{% block sub %}{% endblock %}</div></div></div>
+  {% block body %}{% endblock %}
+  <div class="foot"><span>{{ current_shop.name|default:company.company_name }}</span><span>Printed {% now "d M Y H:i" %} by {{ user.first_name|default:user.username }}</span></div>
+</div></div>
+<script>
+// Always exactly one A4 page: grow small reports (easier to read) and shrink long ones until they fill the page.
+// The width is changed by the same amount, so the page is always filled from side to side.
+(function(){
+  var f = document.getElementById('fit'), W = 194, H = 279 * 96 / 25.4, MAXZ = 1.25;  // printable A4 with 8 mm margins
+  function measure(z){ f.style.zoom = 1; f.style.width = (W / z) + 'mm'; return f.offsetHeight * z; }  // height on paper
+  function fit(){
+    var lo = null, hi = null, z = 1;
+    for (var i = 0; i < 10; i++) {
+      var h = measure(z);
+      if (h <= H) { lo = z; if (z >= MAXZ) break; } else { hi = z; }
+      if (hi === null) z = Math.min(MAXZ, z * H / h);
+      else if (lo === null) z = z * H / h * 0.98;
+      else { if (hi - lo < 0.01) break; z = (lo + hi) / 2; }
+    }
+    if (lo === null) lo = z;
+    f.style.zoom = lo.toFixed(4);
+    f.style.width = (W / lo).toFixed(2) + 'mm';
+  }
+  window.addEventListener('load', fit); window.addEventListener('beforeprint', fit);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+})();
+</script>
+</body></html>

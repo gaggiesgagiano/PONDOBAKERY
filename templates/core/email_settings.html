@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}E-mail settings{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'core:settings' %}">Settings</a> › E-mail</div><h1>E-mail settings</h1>
+  <div class="muted small">Invoices, quotations, supplier orders and reports are e-mailed from this address, with the PDF attached.</div></div></div>
+{% if es.ready %}<div class="banner"><span>{% if es.last_test %}{% if es.last_test_ok %}✓ The last test e-mail worked ({{ es.last_test|date:"d M Y H:i" }}).{% else %}The last test e-mail did not work ({{ es.last_test|date:"d M Y H:i" }}) – check the settings below.{% endif %}{% else %}Press <b>Save &amp; send a test e-mail</b> to check that it works.{% endif %}</span></div>
+{% else %}<div class="banner"><span>E-mail is not set up yet. Fill in the mail server and the password of <b>{{ es.from_email }}</b>, then press <b>Save &amp; send a test e-mail</b>.</span></div>{% endif %}
+<form method="post" class="stack" autocomplete="off">{% csrf_token %}
+  {% if form.errors %}<div class="msg error">Please fix the boxes marked in red.</div>{% endif %}
+  <section class="card stack"><h2>Sender</h2><div class="grid-form">
+    {% include "_field.html" with f=form.from_name %}{% include "_field.html" with f=form.from_email %}
+    {% include "_field.html" with f=form.copy_me %}{% include "_field.html" with f=form.accountant_email %}
+    {% include "_field.html" with f=form.signature wide=1 %}</div></section>
+  <section class="card stack"><h2>Mail server</h2>
+    <p class="small muted" style="margin:0">These come from whoever hosts pondobakery.co.zw (the same details Outlook uses for <b>outgoing</b> mail). Usually: server <b>mail.pondobakery.co.zw</b>, <b>SSL</b>, port <b>465</b>, username = the full e-mail address.</p>
+    <div class="grid-form">
+    {% include "_field.html" with f=form.host %}{% include "_field.html" with f=form.security %}{% include "_field.html" with f=form.port %}
+    {% include "_field.html" with f=form.username %}{% include "_field.html" with f=form.password %}</div>
+    <p class="small muted" style="margin:0">{% if es.password_enc %}🔒 A password is saved (scrambled, only on this laptop).{% else %}No password saved yet.{% endif %}</p></section>
+  <div class="actions"><button class="btn primary" type="submit">Save</button><button class="btn" type="submit" name="test" value="1">Save &amp; send a test e-mail</button><a class="btn quiet" href="{% url 'core:settings' %}">Back to Settings</a></div>
+</form>
+<section class="card stack"><h2>Sent e-mails <span class="muted small">(last 40)</span></h2>
+  <div class="tablebox"><table class="t"><thead><tr><th>When</th><th>Who</th><th>What</th><th>To</th><th>Attached</th><th>Result</th></tr></thead><tbody>
+  {% for e in log %}<tr><td>{{ e.when|date:"d M Y H:i" }}</td><td>{{ e.user.username|default:"–" }}</td><td>{{ e.what }}</td><td>{{ e.to }}</td><td class="small">{{ e.attachments }}</td><td>{% if e.ok %}<span class="pill gp-ok">sent</span>{% else %}<span class="pill gp-red" title="{{ e.error }}">failed</span> <span class="small">{{ e.error }}</span>{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="6" class="muted">Nothing sent yet.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

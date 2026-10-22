@@ -1,0 +1,35 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Staff manual{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'css/manual.css' %}?v=1">{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Help &amp; settings</div><h1>Staff manual</h1>
+  <div class="small muted">How to use the Pondo program, step by step – {{ role_label|lower }}. Print it for staff to study, or read it here.</div></div>
+  <div class="actions">
+    <a class="btn primary" href="{% url 'core:manual_print' %}?role={{ role }}" target="_blank">Print the manual</a>
+    <a class="btn quiet" href="{% url 'core:manual_print' %}?role={{ role }}&amp;ink=low" target="_blank">Print – save ink</a>
+  </div></div>
+
+<section class="card stack">
+  <form method="get" class="row">
+    <label for="role"><b>Show the chapters for</b></label>
+    <select id="role" name="role" class="text" style="max-width:320px" onchange="this.form.submit()">
+      <option value="mine" {% if role == 'mine' %}selected{% endif %}>Me ({{ user_role }})</option>
+      {% for key, r in roles.items %}<option value="{{ key }}" {% if role == key %}selected{% endif %}>{{ r.0 }}</option>{% endfor %}
+    </select>
+    <noscript><button class="btn small" type="submit">Show</button></noscript>
+    <span class="small muted">Choose a role to print the manual for a new cashier, baker, supervisor or manager.</span>
+  </form>
+  <nav class="mtoc" aria-label="Chapters">{% for ch in chapters %}
+    <a class="c-{{ ch.colour }}" href="#{{ ch.key }}" style="--art:url({% static 'brand/art/' %}{{ ch.art }}_{{ ch.ink }}.svg)"><span class="n">{{ ch.n }}</span>{{ ch.title }}</a>{% endfor %}
+  </nav>
+</section>
+
+{% for ch in chapters %}
+<section class="ch c-{{ ch.colour }}" id="{{ ch.key }}">
+  <div class="chh" style="--art:url({% static 'brand/art/' %}{{ ch.art }}_{{ ch.ink }}.svg)"><span class="num">{{ ch.n }}</span>
+    <div><h2>{{ ch.title }}</h2><div class="who">Who: {{ ch.who }}</div></div></div>
+  <div class="chb">{% include "core/manual/"|add:ch.key|add:".html" %}</div>
+  <div class="chfoot no-print"><a class="btn small quiet" href="{% url 'core:manual_print' %}?ch={{ ch.key }}" target="_blank">Print this chapter</a></div>
+</section>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "costing/print_base.html" %}
+{% block title %}Count sheet{% endblock %}
+{% block kind %}STOCK COUNT SHEET · {{ c.number }}{% endblock %}
+{% block body %}
+<h1>Stock count – {{ c.date|date:"l d F Y" }}</h1>
+<div class="facts"><div>Counted by<b>____________</b></div><div>Checked by<b>____________</b></div><div>Start time<b>______</b></div><div>End time<b>______</b></div></div>
+{% for title, kind, items in sections %}
+<h3>{{ title }}</h3>
+<table class="t"><thead><tr><th>Item</th><th>Supplier / category</th><th>Unit</th><th style="width:120px">Count</th></tr></thead><tbody>
+{% for it in items %}<tr><td>{{ it.name }}</td><td class="small">{% if kind == 'i' %}{{ it.supplier|default:"" }}{% else %}{{ it.category|default:"" }}{% endif %}</td><td>{{ it.unit }}</td><td style="border-bottom:1px solid #999"></td></tr>{% endfor %}
+</tbody></table>
+{% endfor %}
+<div class="sign"><div>Counted by – signature</div><div>Checked by – signature</div></div>
+{% endblock %}

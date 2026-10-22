@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Payroll{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Staff &amp; Payroll</div><h1>Payroll</h1></div><div class="actions">{% if can.staff_edit %}<button class="btn" type="button" data-pick title="Choose a pay run to change">Edit</button>{% endif %}</div></div>
+{% include "staff/_tabs.html" %}
+{% if no_bands %}<div class="msg error">There is no PAYE tax table yet. {% if can.owner %}<a href="{% url 'staff:settings' %}">Set it up</a>.{% endif %}</div>{% endif %}
+<div class="cols">
+  <section class="card main stack"><h2>Pay runs</h2>
+    <div class="tablebox"><table class="t">
+      <thead><tr><th>No.</th><th>Month</th><th>Pay date</th><th class="r">People</th><th class="r">Gross</th><th class="r">Net to pay</th><th class="r">Cost to business</th><th>Status</th></tr></thead>
+      <tbody>{% for r, t in rows %}<tr class="link" data-href="{% url 'staff:payrun' r.pk %}"{% if can.staff_edit %} data-edit="{% url 'staff:payrun_edit' r.pk %}"{% endif %}>
+        <td class="small muted">{{ r.number }}</td><td><a class="rowlink" href="{% url 'staff:payrun' r.pk %}">{{ r.period|date:"F Y" }}</a></td><td>{{ r.pay_date|date:"d M Y" }}</td>
+        <td class="r">{{ t.n }}</td><td class="r">{{ t.gross|money }}</td><td class="r"><b>{{ t.net|money }}</b></td><td class="r">{{ t.cost|money }}</td>
+        <td>{% if r.status == 'final' %}<span class="pill gp-ok">Final</span>{% else %}<span class="pill gp-mid">Draft</span>{% endif %}</td></tr>
+      {% empty %}<tr class="emptyrow"><td colspan="8" class="muted">No pay runs yet.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+  {% if can.staff_edit %}
+  <aside class="aside"><form class="card stack" method="post" action="{% url 'staff:payrun_new' %}">{% csrf_token %}<h2>Start a pay run</h2>
+    {% for f in form %}{% include "_field.html" %}{% endfor %}
+    <button class="btn primary" type="submit">Start pay run</button>
+    <p class="small muted" style="margin:0">Everybody working here is added with their pay, allowances and open advances. You then type days, overtime and anything extra.</p>
+    <p class="small muted" style="margin:0">Tax table: {{ s.tax_table_note }}.</p>
+  </form></aside>
+  {% endif %}
+</div>
+{% endblock %}

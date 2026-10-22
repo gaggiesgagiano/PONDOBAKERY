@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Back up now{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Backup</div><h1>Back up now</h1></div></div>
+{% if daily.locked_day %}<div class="msg error">Pondo is locked: the cash-ups of {{ daily.locked_day|date:"l d F" }} are not on the flash drive yet. Make the backup now.</div>
+{% elif daily.today_pending %}<div class="msg warning">Today's cash-ups are not on the flash drive yet. Make the backup after the <b>last</b> cash-up of the day.</div>{% endif %}
+<div class="cols">
+  <section class="card main stack">
+    {% if drives %}
+      <p>Flash drive found. Click to save a copy of everything (recipes, prices, settings, sales, staff, product photos and the staff files) on it. The staff files hold personal papers like IDs, so keep this flash drive locked away.</p>
+      <form method="post" class="row">{% csrf_token %}{% if start or daily.locked_day %}<input type="hidden" name="next" value="start">{% endif %}
+        {% for d in drives %}<button class="btn primary" name="drive" value="{{ d }}" type="submit">Back up to {{ d }}</button>{% endfor %}
+      </form>
+    {% else %}
+      <div class="banner">No flash drive found. Plug one in, wait a few seconds, then <a href="">refresh this page</a>.</div>
+    {% endif %}
+    <p class="small muted">The copy goes into a folder called <b>Pondo Backups</b> on the flash drive, with today's date and time in the name. Keep the flash drive somewhere safe, away from the laptop.</p>
+    {% if company.last_flash_backup %}<p>Last flash drive backup: <b>{{ company.last_flash_backup|date:"l d F Y, H:i" }}</b><br><span class="small muted">{{ company.last_flash_backup_to }}</span></p>{% endif %}
+  </section>
+  <aside class="aside"><section class="card stack"><h2>Automatic copies on the laptop</h2>
+    <p class="small muted">Every time the program starts, it also keeps a copy on this laptop (the last 30). If the laptop itself breaks, only the flash drive copy will help, so back up <b>every day</b> after the last cash-up.</p>
+    {% for f in local %}<div class="small">{{ f.name }}</div>{% empty %}<p class="small muted">None yet.</p>{% endfor %}
+  </section></aside>
+</div>
+{% endblock %}

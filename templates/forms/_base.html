@@ -1,0 +1,118 @@
+{% load static %}<!doctype html>
+<html lang="en" data-font="{{ look.biz_font }}"><head><meta charset="utf-8">
+<title>{{ form_name }} – Pondo Bakery</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=29">{% include "_brand_font.html" %}
+<style>
+  /* Empty Pondo forms – A4, to fill in by hand. */
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A4 portrait;margin:11mm 12mm 12mm}
+  html,body{background:#ddd;font-size:10.5pt;color:#3b1d14}
+  .page{width:186mm;margin:8mm auto;background:#fff;padding:0;display:flex;flex-direction:column;gap:3.2mm}
+  @media screen{.page{padding:11mm 12mm;width:210mm;min-height:297mm;box-shadow:0 4px 18px rgba(0,0,0,.15)}}
+  .bar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:9}
+  @media print{html,body{background:#fff}.page{margin:0;width:auto}.bar{display:none!important}}
+
+  /* letterhead */
+  .lh{display:flex;justify-content:space-between;align-items:center;gap:6mm;background:#fff3d7;border-radius:4mm;padding:3.5mm 5mm;position:relative;overflow:hidden;isolation:isolate}
+  .lh::before{content:"";position:absolute;inset:0;background:url({% static 'brand/art/pattern_orange.svg' %}) 0 0/46mm;opacity:.08;z-index:-1;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0 62mm,#000 82mm);mask-image:linear-gradient(90deg,transparent 0 62mm,#000 82mm)}
+  .lh img{width:50mm;display:block}
+  .lh .shop{text-align:right;font-size:8.8pt;line-height:1.45;color:#7c5a4a}
+  .lh .shop b{color:#7a1315;font-size:10.5pt}
+
+  /* title */
+  .ttl{display:flex;justify-content:space-between;align-items:flex-end;gap:5mm;border-bottom:1mm solid #e56026;padding-bottom:1.5mm}
+  .ttl h1{font-family:var(--head);text-transform:var(--head-case);font-weight:var(--head-weight);font-size:24pt;line-height:1;color:#7a1315;margin:0}
+  .ttl .sub{font-size:9pt;color:#7c5a4a;text-align:right;max-width:80mm}
+  .intro{font-size:9.5pt;color:#5a3a2c;margin:0}
+
+  /* sections */
+  .sec{display:flex;flex-direction:column;gap:1.6mm;break-inside:avoid}
+  .sec.flow{break-inside:auto}
+  .sh{display:flex;align-items:center;gap:2.5mm;margin-top:1mm}
+  .sh .n{width:6.2mm;height:6.2mm;border-radius:1.8mm;background:#e56026;color:#fff3d7;display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:10.5pt;flex:none}
+  .sh h2{font-family:Nunito,sans-serif;font-weight:800;font-size:10.5pt;letter-spacing:.07em;text-transform:uppercase;color:#7a1315;margin:0}
+  .sh .hint{font-size:8.5pt;color:#7c5a4a;font-weight:600;margin-left:auto}
+  .sec.teal .sh .n{background:#218d80}
+  .sec.burg .sh .n{background:#7a1315}
+  .note{font-size:8.8pt;color:#7c5a4a;margin:0}
+
+  /* write-in fields: label + line */
+  .g{display:grid;gap:1.4mm 6mm}
+  .g2{grid-template-columns:1fr 1fr} .g3{grid-template-columns:1fr 1fr 1fr} .g4{grid-template-columns:repeat(4,1fr)}
+  .f{display:flex;align-items:flex-end;gap:2mm;min-height:7.4mm}
+  .f > span{font-size:9pt;font-weight:700;color:#5a3a2c;white-space:nowrap;padding-bottom:.6mm}
+  .f > i{flex:1;border-bottom:.35mm solid #b9977f;height:6mm;min-width:12mm}
+  .f.tall{min-height:11mm}
+  .f small{font-weight:600;color:#9a7a68;font-size:7.8pt}
+  .span2{grid-column:span 2} .span3{grid-column:span 3} .all{grid-column:1/-1}
+  .lines{display:flex;flex-direction:column}
+  .lines i{display:block;border-bottom:.35mm solid #b9977f;height:7.2mm}
+
+  /* tick boxes */
+  .ticks{display:grid;gap:1.6mm 4mm;font-size:9.5pt}
+  .tk{display:flex;align-items:center;gap:2mm}
+  .tk::before{content:"";width:3.8mm;height:3.8mm;border:.4mm solid #218d80;border-radius:.8mm;flex:none;background:#fff}
+  .tk.wide{grid-column:1/-1}
+  .tk .f{flex:1;min-height:auto}
+
+  /* boxed areas */
+  .box{border:.35mm solid #ecd3ad;border-radius:3mm;padding:2.5mm 3.5mm;background:#fffaf0}
+  .office{border:.4mm dashed #7a1315;border-radius:3mm;padding:2.5mm 3.5mm;background:#fff3d7}
+  .office .sh h2{color:#7a1315}
+  .decl{font-size:9.2pt;line-height:1.45;margin:0}
+
+  /* tables (rating, order lines) */
+  table.ft{width:100%;border-collapse:collapse;font-size:9.2pt}
+  table.ft th{background:#7a1315;color:#fff3d7;font-weight:700;padding:1.6mm 2mm;text-align:left;font-size:8.6pt}
+  table.ft th.c,table.ft td.c{text-align:center;width:8mm}
+  table.ft td{border-bottom:.3mm solid #e6cfae;padding:0 2mm;height:7.6mm}
+  table.ft tr:nth-child(even) td{background:#fffaf0}
+  table.ft .cb{display:inline-block;width:3.8mm;height:3.8mm;border:.4mm solid #218d80;border-radius:.8mm;vertical-align:middle}
+
+  /* signatures */
+  .sig{display:grid;grid-template-columns:2fr 1fr;gap:3mm 8mm;margin-top:2mm}
+  .sig .f{min-height:15mm}
+  .signbox .f,.signrow .f{min-height:14mm}
+
+  /* footer */
+  .foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:4mm;border-top:.35mm solid #ecd3ad;padding-top:2mm;font-size:8pt;color:#9a7a68}
+  .foot img{width:9mm}
+  .foot b{font-family:var(--head);text-transform:var(--head-case);font-weight:var(--head-weight);color:#e56026;font-size:10pt;letter-spacing:.02em}
+
+  /* long text (contract) */
+  .legal{font-size:9.4pt;line-height:1.5}
+  .legal p{margin:0 0 1.6mm}
+  .legal ul{margin:0 0 1.6mm;padding-left:5mm}
+  .legal li{margin-bottom:1.2mm}
+  .pb{break-before:page}
+{% block css %}{% endblock %}
+</style></head>
+<body class="{% block bodyclass %}{% endblock %}" data-fit="{% block fit %}.page:274{% endblock %}">
+<div class="bar"><button class="btn primary" onclick="window.print()">Print / save as PDF</button><button class="btn quiet" onclick="window.close()">Close</button></div>
+{% block pages %}
+<div class="page">
+  {% block letterhead %}{% include "forms/_letterhead.html" %}{% endblock %}
+  <div class="ttl"><h1>{{ form_name }}</h1>{% block subtitle %}{% endblock %}</div>
+  {% block content %}{% endblock %}
+  <div class="foot"><span><b>{{ company.tagline|default:"Easy to enjoy" }}</b></span><span>{{ current_shop.name|default:company.company_name|default:"Pondo Bakery" }} · {{ form_name }}</span><img src="{% static 'brand/logo/mark_orange.svg' %}" alt=""></div>
+</div>
+{% endblock %}
+<script>
+/* One-page forms: if the form is a little too long for one A4 sheet, shrink it to fit (data-fit="selector:height in mm"). */
+(function(){
+  var fit = document.body.getAttribute('data-fit'); if(!fit) return;
+  var sel = fit.split(':')[0], maxmm = parseFloat(fit.split(':')[1]), el = document.querySelector(sel); if(!el) return;
+  function go(){
+    el.style.zoom = 1;
+    var keep = [el.style.minHeight, el.style.padding, el.style.boxShadow];
+    el.style.minHeight = '0'; el.style.padding = '0';
+    var h = el.scrollHeight, max = maxmm * 96 / 25.4;
+    el.style.minHeight = keep[0]; el.style.padding = keep[1];
+    if (h > max) el.style.zoom = (max / h - 0.004).toFixed(3);
+  }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(go); else window.addEventListener('load', go);
+  window.addEventListener('beforeprint', go);
+})();
+</script>
+</body></html>

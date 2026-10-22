@@ -1,0 +1,9 @@
+{% load static %}  <div class="lt-head">
+    <img class="logo" src="{% static 'brand/logo/primary_orange.svg' %}" alt="Pondo Bakery">
+    <div class="lt-contact">
+      <div>{{ current_shop.address_line1|default:"74 Chinhoyi Street" }}, cnr Bute Street, {{ current_shop.address_line2|default:"Harare, Zimbabwe" }}</div>
+      <div><b>Business hours</b> +263 790 384 824 <small>(call &amp; WhatsApp)</small><span class="dot">·</span><b>After hours</b> {{ current_shop.phone|default:"+263 78 048 9777" }}</div>
+      <div>{{ current_shop.email|default:"jurie@pondobakery.co.zw" }}<span class="dot">·</span>ndipo@pondobakery.co.zw<span class="dot">·</span>www.pondobakery.co.zw</div>
+    </div>
+  </div>
+  <div class="lt-rule"></div>

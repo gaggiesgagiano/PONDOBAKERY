@@ -1,0 +1,8 @@
+{% with n=request.resolver_match.url_name %}
+<div class="chips subnav no-print" style="margin:0">
+  <a class="chip {% if 'person' in n or n == 'people' %}on{% endif %}" href="{% url 'staff:people' %}">Staff</a>
+  <a class="chip {% if n == 'files' %}on{% endif %}" href="{% url 'staff:files' %}">Staff files</a>
+  <a class="chip {% if 'payrun' in n %}on{% endif %}" href="{% url 'staff:payruns' %}">Payroll</a>
+  {% if can.owner %}<a class="chip {% if n == 'settings' %}on{% endif %}" href="{% url 'staff:settings' %}">Tax &amp; NSSA rates</a>{% endif %}
+</div>
+{% endwith %}

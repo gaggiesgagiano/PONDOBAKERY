@@ -1,0 +1,42 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Stock results {{ month|date:"F Y" }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Reports</div><h1>Stock results – {{ month|date:"F Y" }}</h1>
+  <div class="small muted">Real cost of sales = opening stock + purchases − closing stock, between your stock takes. All excl. VAT.</div></div>
+  <div class="actions"><a class="btn quiet" href="?month={{ prev|date:'Y-m' }}">← {{ prev|date:"M" }}</a>{% if next %}<a class="btn quiet" href="?month={{ next|date:'Y-m' }}">{{ next|date:"M" }} →</a>{% endif %}<button class="btn" type="button" onclick="window.print()">Print</button></div></div>
+{% include "reports/_tabs.html" %}
+{% if not r.periods %}
+<section class="card stack"><h2>No stock results for this month yet</h2>
+  <p style="margin:0">You need <b>two finished stock takes</b> – one at the start and one at the end of the period (for example every Sunday night or the last day of the month). {% if r.n_counts %}You have {{ r.n_counts }} finished so far.{% endif %}</p>
+  {% if can.stock_edit %}<div><a class="btn primary" href="{% url 'stock:counts' %}">Go to stock take</a></div>{% endif %}
+</section>
+{% else %}
+<section class="card"><div class="tablebox"><table class="t dash">
+  <thead><tr><th>Period</th><th class="r">Opening stock</th><th class="r">Purchases</th><th class="r">Closing stock</th><th class="r">Cost of sales</th><th class="r">Sales</th><th class="r">GP $</th><th class="r">GP %</th><th class="r">Recipes GP %</th></tr></thead>
+  <tbody>{% for p in r.periods %}<tr><td><b>{{ p.prev.date|date:"d M" }} – {{ p.cur.date|date:"d M" }}</b><div class="small muted">{{ p.days }} days · {{ p.sales_days }} with sales</div></td>
+    <td class="r">{{ p.opening|money }}</td><td class="r">{{ p.purchases|money }}</td><td class="r">{{ p.closing|money }}</td><td class="r"><b>{{ p.cos|money }}</b></td>
+    <td class="r">{{ p.sales|money }}</td><td class="r">{{ p.gp|money }}</td><td class="r"><span class="pill {{ p.gp_pct|gpclass:company }}">{{ p.gp_pct|pct }}</span></td><td class="r small">{{ p.theo_gp_pct|pct }}</td></tr>{% endfor %}
+  <tr class="total"><td>Month total</td><td></td><td class="r">{{ r.tot.purchases|money }}</td><td></td><td class="r">{{ r.tot.cos|money }}</td><td class="r">{{ r.tot.sales|money }}</td><td class="r">{{ r.tot.gp|money }}</td><td class="r">{{ r.tot.gp_pct|pct }}</td><td class="r">{{ r.tot.theo_gp_pct|pct }}</td></tr></tbody>
+</table></div></section>
+<div class="cols">
+  <section class="card main stack"><h2>Result vs target</h2>
+    <div class="tablebox"><table class="t dash"><tbody>
+      <tr><td><b>Real GP % (from stock takes)</b></td><td class="r"><span class="pill {{ r.tot.gp_pct|gpclass:company }}">{{ r.tot.gp_pct|pct }}</span></td></tr>
+      <tr><td>Target GP %</td><td class="r">{{ r.target|pct:0 }}</td></tr>
+      <tr><td>GP $ over / (short) of target</td><td class="r {{ r.tot.gp_short|sign }}">{{ r.tot.gp_short|money }}</td></tr>
+      <tr><td>Sales needed for the target GP</td><td class="r">{{ r.tot.sales_needed|money }}</td></tr>
+      <tr><td>GP % the recipes say</td><td class="r">{{ r.tot.theo_gp_pct|pct }}</td></tr>
+      <tr><td>Cost of sales the recipes say</td><td class="r">{{ r.tot.theo_cos|money }}</td></tr>
+      <tr><td>Waste logged (at cost)</td><td class="r">{{ r.tot.waste|money }}</td></tr>
+      <tr><td>Staff meals &amp; tasting</td><td class="r">{{ r.tot.meals|money }}</td></tr>
+      <tr class="total"><td>Unexplained loss / (gain)</td><td class="r {% if r.tot.unexplained > 0 %}neg{% endif %}">{{ r.tot.unexplained|money }}</td></tr>
+    </tbody></table></div>
+    <p class="small muted" style="margin:0">Real GP and recipe GP should be close. A big unexplained loss means waste that was not logged, over-portioning, theft, prices that were not updated, or counting mistakes.</p>
+  </section>
+  <aside class="aside"><section class="card stack"><h2>Purchases by supplier</h2>
+    {% for name, v in r.by_supplier %}<div class="row" style="justify-content:space-between"><span class="small">{{ name }}</span><b class="small">{{ v|money }}</b></div>{% empty %}<p class="small muted" style="margin:0">None.</p>{% endfor %}
+    {% for p in r.periods %}{% if forloop.last %}<p class="small muted" style="margin:0">Stock turns {{ p.turnover|num:1 }}× in the last period · about {{ p.days_on_hand|num:0 }} days of stock on hand.</p>{% endif %}{% endfor %}
+  </section></aside>
+</div>
+{% endif %}
+{% endblock %}

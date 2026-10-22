@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Expenses{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Sales &amp; Cash-Up</div><h1>Expenses – {{ month|date:"F Y" }}</h1></div>
+  <div class="actions"><a class="btn xl" href="{% url 'core:excel_file' 'expenses' %}?month={{ month|date:'Y-m' }}" title="Download this list as an Excel file">Excel</a><a class="btn quiet" href="?month={{ prev|date:'Y-m' }}">← {{ prev|date:"M" }}</a>{% if next %}<a class="btn quiet" href="?month={{ next|date:'Y-m' }}">{{ next|date:"M" }} →</a>{% endif %}
+    {% if can.sales_edit %}<a class="btn primary" href="{% url 'sales:expense_new' %}">+ New expense</a>{% endif %}</div></div>
+{% include "sales/_tabs.html" %}
+<div class="cols">
+  <section class="card main stack">
+    <form class="filters" method="get"><input type="hidden" name="month" value="{{ month|date:'Y-m' }}">
+      <label class="visually-hidden" for="cat">Type</label>
+      <select id="cat" name="cat" onchange="this.form.submit()"><option value="">All types</option>{% for c in cats %}<option value="{{ c.pk }}" {% if cat == c.pk|stringformat:'s' %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></form>
+    <div class="tablebox"><table class="t">
+      <thead><tr><th>Date</th><th>Type</th><th>Paid to / what for</th><th>Paid from</th><th class="r">Amount</th></tr></thead>
+      <tbody>{% for e in rows %}<tr class="link" data-href="{% if e.cashup_id %}{% url 'sales:cashup' e.cashup_id %}{% else %}{% url 'sales:expense_edit' e.pk %}{% endif %}">
+        <td>{{ e.date|date:"D d M" }}</td><td><b>{{ e.category }}</b></td><td>{{ e.payee }}{% if e.payee and e.description %} · {% endif %}<span class="small muted">{{ e.description }}</span></td>
+        <td class="small">{% if e.cashup_id %}<a href="{% url 'sales:cashup' e.cashup_id %}">Till ({{ e.cashup.till }})</a>{% else %}{{ e.get_paid_from_display }}{% endif %}</td>
+        <td class="r"><b>{{ e.amount|money }}</b></td></tr>
+      {% empty %}<tr class="emptyrow"><td colspan="5" class="muted">No expenses this month.</td></tr>{% endfor %}
+      {% if rows %}<tr class="total"><td colspan="4">Total</td><td class="r">{{ total|money }}</td></tr>{% endif %}</tbody>
+    </table></div>
+  </section>
+  <aside class="aside"><section class="card stack"><h2>By type</h2>
+    {% for c in by_cat %}<div class="row" style="justify-content:space-between"><span>{{ c.category__name }}</span><b>{{ c.t|money }}</b></div>{% empty %}<p class="muted small" style="margin:0">–</p>{% endfor %}
+    <p class="small muted" style="margin:0">Stock bought from suppliers is not an expense – it goes on a GRV (GRV – goods received). Wages come from the payroll.</p>
+  </section></aside>
+</div>
+{% endblock %}

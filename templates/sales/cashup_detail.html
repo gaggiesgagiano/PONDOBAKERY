@@ -1,0 +1,75 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}{{ cu }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'sales:cashups' %}">Cash-ups</a> › {{ cu.number }}</div>
+  <h1>Cash-up · {{ cu.till }} · {{ cu.date|date:"D d M Y" }}</h1>
+  <div class="chips"><span class="chip">Cashier {{ cu.cashier|default:"–" }}</span><span class="chip">Done by {{ cu.created_by|default:"–" }}</span>
+    {% if cu.signed_off_by %}<span class="chip on">Signed off by {{ cu.signed_off_by }} · {{ cu.signed_off_at|date:"d M H:i" }}</span>{% endif %}</div></div>
+  <div class="actions"><a class="btn" href="{% url 'sales:cashup_print' cu.pk %}" target="_blank">Print</a>
+    {% if can.sales_edit %}{% if not cu.signed_off_by or can.owner %}<a class="btn primary" href="{% url 'sales:cashup_edit' cu.pk %}">Edit</a>{% endif %}
+    {% if not cu.signed_off_by and can.costs %}<form method="post" action="{% url 'sales:cashup_signoff' cu.pk %}">{% csrf_token %}<button class="btn" type="submit">Sign off</button></form>{% endif %}
+    {% if cu.signed_off_by and can.owner %}<form method="post" action="{% url 'sales:cashup_signoff' cu.pk %}">{% csrf_token %}<input type="hidden" name="undo" value="1"><button class="btn quiet" type="submit">Remove sign-off</button></form>{% endif %}{% endif %}</div></div>
+<div class="stats">
+  <div class="card stat dark"><div class="lbl">Sales (till)</div><div class="val">{{ res.total_till|money }}</div></div>
+  <div class="card stat"><div class="lbl">Over / short</div><div class="val" style="color:{% if res.variance < 0 %}var(--low){% elif res.variance > 0 %}var(--mid){% else %}var(--ok){% endif %}">{% if res.variance == 0 %}Balances{% else %}{{ res.variance|money }}{% endif %}</div><div class="sub">{% if res.variance < 0 %}short{% elif res.variance > 0 %}over{% endif %}</div></div>
+  <div class="card stat"><div class="lbl">Paid out of the till</div><div class="val">{{ res.payouts|money }}</div></div>
+  <div class="card stat"><div class="lbl">Cash to bank</div><div class="val">{{ res.to_bank|money }}</div><div class="sub">{% if cu.banked is not None %}banked {{ cu.banked|money }}{% if res.bank_diff %} · <b style="color:var(--low)">diff {{ res.bank_diff|money }}</b>{% endif %}{% else %}not banked yet{% endif %}</div></div>
+</div>
+<div class="cols">
+  <section class="card main stack"><h2>Takings</h2>
+    <div class="tablebox"><table class="t">
+      <thead><tr><th>Payment type</th><th class="r">Till says</th><th class="r">Really received</th><th class="r">Over / short</th></tr></thead>
+      <tbody>{% for r in res.rows %}<tr><td><b>{{ r.method.name }}</b></td><td class="r">{{ r.till|money }}</td>
+        {% if r.method.is_cash %}<td class="r muted small">see cash</td><td></td>{% else %}<td class="r">{{ r.actual|money }}</td><td class="r">{% if r.variance %}<span class="pill {% if r.variance < 0 %}gp-low{% else %}gp-mid{% endif %}">{{ r.variance|money }}</span>{% elif r.actual is not None %}<span class="pill gp-ok">ok</span>{% endif %}</td>{% endif %}</tr>
+      {% empty %}<tr class="emptyrow"><td colspan="4" class="muted">Nothing typed yet.</td></tr>{% endfor %}
+      <tr class="total"><td>Total</td><td class="r">{{ res.total_till|money }}</td><td></td><td class="r">{{ res.variance|money }}</td></tr></tbody>
+    </table></div>
+    <h3>Cash</h3>
+    <div class="tablebox"><table class="t"><tbody>
+      <tr><td>Cash counted in the drawer</td><td class="r">{{ cu.cash_counted|money }}</td></tr>
+      {% if res.zig_usd %}<tr><td>+ ZiG notes {{ cu.zig_counted|num:2 }} ZiG at {{ cu.zig_rate|num:4 }}</td><td class="r">{{ res.zig_usd|money }}</td></tr>{% endif %}
+      <tr><td>− Float at the start</td><td class="r">{{ cu.opening_float|money }}</td></tr>
+      <tr><td>+ Paid out of the till</td><td class="r">{{ res.payouts|money }}</td></tr>
+      {% if cu.drops %}<tr><td>+ Cash drops to the safe</td><td class="r">{{ cu.drops|money }}</td></tr>{% endif %}
+      <tr class="total"><td>Cash taken today</td><td class="r">{{ res.cash_taken|money }}</td></tr>
+      <tr><td>Cash the till says</td><td class="r">{{ res.cash_till|money }}</td></tr>
+      <tr><td><b>Cash over / short</b></td><td class="r"><b>{{ res.cash_variance|money }}</b></td></tr>
+      <tr><td>Float left for tomorrow</td><td class="r">{{ cu.float_left|money }}</td></tr>
+    </tbody></table></div>
+  </section>
+  <aside class="aside">
+    <section class="card stack"><h2>Paid out</h2>
+      {% for e in payouts %}<div class="row" style="justify-content:space-between"><span><b>{{ e.category }}</b>{% if e.payee %} · {{ e.payee }}{% endif %}<br><span class="small muted">{{ e.description }}{% if e.receipt_no %} · slip {{ e.receipt_no }}{% endif %}</span></span><b>{{ e.amount|money }}</b></div>{% empty %}<p class="muted small" style="margin:0">Nothing paid out.</p>{% endfor %}
+    </section>
+    {% if dels %}<section class="card stack"><h2>Deliveries on the till</h2>
+      <p class="small muted" style="margin:0">Checked off on {{ cu.date|date:"d M" }}: this money was rung up on the till, so it is in the till's figures above.</p>
+      {% for d in dels %}<div class="row" style="justify-content:space-between"><span><a href="{% url 'invoices:delivery' d.pk %}">{{ d.number }}</a> · {{ d.doc.name }}<br><span class="small muted">{{ d.pay_short }}{% if d.till_ref %} · slip {{ d.till_ref }}{% endif %}{% if d.difference %} · <b style="color:var(--low)">{% if d.difference < 0 %}short{% else %}over{% endif %} {{ d.difference|money|cut:"-" }}</b>{% endif %}</span></span><b>{{ d.rung_up|money }}</b></div>{% endfor %}
+      <div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding-top:8px"><b>Deliveries total</b><b>{{ dels_total|money }}</b></div>
+    </section>{% endif %}
+    {% if cu.notes %}<section class="card"><h3>Notes</h3><p style="white-space:pre-line;margin:6px 0 0">{{ cu.notes }}</p></section>{% endif %}
+    {% if can.sales_edit and not cu.signed_off_by or can.owner %}<form method="post" action="{% url 'sales:cashup_delete' cu.pk %}" onsubmit="return confirm('Delete this cash-up?')">{% csrf_token %}<button class="btn danger small" type="submit">Delete cash-up</button></form>{% endif %}
+  </aside>
+</div>
+{% if request.GET.saved and daily_pending %}
+<div class="bk-pop no-print" id="bkpop" role="dialog" aria-modal="true" aria-labelledby="bk-t">
+  <div class="bk-box">
+    <div class="bk-ic">💾</div>
+    <h2 id="bk-t">Last cash-up of the day?</h2>
+    <p>When <b>all tills</b> are cashed up, the <b>daily backup</b> must be made on the flash drive – before anybody goes home.
+      <b>If it is not done, Pondo stays locked tomorrow</b> until it is made.</p>
+    {% if can.backup %}<div class="row" style="gap:10px;justify-content:center;flex-wrap:wrap">
+      <a class="btn primary" href="{% url 'core:backup' %}">Back up now</a>
+      <button class="btn quiet" type="button" onclick="document.getElementById('bkpop').remove()">Not yet – more tills to cash up</button></div>
+    {% else %}<p><b>Tell the Supervisor or Manager now</b> – only they can make the backup.</p>
+      <div class="row" style="justify-content:center"><button class="btn primary" type="button" onclick="document.getElementById('bkpop').remove()">OK, I will tell them</button></div>{% endif %}
+  </div>
+</div>
+<style>
+  .bk-pop{position:fixed;inset:0;background:rgba(42,20,18,.55);z-index:80;display:flex;align-items:center;justify-content:center;padding:16px}
+  .bk-box{background:#fff3d7;border-radius:22px;max-width:460px;width:100%;padding:26px 24px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.35);border:3px solid #e56026}
+  .bk-box h2{margin:4px 0 8px;color:#7a1315}
+  .bk-box p{margin:0 0 14px;color:#2a1412;line-height:1.45}
+  .bk-ic{font-size:40px}
+</style>
+{% endif %}
+{% endblock %}

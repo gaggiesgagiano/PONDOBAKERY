@@ -1,0 +1,38 @@
+{% extends "forms/_base.html" %}{% load static %}
+{% block css %}
+  @page{size:A4 landscape;margin:7mm}
+  .sheet{width:283mm;margin:8mm auto;display:grid;grid-template-columns:1fr 1fr;gap:0;background:#fff}
+  @media screen{.sheet{width:297mm;min-height:210mm;padding:7mm;box-shadow:0 4px 18px rgba(0,0,0,.15)}}
+  @media print{.sheet{margin:0;width:auto;height:195mm}}
+  .copy{padding:0 6mm;display:flex;flex-direction:column;gap:2.2mm;font-size:9pt}
+  .copy:first-child{border-right:.4mm dashed #b9977f;padding-left:0}
+  .copy:last-child{padding-right:0}
+  .copy .lh{padding:2.5mm 3.5mm}
+  .copy .lh img{width:36mm}
+  .copy .lh .shop{font-size:7.6pt}
+  .copy .lh .shop b{font-size:9pt}
+  .copy .ttl h1{font-size:17pt}
+  .copy .ttl .who{font-weight:800;font-size:8pt;letter-spacing:.08em;text-transform:uppercase;background:#218d80;color:#fff3d7;border-radius:1.5mm;padding:.8mm 2.2mm}
+  .copy .sh{margin-top:.6mm}
+  .copy .sh h2{font-size:9pt}
+  .copy .sh .n{width:5mm;height:5mm;font-size:8.5pt;border-radius:1.4mm}
+  .copy .f{min-height:6.6mm}
+  .copy .f > span{font-size:8.2pt}
+  .copy .f > i{height:5mm}
+  .copy .ticks{font-size:8.6pt;gap:1.2mm 3mm}
+  .copy .tk::before{width:3.3mm;height:3.3mm}
+  .copy table.ft{font-size:8.4pt}
+  .copy table.ft th{padding:1.1mm 1.6mm;font-size:8pt}
+  .copy table.ft td{height:6.1mm}
+  .copy table.ft tr.tot td{background:#fff3d7;font-weight:800;color:#7a1315}
+  .copy .thanks{margin-top:auto;background:#e56026;color:#fff3d7;border-radius:3mm;padding:2mm 3mm;display:flex;align-items:center;gap:3mm;font-size:8.4pt;font-weight:700}
+  .copy .thanks img{width:9mm}
+  .copy .lines i{height:6mm}
+{% endblock %}
+{% block fit %}.sheet:194{% endblock %}
+{% block pages %}
+<div class="sheet">
+{% include "forms/_order_copy.html" with who="Customer copy" %}
+{% include "forms/_order_copy.html" with who="Bakery copy" %}
+</div>
+{% endblock %}

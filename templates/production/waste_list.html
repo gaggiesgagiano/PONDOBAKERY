@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Waste{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Production</div><h1>Waste log</h1></div>
+  <div class="actions">{% if can.waste_edit %}<button class="btn" type="button" data-pick title="Choose a waste sheet to change">Edit</button>{% endif %}<a class="btn xl" href="{% url 'core:excel_file' 'waste' %}" title="Download this list as an Excel file">Excel</a>{% if can.costs %}<a class="btn" href="{% url 'production:waste_summary' %}">Monthly waste summary</a>{% endif %}</div></div>
+<div class="cols">
+  <section class="card main stack"><h2>Waste logs</h2>
+    <div class="tablebox"><table class="t">
+      <thead><tr><th>No.</th><th>Date</th><th>Shift</th><th class="r">Lines</th>{% if can.costs %}<th class="r">Cost</th>{% endif %}<th>Recorded by</th><th>Signed off</th></tr></thead>
+      <tbody>{% for w, n, cost in rows %}<tr class="link" data-href="{% url 'production:waste' w.pk %}"{% if can.waste_edit %} data-edit="{% url 'production:waste_edit' w.pk %}"{% endif %}>
+        <td class="small muted">{{ w.number }}</td><td><a class="rowlink" href="{% url 'production:waste' w.pk %}">{{ w.date|date:"D d M Y" }}</a></td><td>{{ w.get_shift_display }}</td>
+        <td class="r">{{ n }}</td>{% if can.costs %}<td class="r"><b>{{ cost|money }}</b></td>{% endif %}<td class="small">{{ w.recorded_by|default:"" }}</td>
+        <td>{% if w.signed_off_by %}<span class="pill gp-ok">{{ w.signed_off_by }}</span>{% else %}<span class="pill gp-none">Not yet</span>{% endif %}</td></tr>
+      {% empty %}<tr class="emptyrow"><td colspan="7" class="muted">No waste logged yet.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+  {% if can.waste_edit %}
+  <aside class="aside"><form class="card stack" method="post" action="{% url 'production:waste_new' %}">{% csrf_token %}<h2>Log waste</h2>
+    {% if form.non_field_errors %}<div class="msg error">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+    {% for f in form %}{% include "_field.html" %}{% endfor %}
+    <button class="btn primary" type="submit">Start waste log</button>
+    <p class="small muted" style="margin:0">One log per shift. Every item thrown away, given to staff or returned goes on it.</p>
+  </form></aside>
+  {% endif %}
+</div>
+{% endblock %}

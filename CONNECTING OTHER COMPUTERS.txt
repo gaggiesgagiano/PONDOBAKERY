@@ -1,0 +1,47 @@
+PONDO BAKERY – USING PONDO ON OTHER COMPUTERS AND AT HOME
+=========================================================
+
+There is ONE Pondo, on the main computer (this laptop). Everybody else opens it in Chrome
+and logs in with their own username and password. Nothing is installed on the other computers.
+
+THE MAIN COMPUTER (this laptop)
+- Start Pondo as usual every morning. The small Pondo window shows the address the other
+  computers must use, for example:  http://gaggies:8765
+- Keep it switched on, plugged in and on the UPS / inverter during trading hours.
+- Do not let it go to sleep: Settings > System > Power > "When plugged in, put my device to sleep
+  after" = Never.
+- The very first time, Windows asks "Allow Python on networks?" – tick PRIVATE networks and
+  click Allow.
+- The shop Wi-Fi must be set to "Private": Settings > Network & internet > Wi-Fi > (your network)
+  > Network profile type = Private.
+
+OTHER COMPUTERS IN THE SHOP (same Wi-Fi / network)
+1. Open Chrome.
+2. Type the address from the small Pondo window, e.g.  http://gaggies:8765
+   (if the name does not work, use the number shown, e.g. http://192.168.1.20:8765)
+3. Log in with YOUR OWN username and password.
+4. Make it a bookmark or a desktop shortcut so it is one click next time.
+
+THE BOSS AT HOME (laptop or phone) – through Tailscale, a free private link
+One time:
+1. On the main computer: go to tailscale.com, download Tailscale for Windows, install it and
+   sign in (e.g. with the bakery's Google account).
+2. On the boss's laptop or phone: install Tailscale (Windows / Android / iPhone app) and sign in
+   with the SAME account (or accept the invitation sent from the Tailscale admin page).
+Every time:
+3. Make sure Tailscale is switched on.
+4. Open Chrome and type:  http://gaggies:8765   (or the 100.x.x.x address Tailscale shows for
+   the main computer).
+5. Log in with the boss's own username and password.
+Nothing of Pondo is open to the public internet – only devices signed in to your Tailscale can reach it.
+
+LOGINS
+- The owner (Operations Manager) makes a login for every person under Settings > Users and
+  chooses what each person may see and do.
+- Never share logins. Every change in Pondo is recorded with the name of the person who made it.
+
+IF THE OTHER COMPUTERS CANNOT CONNECT
+- Is Pondo running on the main computer (small Pondo window open)?
+- Is the main computer awake and on the same Wi-Fi?
+- Try the number address instead of the name.
+- Still nothing: Windows Firewall may be blocking it – send Claude a photo of the screen.

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Edit plan{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'production:plans' %}">Production</a> › <a href="{% url 'production:plan' plan.pk %}">{{ plan.number }}</a></div>
+  <h1>{{ plan.get_shift_display }} · {{ plan.date|date:"D d M Y" }}</h1></div></div>
+<form method="post" class="stack" id="plan-form">{% csrf_token %}
+  {% if fs.non_form_errors %}<div class="msg error">{{ fs.non_form_errors }}</div>{% endif %}
+  <section class="card stack">
+    <div class="row" style="justify-content:space-between"><h2>What to make</h2><div class="small muted">Total units: <b id="tot" style="color:var(--maroon);font-size:18px">0</b></div></div>
+    <p class="small muted" style="margin:0"><b>Model stock</b> = how many you want ready. <b>On hand</b> = what is still on the shelf. <b>Suggested</b> = model stock − (on hand − expired). Type in <b>Make</b> only if you want a different number.</p>
+    {{ fs.management_form }}
+    <datalist id="product-names">{% for n in names %}<option value="{{ n }}">{% endfor %}</datalist>
+    <div class="tablebox"><table class="t lines" style="min-width:880px">
+      <thead><tr><th>Product</th><th>Model stock</th><th>On hand</th><th>Expired</th><th class="r">Suggested</th><th>Make</th><th class="r">Units</th><th class="r">Batches</th><th>Remove</th></tr></thead>
+      <tbody id="line-body">
+      {% for f in fs %}
+        <tr class="line{% if f.errors %} has-error{% endif %}"><td class="ing">{{ f.product }}</td><td class="qty">{{ f.model_stock }}</td><td class="qty">{{ f.on_hand }}</td><td class="qty">{{ f.expired }}</td>
+          <td class="cost sug">–</td><td class="qty">{{ f.actual }}</td><td class="cost units">–</td><td class="cost bat">–</td><td style="text-align:center">{{ f.DELETE }}</td></tr>
+        {% if f.errors %}<tr><td colspan="9" style="color:var(--low);font-weight:700">{{ f.non_field_errors|join:" " }}</td></tr>{% endif %}
+      {% endfor %}
+      </tbody>
+    </table></div>
+    <template id="line-template"><tr class="line"><td class="ing">{{ fs.empty_form.product }}</td><td class="qty">{{ fs.empty_form.model_stock }}</td><td class="qty">{{ fs.empty_form.on_hand }}</td><td class="qty">{{ fs.empty_form.expired }}</td><td class="cost sug">–</td><td class="qty">{{ fs.empty_form.actual }}</td><td class="cost units">–</td><td class="cost bat">–</td><td style="text-align:center">{{ fs.empty_form.DELETE }}</td></tr></template>
+    <div class="row"><button class="btn quiet small" type="button" id="add-line">+ Add product</button><button class="btn quiet small" type="button" id="add-5">+ Add 5</button></div>
+  </section>
+  <section class="card stack"><div class="grid-form">{% include "_field.html" with f=hf.supervisor %}{% include "_field.html" with f=hf.status %}{% include "_field.html" with f=hf.notes wide=1 %}</div></section>
+  <div class="actions"><button class="btn primary" type="submit">Save plan</button><a class="btn quiet" href="{% url 'production:plan' plan.pk %}">Cancel</a></div>
+</form>
+{{ yields|json_script:"yields" }}
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  var y = JSON.parse(document.getElementById('yields').textContent), Y = {};
+  Object.keys(y).forEach(function(k){ Y[k.toLowerCase()] = y[k]; });
+  var body = document.getElementById('line-body'), total = document.getElementById('id_ln-TOTAL_FORMS');
+  function add(){ body.insertAdjacentHTML('beforeend', document.getElementById('line-template').innerHTML.replace(/__prefix__/g, total.value)); total.value = +total.value + 1; hook(); calc(); }
+  document.getElementById('add-line').onclick = add; document.getElementById('add-5').onclick = function(){ for (var i=0;i<5;i++) add(); };
+  function n(tr, s){ var v = tr.querySelector('input[name$="-' + s + '"]').value; return v === '' ? null : parseInt(v, 10); }
+  function calc(){
+    var tot = 0;
+    body.querySelectorAll('tr.line').forEach(function(tr){
+      var name = tr.querySelector('input[name$="-product"]').value.trim().toLowerCase(), del = tr.querySelector('input[name$="-DELETE"]').checked;
+      var sug = Math.max(0, (n(tr,'model_stock')||0) - Math.max(0,(n(tr,'on_hand')||0) - (n(tr,'expired')||0)));
+      var act = n(tr,'actual'), units = act === null ? sug : act;
+      tr.querySelector('.sug').textContent = name ? sug : '–';
+      tr.querySelector('.units').textContent = name ? units : '–';
+      var yy = Y[name];
+      tr.querySelector('.bat').textContent = name ? (yy ? (units / yy).toFixed(2) : (name in Y ? 'no yield' : 'not a recipe')) : '–';
+      if (name && !del) tot += units;
+    });
+    document.getElementById('tot').textContent = tot;
+  }
+  function hook(){ document.querySelectorAll('#plan-form input').forEach(function(el){ el.oninput = calc; el.onchange = calc; }); }
+  hook(); calc();
+})();
+</script>
+{% endblock %}

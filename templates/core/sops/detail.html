@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ sop.code }} {{ sop.title }}{% endblock %}
+{% block head %}{% include "core/sops/_doc_css.html" %}<style>
+  .readlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px 18px}
+  .readlist label{display:flex;gap:8px;align-items:center;font-size:14px}
+  .readlist input{width:18px;height:18px}
+  .st{font-size:12px;font-weight:800;border-radius:6px;padding:1px 6px;margin-left:auto;white-space:nowrap}
+  .st.ok{background:#d8efea;color:#13574f} .st.old{background:#fde3c9;color:#9c3d17} .st.no{background:#f4e4c9;color:#7c5a4a}
+</style>{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'core:sops' %}">SOP file</a> › {{ sop.section }} · {{ sop.section_name }}</div>
+  <h1>{{ sop.code }} · {{ sop.title }}</h1>
+  <div class="chips">{% if sop.status == 'approved' %}<span class="chip ok">Approved {{ sop.approved_on|date:"d M Y" }} · version {{ sop.version }}</span>{% if sop.review_due %}<span class="chip {% if sop.review_due <= today %}due{% endif %}">Review by {{ sop.review_due|date:"d M Y" }}</span>{% endif %}{% else %}<span class="chip draft">Draft · version {{ sop.version }} – not approved yet</span>{% endif %}{% if not sop.active %}<span class="chip due">Taken out of the file</span>{% endif %}</div></div>
+  <div class="actions">
+    <a class="btn" href="{% url 'core:sop_print' %}?sop={{ sop.pk }}" target="_blank">Print SOP</a>
+    <a class="btn" href="{% url 'core:sop_sheet' sop.pk %}" target="_blank">Print sign-off sheet</a>
+    {% if can.sops_edit %}<a class="btn primary" href="{% url 'core:sop_edit' sop.pk %}">Edit</a>{% endif %}</div></div>
+
+<section class="card stack">
+  <div class="sopmeta">
+    <div><span>Purpose</span>{{ sop.purpose }}</div>
+    <div><span>Responsible</span>{{ sop.responsible|default:"–" }}</div>
+    <div><span>Must be read by</span>{{ sop.applies_text }}</div>
+    <div><span>Written by</span>{{ sop.written_by }}</div>
+    <div><span>Approved by</span>{{ sop.approved_by }}{% if sop.approved_on %} · {{ sop.approved_on|date:"d M Y" }}{% endif %}</div>
+  </div>
+</section>
+<section class="card"><div class="sopdoc">{{ sop.body|safe }}</div></section>
+
+{% if can.sops_edit %}<section class="card stack"><h2>Approval</h2>
+  {% if sop.status == 'approved' %}
+    <p style="margin:0">Approved by <b>{{ sop.approved_by }}</b> on <b>{{ sop.approved_on|date:"d F Y" }}</b>. Changing the procedure makes a new version that must be approved again.</p>
+    <form method="post" action="{% url 'core:sop_approve' sop.pk %}">{% csrf_token %}<button class="btn small quiet" name="undo" value="1">Back to draft</button></form>
+  {% else %}
+    <p class="small muted" style="margin:0">Read it through with the Owner / Director. When it is right, record the approval – staff then have to read and sign it.</p>
+    <form method="post" action="{% url 'core:sop_approve' sop.pk %}" class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end">{% csrf_token %}
+      <div class="field"><label for="ab">Approved by</label><input id="ab" name="approved_by" value="{{ sop.approved_by }}"></div>
+      <div class="field"><label for="ad">Date</label><input id="ad" type="date" name="approved_on" value="{{ today|date:'Y-m-d' }}"></div>
+      <button class="btn primary" type="submit">Approve version {{ sop.version }}</button></form>
+  {% endif %}
+</section>{% endif %}
+
+<section class="card stack"><h2>Read &amp; signed <span class="small muted" style="font-weight:600">{{ n_ok }} of {{ state|length }} signed version {{ sop.version }}</span></h2>
+  {% if sop.status != 'approved' %}<p class="small muted" style="margin:0">Staff sign once the SOP is approved.</p>{% endif %}
+  {% if state %}
+  <form method="post" action="{% url 'core:sop_reads' sop.pk %}" class="stack">{% csrf_token %}
+    <div class="readlist">{% for e, r, st in state %}
+      <label>{% if can.sops_edit and st != 'ok' %}<input type="checkbox" name="emp" value="{{ e.pk }}">{% endif %}{{ e.name }}<span class="small muted">{{ e.job_title }}</span>
+        <span class="st {{ st }}">{% if st == 'ok' %}✓ {{ r.signed_on|date:"d M" }}{% elif st == 'old' %}read v{{ r.version }} – again{% else %}not yet{% endif %}</span></label>{% endfor %}</div>
+    {% if can.sops_edit and sop.status == 'approved' %}<div class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap">
+      <div class="field"><label for="sd">Signed on</label><input id="sd" type="date" name="signed_on" value="{{ today|date:'Y-m-d' }}"></div>
+      <button class="btn primary" type="submit">Save – these people signed</button>
+      <span class="small muted">Print the sign-off sheet, let everybody sign it, then tick them here.</span></div>{% endif %}
+  </form>
+  {% else %}<p class="muted" style="margin:0">Nobody on the staff list must read this SOP yet.</p>{% endif %}
+</section>
+
+{% if versions %}<section class="card stack"><h2>Earlier versions</h2>
+  <div class="tablebox"><table class="t"><thead><tr><th>Version</th><th>Approved</th><th>Changed on</th><th>By</th><th>What changed</th></tr></thead>
+  <tbody>{% for v in versions %}<tr><td>v{{ v.version }}</td><td>{{ v.approved_on|date:"d M Y"|default:"–" }}</td><td>{{ v.saved_at|date:"d M Y H:i" }}</td><td>{{ v.saved_by|default:"–" }}</td><td>{{ v.note|default:"–" }}</td></tr>{% endfor %}</tbody></table></div>
+</section>{% endif %}
+{% if can.sops_edit %}<form method="post" action="{% url 'core:sop_archive' sop.pk %}" onsubmit="return confirm('{% if sop.active %}Take {{ sop.code }} out of the SOP file?{% else %}Put {{ sop.code }} back in the file?{% endif %}')">{% csrf_token %}
+  <button class="btn small quiet {% if sop.active %}danger{% endif %}" type="submit">{% if sop.active %}Take this SOP out of the file{% else %}Put it back in the file{% endif %}</button></form>{% endif %}
+{% endblock %}

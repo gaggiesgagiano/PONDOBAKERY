@@ -1,0 +1,47 @@
+{# Shared line editor for orders and GRVs. Needs: fs, names, prices, grv (bool) #}
+{{ fs.management_form }}
+<datalist id="item-names">{% for n in names %}<option value="{{ n }}">{% endfor %}</datalist>
+<div class="tablebox"><table class="t lines" style="min-width:820px">
+  <thead><tr><th>Item</th><th>Pack</th>{% if grv %}<th>Ordered</th><th>Received (packs)</th>{% else %}<th>Packs</th>{% endif %}
+    {% if can.costs %}<th>Price per pack</th><th class="r">Line total</th>{% endif %}<th>Remove</th></tr></thead>
+  <tbody id="line-body">
+  {% for f in fs %}
+    <tr class="line{% if f.errors %} has-error{% endif %}"><td class="ing">{{ f.item }}</td><td class="cost pk small">–</td>
+      {% if grv %}<td class="qty">{{ f.packs_ordered }}</td>{% endif %}<td class="qty">{{ f.packs }}</td>
+      {% if can.costs %}<td class="qty">{{ f.pack_price }}</td><td class="cost tot">–</td>{% else %}<td hidden>{{ f.pack_price }}</td>{% endif %}
+      <td style="text-align:center">{{ f.DELETE }}</td></tr>
+    {% if f.errors %}<tr><td colspan="7" style="color:var(--low);font-weight:700">{{ f.non_field_errors|join:" " }}</td></tr>{% endif %}
+  {% endfor %}
+  </tbody>
+  {% if can.costs %}<tfoot><tr class="total"><td colspan="{% if grv %}5{% else %}4{% endif %}">Total</td><td class="r" id="grand">–</td><td></td></tr></tfoot>{% endif %}
+</table></div>
+<template id="line-template"><tr class="line"><td class="ing">{{ fs.empty_form.item }}</td><td class="cost pk small">–</td>
+  {% if grv %}<td class="qty">{{ fs.empty_form.packs_ordered }}</td>{% endif %}<td class="qty">{{ fs.empty_form.packs }}</td>
+  {% if can.costs %}<td class="qty">{{ fs.empty_form.pack_price }}</td><td class="cost tot">–</td>{% else %}<td hidden>{{ fs.empty_form.pack_price }}</td>{% endif %}
+  <td style="text-align:center">{{ fs.empty_form.DELETE }}</td></tr></template>
+<div class="row"><button class="btn quiet small" type="button" id="add-line">+ Add line</button><button class="btn quiet small" type="button" id="add-5">+ Add 5</button></div>
+{{ prices|json_script:"prices" }}
+<script>
+(function(){
+  var P = JSON.parse(document.getElementById('prices').textContent), L = {};
+  Object.keys(P).forEach(function(k){ L[k.toLowerCase()] = P[k]; });
+  var body = document.getElementById('line-body'), total = document.getElementById('id_ln-TOTAL_FORMS');
+  function add(){ body.insertAdjacentHTML('beforeend', document.getElementById('line-template').innerHTML.replace(/__prefix__/g, total.value)); total.value = +total.value + 1; hook(); calc(); }
+  document.getElementById('add-line').onclick = add; document.getElementById('add-5').onclick = function(){ for (var i=0;i<5;i++) add(); };
+  function calc(){
+    var g = 0;
+    body.querySelectorAll('tr.line').forEach(function(tr){
+      var name = tr.querySelector('input[name$="-item"]'), info = L[name.value.trim().toLowerCase()];
+      var price = tr.querySelector('input[name$="-pack_price"]'), packs = parseFloat(tr.querySelector('input[name$="-packs"]').value);
+      tr.querySelector('.pk').textContent = info ? info.size + ' ' + info.unit : (name.value ? 'not on list' : '–');
+      if (info && price.value === '' && document.activeElement !== price) price.value = info.price;
+      var t = tr.querySelector('.tot');
+      if (t) { var v = (parseFloat(price.value) || 0) * (packs || 0); t.textContent = (info && packs) ? '$' + v.toFixed(2) : '–';
+        if (info && packs && !tr.querySelector('input[name$="-DELETE"]').checked) g += v; }
+    });
+    var gr = document.getElementById('grand'); if (gr) gr.textContent = '$' + g.toFixed(2);
+  }
+  function hook(){ body.querySelectorAll('input').forEach(function(el){ el.oninput = calc; el.onchange = calc; }); }
+  hook(); calc();
+})();
+</script>

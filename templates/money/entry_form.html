@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{% if en %}Money entry{% else %}Money in / out{% endif %}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'money:home' %}">Money &amp; accounts</a></div><h1>{% if en %}Change money entry{% else %}Money in / out{% endif %}</h1>
+  <div class="small muted">Only for money Pondo can't know about by itself. Cash-ups, expenses, wages, advances, supplier payments and paid invoices are already in the cash book – don't type them here.</div></div></div>
+{% include "money/_tabs.html" %}
+<div class="cols"><form class="card stack main" method="post" style="max-width:660px">{% csrf_token %}
+  {% for f in form %}<div class="field" id="f_{{ f.name }}"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.help_text %}<div class="small muted">{{ f.help_text }}</div>{% endif %}{% for e in f.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>{% endfor %}
+  {% for e in form.non_field_errors %}<div class="msg error">{{ e }}</div>{% endfor %}
+  <div class="row"><button class="btn primary" type="submit">Save</button><a class="btn quiet" href="{% url 'money:home' %}">Cancel</a></div>
+</form>
+{% if en %}<form method="post" action="{% url 'money:entry_delete' en.pk %}" onsubmit="return confirm('Delete this entry?');" class="no-print" style="margin-top:8px">{% csrf_token %}<button class="btn small quiet" type="submit">Delete this entry</button></form>{% endif %}
+<aside class="aside"><section class="card stack"><h2 style="margin:0">Examples</h2>
+<p class="small" style="margin:0"><b>The boss transfers $2,000 to the bank for the opening:</b> Owner / boss put money in – Bank. (If it must be paid back, choose <i>Loan to the business</i>.)<br><br>
+<b>The manager banks $1,500 safe cash:</b> Move money between accounts – from Safe to Bank.<br><br>
+<b>NSSA paid for last month:</b> Paid NSSA – Bank.<br><br>
+<b>Bank charges on the statement:</b> Bank / EcoCash charges – Bank.<br><br>
+<b>New mixer paid from the bank:</b> Bought equipment – Bank (and add it to the equipment register).</p></section></aside></div>
+<script>(function(){var k=document.getElementById("id_kind"),t=document.getElementById("f_to_account");function s(){t.style.display=k.value==="transfer"?"":"none";}k.addEventListener("change",s);s();})();</script>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% load static pondo %}<!doctype html>
+<html lang="en" data-font="{{ look.biz_font }}"><head><meta charset="utf-8"><title>{{ doc.number }} – {{ doc.name }}</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=29">{% include "_brand_font.html" %}
+<style>
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A4;margin:12mm}
+  html,body{background:#fff;font-size:12.5px}
+  .sheet{max-width:186mm;margin:0 auto;padding:10px 0;display:flex;flex-direction:column;gap:12px}
+  .top{display:flex;justify-content:space-between;align-items:center;background:#fff3d7;border-radius:14px;padding:14px 18px;gap:20px;position:relative;overflow:hidden;isolation:isolate}
+  .top::before{content:"";position:absolute;inset:0;background:url({% static 'brand/art/pattern_orange.svg' %}) 0 0/180px;opacity:.08;z-index:-1;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0 250px,#000 320px);mask-image:linear-gradient(90deg,transparent 0 250px,#000 320px)}
+  .top img{width:190px}
+  .shop{text-align:right;font-size:12px;color:#7c5a4a;line-height:1.5}
+  .shop b{color:#7a1315;font-size:14px}
+  .titlerow{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;border-bottom:3px solid #e56026;padding-bottom:6px}
+  h1{font-size:34px;color:#7a1315}
+  .titlerow .no{font-weight:900;font-size:16px;color:#e56026}
+  .box h3{font-family:Nunito}
+  .brandfoot{display:flex;align-items:center;justify-content:space-between;gap:14px;background:#e56026;color:#fff3d7;border-radius:14px;padding:10px 16px;margin-top:6px}
+  .brandfoot .tl{font-family:var(--head);text-transform:var(--head-case);font-size:22px;line-height:1}
+  .brandfoot img{width:62px}
+  .brandfoot small{display:block;font-weight:700;color:#ffe3c4;font-size:11px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .box{border:1.5px solid var(--line2);border-radius:10px;padding:10px 12px;line-height:1.5}
+  .box h3{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--rust);margin-bottom:4px}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px}
+  .kv span{color:var(--muted)}
+  table.t td,table.t th{padding:6px 8px}
+  .totals{margin-left:auto;width:280px}
+  .totals td{padding:4px 8px}
+  .sign{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-top:22px;font-size:11.5px}
+  .sign div{border-top:1px solid #999;padding-top:4px}
+  .thanks{text-align:center;color:var(--muted);font-size:12px;margin-top:8px}
+  .bar{position:fixed;top:14px;right:14px;display:flex;gap:10px;z-index:5}
+  @media print{.bar{display:none}}
+</style></head>
+<body><div class="sheet">
+  <div class="bar"><button class="btn primary" onclick="window.print()">Print / save as PDF</button><button class="btn quiet" onclick="window.close()">Close</button></div>
+  <div class="top"><img src="{% static 'brand/logo/primary_orange.svg' %}" alt="Pondo Bakery">
+    <div class="shop"><b>{{ current_shop.name|default:company.company_name }}</b><br>{% if current_shop.address_line1 %}{{ current_shop.address_line1 }}<br>{% endif %}{% if current_shop.address_line2 %}{{ current_shop.address_line2 }}<br>{% endif %}{% if current_shop.phone %}Tel: {{ current_shop.phone }}<br>{% endif %}{% if current_shop.email %}{{ current_shop.email }}<br>{% endif %}{% if current_shop.vat_no %}VAT / Reg. no.: {{ current_shop.vat_no }}<br>{% endif %}{% if current_shop.tin %}TIN: {{ current_shop.tin }}{% endif %}</div></div>
+  <div class="titlerow"><h1>{{ doc.title }}</h1><span class="no">{{ doc.number }}</span></div>
+  <div class="two">
+    <div class="box"><h3>Bill to</h3><b>{{ doc.name }}</b>{% if doc.company %}<br>{{ doc.company }}{% endif %}{% if doc.address1 %}<br>{{ doc.address1 }}{% endif %}{% if doc.address2 %}<br>{{ doc.address2 }}{% endif %}{% if doc.phone %}<br>{{ doc.phone }}{% endif %}{% if doc.email %}<br>{{ doc.email }}{% endif %}{% if doc.vat_no %}<br>VAT no.: {{ doc.vat_no }}{% endif %}</div>
+    <div class="box"><h3>Document details</h3><div class="kv">
+      <span>Number</span><b>{{ doc.number }}</b><span>Date</span><b>{{ doc.date|date:"d F Y" }}</b>
+      {% if doc.due %}<span>{% if doc.kind == 'quote' %}Valid until{% else %}Due date{% endif %}</span><b>{{ doc.due|date:"d F Y" }}</b>{% endif %}
+      {% if doc.your_ref %}<span>Your ref / order no.</span><b>{{ doc.your_ref }}</b>{% endif %}
+      {% if doc.prepared_by %}<span>Prepared by</span><b>{{ doc.prepared_by }}</b>{% endif %}
+      <span>Total due</span><b>{{ doc.total|money }}</b></div></div>
+  </div>
+  <table class="t"><thead><tr><th>#</th><th>Description</th><th class="r">Qty</th><th class="r">Unit price (incl. VAT)</th><th class="r">Discount</th><th class="r">Line total (incl. VAT)</th></tr></thead><tbody>
+  {% for ln in lines %}<tr><td>{{ forloop.counter }}</td><td>{{ ln.description }}</td><td class="r">{{ ln.qty|num:2 }}</td><td class="r">{{ ln.price|money }}</td><td class="r">{% if ln.discount %}{{ ln.discount|pct:0 }}{% endif %}</td><td class="r">{{ ln.total|money }}</td></tr>{% endfor %}
+  </tbody></table>
+  <table class="t totals"><tbody><tr><td>Subtotal (excl. VAT)</td><td class="r">{{ doc.subtotal|money }}</td></tr><tr><td>VAT</td><td class="r">{{ doc.vat|money }}</td></tr><tr class="total"><td>TOTAL (incl. VAT)</td><td class="r">{{ doc.total|money }}</td></tr></tbody></table>
+  {% if doc.notes %}<div><b>Notes:</b> <span style="white-space:pre-line">{{ doc.notes }}</span></div>{% endif %}
+  {% if current_shop.payment_details %}<div class="box"><h3>Payment</h3><span style="white-space:pre-line">{{ current_shop.payment_details }}</span></div>{% endif %}
+  <div class="sign"><div>Authorised by</div><div>Sign</div><div>Date</div></div>
+  <div class="sign"><div>{% if doc.kind == 'invoice' %}Received by (customer){% else %}Accepted by (customer){% endif %}</div><div>Sign</div><div>Date</div></div>
+  <div class="brandfoot"><div><div class="tl">{{ company.tagline|default:"Easy to enjoy" }}</div>
+    <small>Thank you for your business.{% if doc.kind == 'quote' and doc.due %} This quotation is valid until {{ doc.due|date:"d F Y" }}.{% endif %}</small></div>
+    <img src="{% static 'brand/logo/badge_burgundy_on_cream.svg' %}" alt="Fresh since 2026"></div>
+</div></body></html>

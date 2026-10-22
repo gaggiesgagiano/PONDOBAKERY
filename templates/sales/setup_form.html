@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ label|capfirst }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'sales:setup' %}">Payment &amp; expense types</a></div><h1>{% if obj.pk %}{{ obj.name }}{% else %}New {{ label }}{% endif %}</h1></div></div>
+<form method="post" class="stack">{% csrf_token %}
+  <section class="card stack"><div class="grid-form">{% for f in form %}{% include "_field.html" %}{% endfor %}</div>
+  <p class="small muted" style="margin:0">To stop using one, untick "Active" – old cash-ups and expenses keep it.</p></section>
+  <div class="actions"><button class="btn primary" type="submit">Save</button><a class="btn quiet" href="{% url 'sales:setup' %}">Cancel</a></div>
+</form>
+{% endblock %}

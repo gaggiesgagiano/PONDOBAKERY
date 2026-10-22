@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Product sales{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'sales:daysales_list' %}">Product sales</a> › {{ day.number }}</div>
+  <h1>Product sales · {{ day.date|date:"D d M Y" }}</h1></div></div>
+<form method="post" class="stack">{% csrf_token %}
+  <section class="card stack">
+    <div class="row" style="justify-content:space-between"><h2>Sold</h2><div class="small muted">Total: <b id="tot" style="color:var(--maroon);font-size:18px">$0.00</b>{% if till is not None %} · till sales that day: <b>${{ till|floatformat:2 }}</b>{% endif %}</div></div>
+    <p class="small muted" style="margin:0">Leave the price empty to use the normal selling price. Products with no quantity are skipped.</p>
+    {{ fs.management_form }}
+    <datalist id="product-names">{% for n in names %}<option value="{{ n }}">{% endfor %}</datalist>
+    <div class="tablebox"><table class="t lines" style="min-width:640px">
+      <thead><tr><th>Product</th><th>Qty sold <span class="small muted">(kg for products sold per kg)</span></th><th>Price each / per kg ($)</th><th class="r">Value</th><th>Remove</th></tr></thead>
+      <tbody id="line-body">{% for f in fs %}
+        <tr class="line{% if f.errors %} has-error{% endif %}"><td class="ing">{{ f.product }}</td><td class="qty">{{ f.qty }}</td><td class="qty">{{ f.price }}</td><td class="cost val">–</td><td style="text-align:center">{{ f.DELETE }}</td></tr>
+        {% if f.errors %}<tr><td colspan="5" style="color:var(--low);font-weight:700">{{ f.non_field_errors|join:" " }}</td></tr>{% endif %}
+      {% endfor %}</tbody>
+    </table></div>
+    <template id="line-template"><tr class="line"><td class="ing">{{ fs.empty_form.product }}</td><td class="qty">{{ fs.empty_form.qty }}</td><td class="qty">{{ fs.empty_form.price }}</td><td class="cost val">–</td><td style="text-align:center">{{ fs.empty_form.DELETE }}</td></tr></template>
+    <div class="row"><button class="btn quiet small" type="button" id="add-line">+ Add product</button><button class="btn quiet small" type="button" id="add-5">+ Add 5</button></div>
+  </section>
+  <section class="card stack"><div class="field"><label for="notes">Notes</label><textarea id="notes" name="notes" rows="2">{{ day.notes }}</textarea></div></section>
+  <div class="actions"><button class="btn primary" type="submit">Save product sales</button><a class="btn quiet" href="{% url 'sales:daysales' day.pk %}">Cancel</a></div>
+</form>
+{{ prices|json_script:"prices" }}
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  var p = JSON.parse(document.getElementById('prices').textContent), P = {};
+  Object.keys(p).forEach(function(k){ P[k.toLowerCase()] = p[k]; });
+  var body = document.getElementById('line-body'), total = document.getElementById('id_ln-TOTAL_FORMS');
+  function add(){ body.insertAdjacentHTML('beforeend', document.getElementById('line-template').innerHTML.replace(/__prefix__/g, total.value)); total.value = +total.value + 1; }
+  document.getElementById('add-line').onclick = add; document.getElementById('add-5').onclick = function(){ for (var i=0;i<5;i++) add(); };
+  function calc(){
+    var tot = 0;
+    body.querySelectorAll('tr.line').forEach(function(tr){
+      var name = (tr.querySelector('input[name$="-product"]').value || '').trim().replace(/\s+/g,' ').toLowerCase();
+      var q = parseFloat(tr.querySelector('input[name$="-qty"]').value), pr = tr.querySelector('input[name$="-price"]');
+      var price = pr.value === '' ? P[name] : parseFloat(pr.value);
+      if (pr.value === '' && P[name] !== undefined) pr.placeholder = P[name].toFixed(2); else if (pr.value === '') pr.placeholder = '';
+      var del = tr.querySelector('input[name$="-DELETE"]');
+      var val = (!isNaN(q) && price !== undefined && !isNaN(price) && !(del && del.checked)) ? q * price : null;
+      tr.querySelector('.val').textContent = val === null ? '–' : '$' + val.toFixed(2);
+      if (val) tot += val;
+    });
+    document.getElementById('tot').textContent = '$' + tot.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+  body.addEventListener('input', calc); body.addEventListener('change', calc); calc();
+})();
+</script>
+{% endblock %}

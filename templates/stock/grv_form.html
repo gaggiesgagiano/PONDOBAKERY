@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Receive goods{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'stock:grvs' %}">Receiving</a>{% if g.pk %} › {{ g.number }}{% endif %}</div>
+  <h1>{% if g.pk %}Edit {{ g.number }}{% else %}Receive goods{% endif %}{% if order %} · {{ order.number }}{% endif %}</h1></div></div>
+<form method="post" class="stack">{% csrf_token %}
+  {% if fs.non_form_errors %}<div class="msg error">{{ fs.non_form_errors }}</div>{% endif %}
+  <section class="card stack"><div class="grid-form">{% include "_field.html" with f=form.supplier %}{% include "_field.html" with f=form.date %}{% include "_field.html" with f=form.invoice_no %}{% include "_field.html" with f=form.invoice_total %}</div></section>
+  <section class="card stack"><h2>What arrived</h2>
+    <p class="small muted" style="margin:0">Count what really arrived. Type the price on the invoice if it is different.</p>
+    {% include "stock/_lines.html" with grv=True %}
+    {% if can.costs %}{% include "_field.html" with f=form.update_prices %}{% else %}<input type="hidden" name="update_prices" value="">{% endif %}
+  </section>
+  <section class="card stack"><div class="grid-form">{% include "_field.html" with f=form.notes wide=1 %}</div></section>
+  <div class="actions"><button class="btn primary" type="submit">Save – add to stock</button><a class="btn quiet" href="{% url 'stock:grvs' %}">Cancel</a></div>
+</form>
+{% endblock %}

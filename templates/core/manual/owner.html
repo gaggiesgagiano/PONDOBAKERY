@@ -1,0 +1,63 @@
+<p class="lead">Only the <b>Manager</b> (the top login) sees Settings, Users &amp; rights, E-mail settings and the change history, and can do everything in the program. Managers and supervisors can make backups if their rights allow it.</p>
+<h3>The people and their logins</h3>
+<ul class="dots">
+  <li><b>Manager</b> – first in charge. Everything, plus Settings and Users.</li>
+  <li><b>Assistant Manager</b> – everything, also staff &amp; payroll (not Settings or Users).</li>
+  <li><b>Supervisor</b> and <b>Admin</b> – everything except staff &amp; payroll.</li>
+  <li><b>Cashier</b> – sales &amp; cash-up, invoices and deliveries; can look at selling prices.</li>
+  <li><b>Baker</b> – only recipes: to look at them and print recipe cards (no costs, no prices).</li>
+</ul>
+<p><b>Letters</b> are not part of any role – nobody except the Manager can write letters until you tick <b>Letters</b> for that person.</p>
+<h3>Add a person and choose their rights <span class="when">Manager</span></h3>
+<ol class="steps">
+  <li><b>Settings › Users &amp; rights</b> → <span class="ui">Add person</span>: username, name, password (at least 8 letters) and a starting role.</li>
+  <li>The <b>tick list</b> opens, grouped like the menu: <i>Freight &amp; Logistics · Procurement &amp; Inventory · Finance · Production · HR · Administration · Sales</i>. Every part of the program has two ticks: <i>Can see</i> and <i>Can change</i> (“change” includes “see”). Add or remove single ticks, or use <span class="ui">Tick everything</span> / <span class="ui">Untick everything</span>.</li>
+  <li><b>Office → Letters:</b> no tick = Letters is hidden; <i>Can see</i> = open and reprint saved letters; <i>Can change</i> = write, change, print and delete letters. Only you can put your signature on a letter.</li>
+  <li><b>Stock &amp; orders</b> covers Stock, Orders and GRV together.</li>
+  <li>Two extra ticks: <b>See costs &amp; profit</b> (ingredient prices, GP, dashboard figures, reports, GP check) and <b>Make flash drive backups</b> → <span class="ui">Save rights</span>.</li>
+  <li>Forgotten password: type a new one next to the person → <span class="ui">Set</span>. Somebody left: <span class="ui">Switch off</span> – the record of what they did stays.</li>
+</ol>
+<h3>Staff cards</h3>
+<ul class="dots">
+  <li><span class="ui">Settings › Staff cards</span>: a photo card with a barcode for every staff member – scan to log in and to approve on the till. Choose each person's login next to their name. <span class="ui">Make missing cards &amp; print all</span> → cut out and laminate. Lost card → <span class="ui">New card</span>.</li>
+  <li>The <b>Money &amp; accounts</b> tick shows the owner's money – give it only to people you trust with the books.</li>
+</ul>
+<h3>Settings</h3>
+<ul class="dots">
+  <li><b>Money settings:</b> company name, VAT rate, target GP and <b>“Show GP in red below %”</b> (35%). <b>Shop details</b> (address, phone, VAT number, payment details) print on invoices, payslips and orders.</li>
+  <li><b>Costs &amp; targets:</b> the profit you want per month, trading days per week, the waste target and the monthly overheads. The dashboard works out break-even from this.</li>
+  <li><b>Categories &amp; suppliers</b>, <b>Payment &amp; expense types</b>, <b>Tax &amp; NSSA rates</b> (check the PAYE table with ZIMRA every year).</li>
+  <li><b>Change history:</b> who changed what, and when – also every price change.</li>
+  <li><b>Look &amp; feel:</b> the colours for everybody and the log-in screen, and the tagline (“Easy to enjoy”). The brand font Pondo (Retro Star) is built in.</li>
+</ul>
+<h3>Pondo on other computers <span class="when">one main computer, many users</span></h3>
+<p>There is <b>one</b> Pondo, on the main computer. Everybody else opens it in Chrome on their own computer and logs in with their own username – nothing is installed on the other computers, and everybody sees the same, up-to-date figures. Up to about 10 people can work at the same time.</p>
+<ol class="steps">
+  <li>Start Pondo on the main computer every morning and keep it <b>switched on, plugged in and on the UPS / inverter</b> during trading hours.</li>
+  <li>Stop it going to sleep: Windows <i>Settings › System › Power</i> → “When plugged in, put my device to sleep after” = <b>Never</b>.</li>
+  <li>The shop Wi-Fi must be set to <b>Private</b> (<i>Settings › Network &amp; internet › Wi-Fi › your network › Network profile type</i>). The very first time Windows asks “Allow Python on networks?” – tick <b>Private networks</b> only and press Allow.</li>
+  <li>The small Pondo window shows the address for the other computers, e.g. <b>http://gaggies:8765</b> (or the number, e.g. http://192.168.0.106:8765). On each other computer: open Chrome, type the address, log in, make a bookmark.</li>
+</ol>
+<p>Can't connect? Check that Pondo is running, the main computer is awake and on the same Wi-Fi, and try the number address instead of the name. The file <b>CONNECTING OTHER COMPUTERS.txt</b> in the Pondo folder has the same steps.</p>
+<div class="warn">Pondo is only open on the bakery's <b>private</b> network – not on the internet. Working from home or an internet café is being set up separately; until then ask the Manager.</div>
+<h3>Change history and login register</h3>
+<ul class="dots">
+  <li><b>Settings › Change history</b> shows who changed what, and when – also every price change.</li>
+  <li><b>Settings › Login register</b> (or the <i>Logins</i> tab on the same page) shows every <b>log-in</b>, <b>log-out</b> and <b>wrong password</b>: the date and time, the person, <b>where</b> (Main computer · Shop network · Outside) and the computer or phone (e.g. “Chrome on Android phone”).</li>
+  <li>Pick one person, or tick <i>Only wrong passwords</i>. Several wrong passwords in a row for one name can mean somebody is guessing – give that person a new password.</li>
+</ul>
+<h3>SOP exams <span class="when">owner only</span></h3>
+<p><b>Help &amp; settings › SOP exams</b> holds the 5 exam papers and their memos. Only the owner sees it, and it only opens after typing the login password again. It locks itself after 10 minutes (or press <b>Lock now</b>). Every opening is written in the change history. Staff who fail write again after one week on a different paper.</p>
+<h3>Phones</h3>
+<p>Phones on the shop Wi-Fi open Pondo the same way as other computers – see <i>Getting started › Open the program on your phone</i>. If a phone can't connect after a new laptop or a new router: double-click <b>Allow phones and other computers</b> in the Pondo folder (answer <b>Yes</b>) – it sets the shop Wi-Fi to Private and lets Pondo through the Windows firewall.</p>
+<h3>Daily backup <span class="when">every trading day, after the last cash-up</span></h3>
+<ol class="steps">
+  <li>The program makes a copy on the laptop by itself every time it starts – but if the laptop breaks or is stolen, only the <b>flash drive</b> copy helps.</li>
+  <li><b>Every trading day</b>, after the <b>last cash-up</b>: plug in the flash drive → <span class="ui">Back up now</span> → choose the drive. The data, the product photos and the staff files are copied to a “Pondo Backups” folder. Wait for “Backup saved”.</li>
+  <li>After a cash-up is saved, Pondo pops up <i>“Last cash-up of the day? … Back up now”</i> as a reminder.</li>
+  <li>Keep the flash drive locked away – not next to the laptop.</li>
+</ol>
+<div class="warn"><b>No backup – no start.</b> If the last trading day's cash-ups were not backed up, Pondo is <b>locked the next morning</b> for everybody and shows “Make the backup first”. A Supervisor, the Assistant Manager or the Manager makes the backup, and Pondo opens again. Flash drive lost or broken? Only the Manager can open Pondo for that day without it – with a written reason that goes into the change history.</div>
+<h3>E-mail</h3>
+<p><span class="ui">Settings</span> → <span class="ui">E-mail</span>: type the mail server (usually <b>mail.pondobakery.co.zw</b>, SSL, port 465), the username (the full e-mail address) and the <b>password</b> of jurie@pondobakery.co.zw, then <span class="ui">Save &amp; send a test e-mail</span>. The password is kept scrambled on this laptop only. Also type the accountant's e-mail address. The list at the bottom shows every e-mail Pondo sent.</p>
+<p>After that, invoices and quotations (<span class="ui">✉ E-mail</span>), supplier orders (<span class="ui">✉ E-mail to supplier</span> – see <i>Orders</i>) and the accountant report (<span class="ui">✉ E-mail to accountant</span>) can be e-mailed with the PDF attached. You can change the address, subject and message before you press <span class="ui">Send e-mail</span>; a copy goes to your own inbox.</p>

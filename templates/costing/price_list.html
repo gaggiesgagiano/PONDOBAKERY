@@ -1,0 +1,93 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Products & prices{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Bakery &amp; Stock</div><h1>Products &amp; prices</h1>
+  {% if can.costs %}<div class="small muted">Average GP of the products shown: <b>{{ avg|pct }}</b> · target {{ company.target_gp|pct:0 }}</div>{% endif %}</div>
+  <div class="actions"><a class="btn xl" href="{% url 'core:excel_file' 'products' %}" title="Download this list as an Excel file">Excel</a>
+    <a class="btn" href="{% url 'costing:cards' %}">Price cards &amp; posters</a>
+    <button class="btn" type="button" onclick="window.print()">Print price list</button></div></div>
+<form class="filters no-print" method="get">
+  <label class="visually-hidden" for="cat">Category</label>
+  <select id="cat" name="cat" onchange="this.form.submit()"><option value="">All categories</option>{% for c in cats %}<option value="{{ c.pk }}" {% if cat == c.pk|stringformat:'s' %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select>
+  <div class="chips" style="margin:0">
+    <a class="chip {% if not f %}on{% endif %}" href="?cat={{ cat }}{% if editing %}&edit=1{% endif %}">All</a>
+    {% if can.costs %}<a class="chip {% if f == 'low' %}on{% endif %}" href="?cat={{ cat }}&f=low{% if editing %}&edit=1{% endif %}">Below target</a>{% endif %}
+    <a class="chip {% if f == 'noprice' %}on{% endif %}" href="?cat={{ cat }}&f=noprice{% if editing %}&edit=1{% endif %}">No price</a>
+  </div>
+  {% if editing %}<input type="hidden" name="edit" value="1">{% endif %}
+</form>
+<form method="post" id="price-form">{% csrf_token %}
+{% if editing and can.prices_edit %}<div class="banner no-print"><span><b>To change a price:</b> find the product, click its teal price box and type the new one (incl. VAT){% if can.costs %} – the GP works itself out as you type{% endif %}. Press <b>Enter</b> or <b>Save prices</b> to save.</span>
+  <label class="visually-hidden" for="find">Find a product</label><input type="search" id="find" name="q" value="{{ q }}" placeholder="Find a product …" style="max-width:260px" autocomplete="off" autofocus>
+  <input type="hidden" name="at" id="at"></div>{% endif %}
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>Product</th><th>Category</th>{% if can.costs %}<th class="r">Cost / unit</th>{% endif %}<th class="r">Selling price<br>incl. VAT</th><th class="r">VAT</th><th class="r">Excl. VAT</th>{% if can.costs %}<th class="r">GP $</th><th class="r">GP %</th><th class="r">Price for {{ company.target_gp|pct:0 }}</th>{% endif %}</tr></thead>
+  <tbody>
+  {% for r, s in rows %}
+  <tr {% if not editing and can.recipes_view %}class="link" data-href="{% url 'costing:recipe' r.pk %}"{% endif %}{% if editing %} data-name="{{ r.name|lower }}" data-cost="{{ s.cpu|default_if_none:'' }}" data-vat="{{ s.vat|default_if_none:'0' }}"{% if r.just_saved %} class="just-saved"{% endif %}{% endif %}>
+    <td>{% if r.photo %}<img class="thumb" src="{{ r.photo.url }}" alt="" loading="lazy">{% endif %}{% if can.recipes_view %}<a class="rowlink" href="{% url 'costing:recipe' r.pk %}">{{ r.name }}</a>{% else %}<b>{{ r.name }}</b>{% endif %}</td><td class="small">{{ r.category|default:"" }}</td>
+    {% if can.costs %}<td class="r">{{ s.cpu|money:3 }}</td>{% endif %}
+    <td class="r">{% if editing and can.prices_edit %}<label class="visually-hidden" for="p{{ r.pk }}">Price for {{ r.name }}</label><input id="p{{ r.pk }}" name="p{{ r.pk }}" class="text pin" style="width:100px;min-height:36px;text-align:right" value="{{ r.sell_price|default_if_none:'' }}" data-old="{{ r.sell_price|default_if_none:'' }}" inputmode="decimal" autocomplete="off">{% else %}<b>{{ r.sell_price|money }}</b>{% endif %}{% if r.just_saved %}<span class="savedtick">✓ saved</span>{% endif %}</td>
+    <td class="r small">{{ s.vat|pct:1 }}</td>
+    <td class="r c-excl">{{ s.sell_excl|money }}</td>
+    {% if can.costs %}<td class="r c-gp">{{ s.gp_amount|money }}</td>
+    <td class="r"><span class="pill c-gpp {{ s.gp|gpclass:company }}">{{ s.gp|pct }}</span></td>
+    <td class="r small muted">{{ s.target_price|money }}</td>{% endif %}
+  </tr>
+  {% empty %}<tr class="emptyrow"><td colspan="9" class="muted">Nothing to show.</td></tr>{% endfor %}
+  </tbody></table></div></section>
+{% if editing and can.prices_edit %}<div class="savebar no-print"><span id="chg">No prices changed yet</span>
+  <span class="row"><button class="btn quiet" type="button" id="undo">Undo changes</button><button class="btn primary" type="submit">Save prices</button></span></div>{% endif %}
+</form>
+{% endblock %}
+{% block scripts %}<style>@media print{input.pin{border:0!important;background:none!important;padding:0!important;font-weight:700}}</style>{% if editing and can.prices_edit %}
+<script>
+(function(){
+  var form = document.getElementById('price-form'), saving = false;
+  var low = {{ company.gp_low|default:"0.45" }}, target = {{ company.target_gp|default:"0.6" }};
+  function money(v){ return '$' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function update(inp){
+    var tr = inp.closest('tr'), raw = inp.value.replace('$', '').replace(',', '.').trim(), p = parseFloat(raw);
+    inp.classList.toggle('changed', raw !== inp.dataset.old && !(raw && inp.dataset.old && parseFloat(raw) === parseFloat(inp.dataset.old)));
+    var vat = parseFloat(tr.dataset.vat) || 0, cost = parseFloat(tr.dataset.cost), ex = tr.querySelector('.c-excl'),
+        gp = tr.querySelector('.c-gp'), gpp = tr.querySelector('.c-gpp');
+    if (isNaN(p)) { ex.textContent = '–'; if (gp) gp.textContent = '–'; if (gpp) { gpp.textContent = '–'; gpp.className = 'pill c-gpp gp-none'; } return; }
+    var e = p / (1 + vat); ex.textContent = money(e);
+    if (gp && !isNaN(cost)) {
+      var g = e - cost, pc = e ? g / e : 0;
+      gp.textContent = money(g);
+      gpp.textContent = (pc * 100).toFixed(1) + '%';
+      gpp.className = 'pill c-gpp ' + (pc < low ? 'gp-low gp-red' : pc < target ? 'gp-mid' : 'gp-ok');
+    }
+  }
+  function count(){
+    var n = form.querySelectorAll('input.pin.changed').length;
+    document.getElementById('chg').innerHTML = n ? '<b>' + n + '</b> price' + (n === 1 ? '' : 's') + ' changed – press Save prices' : 'No prices changed yet';
+  }
+  form.addEventListener('input', function(e){ if (e.target.classList.contains('pin')) { update(e.target); count(); } });
+  document.getElementById('undo').addEventListener('click', function(){
+    form.querySelectorAll('input.pin.changed').forEach(function(i){ i.value = i.dataset.old; update(i); }); count();
+  });
+  // remember the last price box used, to come back to it after saving
+  form.addEventListener('focusin', function(e){ if (e.target.classList.contains('pin')) document.getElementById('at').value = e.target.id; });
+  // find a product: lines with a price typed but not saved yet stay on the screen
+  var find = document.getElementById('find');
+  function filter(keepSaved){
+    var q = find.value.trim().toLowerCase();
+    form.querySelectorAll('tbody tr[data-name]').forEach(function(tr){
+      var keep = tr.querySelector('input.pin.changed') || (keepSaved && tr.classList.contains('just-saved'));
+      tr.hidden = !!q && tr.dataset.name.indexOf(q) < 0 && !keep;
+    });
+  }
+  if (find) {
+    find.addEventListener('input', function(){ filter(false); });
+    filter(true);
+    // just saved: stay on the same line, and the search box is ready for the next product
+    var atId = '{{ at|escapejs }}', back = (atId && document.getElementById(atId)) || form.querySelector('tr.just-saved');
+    if (back) { (back.closest('tr') || back).scrollIntoView({block: 'center'}); find.focus({preventScroll: true}); find.select(); }
+  }
+  form.addEventListener('keydown', function(e){ if (e.key === 'Enter' && e.target.id === 'find') e.preventDefault(); });
+  form.addEventListener('submit', function(){ saving = true; });
+  window.addEventListener('beforeunload', function(e){ if (!saving && form.querySelector('input.pin.changed')) { e.preventDefault(); e.returnValue = ''; } });
+})();
+</script>{% endif %}{% endblock %}

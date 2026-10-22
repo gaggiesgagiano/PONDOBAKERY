@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Stock take{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Stock</div><h1>Stock take</h1></div>
+  <div class="actions">{% if can.stock_edit %}{% if draft %}<a class="btn primary" href="{% url 'stock:count_edit' draft.pk %}">Carry on with stock take ({{ draft.date|date:"d M" }})</a>{% else %}<form method="post" action="{% url 'stock:count_new' %}">{% csrf_token %}<button class="btn primary" type="submit">Start stock take</button></form>{% endif %}{% endif %}</div></div>
+{% include "stock/_tabs.html" %}
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>Stock take</th><th>Date</th><th>Counted by</th><th>Status</th>{% if can.costs %}<th class="r">Opening</th><th class="r">+ Purchases</th><th class="r">− Closing</th><th class="r">= Cost of sales</th>{% endif %}</tr></thead>
+  <tbody>{% for c, cogs in rows %}<tr class="link" data-href="{% if c.status == 'final' %}{% url 'stock:count' c.pk %}{% else %}{% url 'stock:count_edit' c.pk %}{% endif %}">
+    <td><a class="rowlink" href="{% if c.status == 'final' %}{% url 'stock:count' c.pk %}{% else %}{% url 'stock:count_edit' c.pk %}{% endif %}">{{ c.number }}</a></td><td>{{ c.date|date:"D d M Y" }}</td><td>{{ c.counted_by }}</td>
+    <td>{% if c.status == "final" %}<span class="pill gp-ok">Final</span>{% else %}<span class="pill gp-mid">Busy</span>{% endif %} <a class="small" href="{% url 'stock:count_variance' c.pk %}">variance</a></td>
+    {% if can.costs %}{% if cogs %}<td class="r">{{ cogs.open|money }}</td><td class="r">{{ cogs.purch|money }}</td><td class="r">{{ cogs.close|money }}</td><td class="r"><b>{{ cogs.cos|money }}</b></td>
+    {% else %}<td class="r">–</td><td class="r">–</td><td class="r">{{ c.total_value|money }}</td><td class="r small muted">{% if c.status == 'final' %}first count{% endif %}</td>{% endif %}{% endif %}</tr>
+  {% empty %}<tr class="emptyrow"><td colspan="8" class="muted">No stock takes yet.</td></tr>{% endfor %}</tbody></table></div></section>
+{% if manager %}<form class="card stack" method="post" action="{% url 'stock:count_settings' %}" style="max-width:640px">{% csrf_token %}
+  <h2 style="margin:0">How Pondo works out expected stock</h2>
+  <div class="field"><label for="stock_usage">Stock is used up by</label><select id="stock_usage" name="stock_usage">
+    <option value="sales" {% if cs.stock_usage == "sales" %}selected{% endif %}>Till sales + waste (every product sold or wasted takes its ingredients)</option>
+    <option value="production" {% if cs.stock_usage == "production" %}selected{% endif %}>Production plans marked Done</option></select></div>
+  <div class="field"><label for="limit">Explain every difference from ($)</label><input id="limit" name="limit" inputmode="decimal" value="{{ cs.stock_variance_limit|floatformat:0 }}"></div>
+  <button class="btn" type="submit">Save</button></form>{% endif %}
+<p class="small muted">Cost of sales = stock at the previous count + goods received since − stock now. Do a stock take once a week, on the same day.</p>
+{% endblock %}

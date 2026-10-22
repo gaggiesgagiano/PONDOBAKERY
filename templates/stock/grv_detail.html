@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}{{ g.number }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'stock:grvs' %}">Receiving</a> › {{ g.number }}</div>
+  <h1>{{ g.number }} · {{ g.supplier }}</h1>
+  <div class="chips"><span class="chip">Received {{ g.date|date:"d M Y" }}</span>{% if g.invoice_no %}<span class="chip">Invoice {{ g.invoice_no }}</span>{% endif %}{% if g.order %}<a class="chip" href="{% url 'stock:order' g.order.pk %}">{{ g.order.number }}</a>{% endif %}<span class="chip">By {{ g.received_by|default:"–" }}</span>{% if can.money_view %}{% if pay.owing <= 0 %}<span class="chip ok">Paid</span>{% elif pay.paid %}<a class="chip due" href="{% url 'money:pay' %}?supplier={{ g.supplier_id }}">Part paid – owe {{ pay.owing|money }}</a>{% else %}<a class="chip due" href="{% url 'money:pay' %}?supplier={{ g.supplier_id }}">Not paid yet – {{ pay.owing|money }}</a>{% endif %}{% for a in pay.allocs %}<a class="chip" href="{% url 'money:payment' a.payment_id %}">{{ a.payment.number }} {{ a.amount|money }}</a>{% endfor %}{% endif %}</div></div>
+  <div class="actions"><button class="btn" type="button" onclick="window.print()">Print</button>{% if can.stock_edit %}<a class="btn primary" href="{% url 'stock:grv_edit' g.pk %}">Edit</a>{% endif %}</div></div>
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>Item</th><th class="r">Ordered</th><th class="r">Received</th><th class="r">Short / over</th><th class="r">Into stock</th>{% if can.costs %}<th class="r">Price / pack</th><th class="r">Total</th>{% endif %}</tr></thead>
+  <tbody>{% for ln in lines %}<tr><td>{{ ln.ingredient.name }}</td><td class="r">{{ ln.packs_ordered|num:2 }}</td><td class="r"><b>{{ ln.packs|num:2 }}</b></td>
+    <td class="r">{% if ln.short %}<span class="pill {% if ln.short < 0 %}gp-low{% else %}gp-mid{% endif %}">{{ ln.short|num:2 }}</span>{% endif %}</td>
+    <td class="r small">{{ ln.units|num:2 }} {{ ln.ingredient.unit }}</td>
+    {% if can.costs %}<td class="r">{{ ln.pack_price|money }}</td><td class="r">{{ ln.line_total|money }}</td>{% endif %}</tr>{% endfor %}
+  {% if can.costs %}<tr class="total"><td colspan="6">Total</td><td class="r">{{ g.total|money }}</td></tr>
+  {% if g.invoice_total is not None %}<tr><td colspan="6" class="small">Invoice total typed</td><td class="r small">{{ g.invoice_total|money }}{% if g.invoice_total != g.total %} <span class="pill gp-low">differs</span>{% endif %}</td></tr>{% endif %}{% endif %}
+  </tbody></table></div></section>
+{% if g.notes %}<section class="card"><h3>Notes / problems</h3><p style="white-space:pre-line;margin:6px 0 0">{{ g.notes }}</p></section>{% endif %}
+{% endblock %}

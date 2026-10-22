@@ -1,0 +1,19 @@
+{% extends "costing/print_base.html" %}{% load pondo %}
+{% block title %}Production plan {{ plan }}{% endblock %}
+{% block kind %}PRODUCTION PLAN · {{ plan.number }}{% endblock %}
+{% block body %}
+<h1>{{ plan.get_shift_display }} – {{ plan.date|date:"l d F Y" }}</h1>
+<div class="facts">
+  <div>Products<b>{{ res.products|length }}</b></div><div>Units to make<b>{{ res.total_units }}</b></div>
+  <div>Supervisor<b>{{ plan.supervisor|default:"________" }}</b></div><div>Status<b>{{ plan.get_status_display }}</b></div>
+</div>
+<table class="t">
+  <thead><tr><th>Product</th><th class="r">Make</th><th class="r">Batches</th><th class="r">Scale at</th><th>Made ✓</th><th>Actual made</th></tr></thead>
+  <tbody>{% for p in res.products %}<tr><td><b>{{ p.line.recipe.name }}</b></td><td class="r"><b>{{ p.units }}</b></td><td class="r">{{ p.batches|num:2 }}</td>
+    <td class="r">{% if p.line.recipe.scaling_weight %}{{ p.line.recipe.scaling_weight|num:3 }} kg{% endif %}</td><td>☐</td><td>__________</td></tr>{% endfor %}</tbody>
+</table>
+{% if res.prepare_rows %}<h3>Prepare first (mother recipes)</h3>
+<table class="t"><tbody>{% for d in res.prepare_rows %}<tr><td>{{ d.recipe.name }}</td><td class="r"><b>{{ d.qty|num:3 }} {{ d.ingredient.unit }}</b></td><td class="r">{{ d.batches|num:2 }} batches</td><td>☐</td></tr>{% endfor %}</tbody></table>{% endif %}
+{% if plan.notes %}<h3>Notes</h3><p style="white-space:pre-line;margin:0">{{ plan.notes }}</p>{% endif %}
+<div class="sign"><div>Planned by: {{ plan.planned_by|default:"" }}</div><div>Supervisor signature</div></div>
+{% endblock %}

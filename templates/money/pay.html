@@ -1,0 +1,36 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Pay a supplier{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'money:creditors' %}">Suppliers we owe</a></div><h1>Pay a supplier</h1>
+  <div class="small muted">Choose the supplier, type what was paid, and say which invoices (GRVs) it pays. Pay only against a GRV – an invoice that was never received on a GRV can't be paid here.</div></div></div>
+{% include "money/_tabs.html" %}
+{% if error %}<div class="msg error">{{ error }}</div>{% endif %}
+<form class="card stack" method="post" style="max-width:880px" autocomplete="off">{% csrf_token %}
+  <div class="field"><label for="supplier">Supplier</label><select id="supplier" name="supplier" onchange="location.href='?supplier='+this.value"><option value="">Choose…</option>{% for s in sups %}<option value="{{ s.pk }}" {% if sup.pk == s.pk %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></div>
+  {% if sup %}
+  {% if open %}
+  <div class="row" style="gap:14px;flex-wrap:wrap">
+    <div class="field"><label for="date">Date paid</label><input id="date" type="date" name="date" value="{% if post.date %}{{ post.date }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}" required></div>
+    <div class="field"><label for="account">Paid from</label><select id="account" name="account" required><option value="">Choose…</option>{% for a in accounts %}<option value="{{ a.pk }}" {% if post.account == a.pk|stringformat:"s" %}selected{% endif %}>{{ a }}</option>{% endfor %}<option value="owner" {% if post.account == "owner" %}selected{% endif %}>Owner / boss paid from own pocket</option></select></div>
+    <div class="field"><label for="amount">Amount paid ($)</label><input id="amount" name="amount" inputmode="decimal" value="{{ post.amount|default:'' }}" required style="font-size:20px;max-width:180px"></div>
+    <div class="field"><label for="ref">Ref / proof of payment no.</label><input id="ref" name="ref" value="{{ post.ref|default:'' }}"></div>
+  </div>
+  <div class="row"><button class="btn small" type="button" id="fill">Fill oldest first</button><button class="btn small quiet" type="button" id="all">Pay everything ({{ owing|money }})</button><span class="small muted" id="sum"></span></div>
+  <div class="tablebox"><table class="t"><thead><tr><th>Received</th><th>Invoice</th><th class="r">Owe</th><th>Due</th><th class="r">Pay now</th></tr></thead><tbody>
+  {% for r in open %}<tr><td>{{ r.grv.date|date:"d M Y" }}</td><td>{{ r.grv.invoice_no|default:"–" }} <span class="small muted">{{ r.grv.number }}</span></td><td class="r">{{ r.owing|money }}</td><td>{{ r.due|date:"d M" }}{% if r.late %} <span class="chip due">{{ r.late }}d late</span>{% endif %}</td>
+    <td class="r"><input class="alloc" name="grv_{{ r.grv.pk }}" data-owe="{{ r.owing }}" inputmode="decimal" style="max-width:120px;text-align:right" value="{{ r.val }}"></td></tr>{% endfor %}
+  </tbody></table></div>
+  <div class="field"><label for="notes">Notes</label><input id="notes" name="notes" value="{{ post.notes|default:'' }}"></div>
+  <div class="row"><button class="btn primary" type="submit">Save payment</button><a class="btn quiet" href="{% url 'money:creditors' %}">Cancel</a></div>
+  {% else %}<p class="muted">We owe {{ sup }} nothing – there are no unpaid GRVs.</p>{% endif %}
+  {% endif %}
+</form>
+<script>(function(){
+  var amt=document.getElementById("amount"); if(!amt) return; var boxes=[].slice.call(document.querySelectorAll(".alloc")), sum=document.getElementById("sum");
+  function n(v){v=parseFloat(String(v).replace(/[,$\s]/g,""));return isNaN(v)?0:v;}
+  function show(){var t=boxes.reduce(function(a,b){return a+n(b.value);},0);sum.textContent="Invoices ticked: $"+t.toFixed(2)+(n(amt.value)&&Math.abs(t-n(amt.value))>0.004?"  – must equal the amount paid":"  ✓");}
+  document.getElementById("fill").onclick=function(){var left=n(amt.value);boxes.forEach(function(b){var o=n(b.dataset.owe),p=Math.min(o,left);b.value=p>0?p.toFixed(2):"";left-=p;});show();};
+  document.getElementById("all").onclick=function(){var t=0;boxes.forEach(function(b){b.value=n(b.dataset.owe).toFixed(2);t+=n(b.dataset.owe);});amt.value=t.toFixed(2);show();};
+  boxes.forEach(function(b){b.addEventListener("input",show);}); amt.addEventListener("input",show); show();
+})();</script>
+{% endblock %}

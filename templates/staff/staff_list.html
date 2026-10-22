@@ -1,0 +1,36 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Staff{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Staff &amp; Payroll</div><h1>Staff</h1></div>
+  <div class="actions">{% if can.staff_edit %}<button class="btn" type="button" data-pick title="Choose a person to change">Edit</button>{% endif %}<a class="btn xl" href="{% url 'core:excel_file' 'staff' %}" title="Download this list as an Excel file">Excel</a><a class="btn" href="{% url 'staff:cards_print' %}" target="_blank">Print staff cards</a>{% if can.staff_edit %}<a class="btn primary" href="{% url 'staff:person_new' %}">+ New staff member</a>{% endif %}</div></div>
+{% include "staff/_tabs.html" %}
+{% if no_number %}<div class="banner"><span>{{ no_number }} staff member{{ no_number|pluralize:" doesn't,s don't" }} have a staff number yet. Numbers look like <b>{{ sample_no }}</b>.</span>
+  {% if can.staff_edit %}<span class="row"><form method="post" action="{% url 'staff:give_numbers' %}">{% csrf_token %}<input type="hidden" name="next" value="{% url 'staff:people' %}"><button class="btn small primary" type="submit">Give them numbers</button></form><a class="btn small quiet" href="{% url 'staff:files' %}#numbers">Change how numbers look</a></span>{% endif %}</div>{% endif %}
+{% if expiring %}<div class="banner"><span>{% for p in expiring|slice:":3" %}{% if not forloop.first %} · {% endif %}<a href="{% url 'staff:person' p.employee_id %}#papers">{{ p.employee.name }}</a>: {{ p.get_kind_display }} {% if p.expires < today %}ran out {{ p.expires|date:"d M Y" }}{% else %}runs out {{ p.expires|date:"d M Y" }}{% endif %}{% endfor %}{% if expiring|length > 3 %} · and {{ expiring|length|add:"-3" }} more{% endif %}</span><a class="btn small" href="{% url 'staff:files' %}">See staff files</a></div>{% endif %}
+<div class="stats">
+  <div class="card stat dark"><div class="lbl">Working here</div><div class="val">{{ n_active }}</div>{% if n_open %}<div class="sub">+ {{ n_open }} open place{{ n_open|pluralize }} to fill</div>{% endif %}</div>
+  <div class="card stat"><div class="lbl">Monthly salaries + allowances</div><div class="val">{{ monthly_bill|money }}</div><div class="sub">{% if n_day %}plus {{ n_day }} on day / hourly rates{% else %}before overtime{% endif %}</div></div>
+  <div class="card stat"><div class="lbl">Advances not paid back</div><div class="val">{{ open_adv|money }}</div></div>
+</div>
+<form class="filters" method="get" role="search">
+  <label class="visually-hidden" for="q">Find</label>
+  <input type="search" id="q" name="q" value="{{ q }}" placeholder="Name, staff no., ID no. or cell">
+  <label class="visually-hidden" for="show">Show</label>
+  <select id="show" name="show" onchange="this.form.submit()"><option value="active" {% if show == 'active' %}selected{% endif %}>Working here</option><option value="left" {% if show == 'left' %}selected{% endif %}>Left</option><option value="all" {% if show == 'all' %}selected{% endif %}>Everybody</option></select>
+  <label class="visually-hidden" for="dept">Department</label>
+  <select id="dept" name="dept" onchange="this.form.submit()"><option value="">All departments</option>{% for k, l in depts %}<option value="{{ k }}" {% if dept == k %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+  <label class="visually-hidden" for="sort">Sort</label>
+  <select id="sort" name="sort" onchange="this.form.submit()"><option value="name" {% if sort != 'no' %}selected{% endif %}>A–Z by name</option><option value="no" {% if sort == 'no' %}selected{% endif %}>By staff no.</option></select>
+  <button class="btn" type="submit">Find</button>{% if q %}<a class="btn quiet" href="?show={{ show }}&dept={{ dept }}&sort={{ sort }}">Clear</a>{% endif %}
+</form>
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>Staff no.</th><th>Name</th><th>Job</th><th>Department</th><th>Cell</th><th>Staff file</th><th class="r">Pay</th></tr></thead>
+  <tbody>{% for e in people %}<tr class="link" data-href="{% url 'staff:person' e.pk %}"{% if can.staff_edit %} data-edit="{% url 'staff:person_edit' e.pk %}"{% endif %}>
+    <td>{% if e.code %}<span class="staffno">{{ e.code }}</span>{% else %}<span class="staffno none">no number</span>{% endif %}</td>
+    <td><div class="who-cell">{% include "staff/_ava.html" %}<span><a class="rowlink" href="{% url 'staff:person' e.pk %}">{{ e.name }}</a>{% if not e.active %} <span class="pill gp-none">left</span>{% endif %}</span></div></td>
+    <td>{{ e.job_title }}</td><td class="small">{{ e.get_department_display }}</td><td class="small">{{ e.phone }}</td>
+    <td class="small"><span class="fdots" title="{% for i in e.file_items %}{{ i.label }}: {% if i.exp == 'expired' %}ran out{% elif i.state == 'both' %}on the laptop and in the file{% elif i.state == 'soft' %}only on the laptop{% elif i.state == 'hard' %}only in the paper file{% else %}missing{% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}">{% for i in e.file_items %}<i class="{% if i.exp == 'expired' %}expired{% else %}{{ i.state }}{% endif %}"></i>{% endfor %}</span> {{ e.file_done }}/{{ n_needs }}</td>
+    <td class="r"><b>{{ e.rate|money }}</b> <span class="small muted">{% if e.pay_type == 'monthly' %}/ month{% elif e.pay_type == 'daily' %}/ day{% else %}/ hour{% endif %}</span></td></tr>
+  {% empty %}<tr class="emptyrow"><td colspan="7" class="muted">{% if q %}Nobody found for “{{ q }}”.{% else %}Nobody here yet.{% if can.staff_edit %} <a href="{% url 'staff:person_new' %}">Add your first staff member.</a>{% endif %}{% endif %}</td></tr>{% endfor %}</tbody>
+</table></div></section>
+{% endblock %}

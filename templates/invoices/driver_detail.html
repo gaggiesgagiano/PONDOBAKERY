@@ -1,0 +1,53 @@
+{% extends "base.html" %}{% load pondo static %}
+{% block title %}{{ drv.name }}{% endblock %}
+{% block scripts %}<script src="{% static 'js/photo.js' %}?v=1"></script>{% endblock %}
+{% block content %}
+<div class="head"><div class="title-row">{% include "invoices/_drv_ava.html" with d=drv big=1 %}<div class="title"><div class="crumbs"><a href="{% url 'invoices:drivers' %}">Drivers</a> › {{ drv.name }}</div>
+  <h1>{{ drv.name }}</h1>
+  <div class="chips"><span class="staffno">{{ drv.number }}</span>{% if drv.car_reg %}<span class="chip">{{ drv.car_reg }}</span>{% endif %}{% if drv.car %}<span class="chip">{{ drv.car }}</span>{% endif %}{% if not drv.active %}<span class="chip on">Stopped – may not deliver</span>{% endif %}</div></div></div>
+  <div class="actions"><a class="btn primary" href="{% url 'invoices:driver_card' drv.pk %}" target="_blank">Print ID card</a>
+    {% if can.deliveries_edit %}{% if drv.active %}<a class="btn" href="{% url 'invoices:delivery_new' %}?driver={{ drv.pk }}">+ Delivery with {{ drv.first }}</a>{% endif %}<a class="btn" href="{% url 'invoices:driver_edit' drv.pk %}">Edit</a>{% endif %}</div></div>
+{% if not drv.photo %}<div class="banner"><span>No photo yet – take one before printing the ID card.</span></div>{% endif %}
+<div class="stats">
+  <div class="card stat dark"><div class="lbl">Deliveries</div><div class="val">{{ n }}</div></div>
+  <div class="card stat"><div class="lbl">Money short / over</div><div class="val">{% if short %}{{ short|money }}{% else %}$0.00{% endif %}</div><div class="sub">{% if short and short < 0 %}brought back less than he should{% elif short %}brought back more{% else %}always brought back the right money{% endif %}</div></div>
+</div>
+<div class="cols">
+  <div class="main stack">
+    <section class="card stack"><h2>Details</h2>
+      <div class="tablebox"><table class="t"><tbody>
+        <tr><td class="muted">Driver no.</td><td><b>{{ drv.number }}</b></td><td class="muted">ID card issued</td><td>{{ drv.issued|date:"d M Y" }}</td></tr>
+        <tr><td class="muted">Cell</td><td>{% if drv.phone %}<a href="tel:{{ drv.phone }}">{{ drv.phone }}</a>{% else %}–{% endif %}</td><td class="muted">National ID no.</td><td>{{ drv.id_number|default:"–" }}</td></tr>
+        <tr><td class="muted">Car</td><td>{% if drv.car_reg %}<span class="plate sm">{{ drv.car_reg }}</span>{% endif %} <span class="cdot" data-colour="{{ drv.car_colour|lower }}"></span>{{ drv.car|default:"–" }}</td><td class="muted">Driver's licence</td><td>{{ drv.licence_no|default:"–" }}</td></tr>
+      </tbody></table></div>
+      {% if drv.notes %}<p class="small" style="white-space:pre-line;margin:0">{{ drv.notes }}</p>{% endif %}
+    </section>
+    <section class="card stack"><h2>Deliveries</h2>
+      <div class="tablebox"><table class="t"><thead><tr><th>No.</th><th>Date</th><th>Customer</th><th class="r">Goods</th><th class="r">Fee</th><th>Money back</th></tr></thead><tbody>
+      {% for d in dels %}<tr class="link" data-href="{% url 'invoices:delivery' d.pk %}"><td><a class="rowlink" href="{% url 'invoices:delivery' d.pk %}">{{ d.number }}</a></td><td class="small">{{ d.date|date:"d M Y" }}</td><td>{{ d.doc.name }}</td><td class="r">{{ d.goods|money }}</td><td class="r small">{{ d.fee|money }}</td>
+        <td>{% if d.stage == 'cancelled' %}<span class="pill gp-none">cancelled</span>{% elif d.stage != 'done' %}<span class="pill gp-mid">still out</span>{% elif d.difference %}<span class="pill gp-low">{% if d.difference < 0 %}short{% else %}over{% endif %} {{ d.difference|money|cut:"-" }}</span>{% else %}<span class="pill gp-ok">right</span>{% endif %}</td></tr>
+      {% empty %}<tr class="emptyrow"><td colspan="6" class="muted">No deliveries yet.</td></tr>{% endfor %}</tbody></table></div>
+    </section>
+  </div>
+  <aside class="aside">
+    <section class="card stack photo-widget" id="photo" data-shape="portrait"><h2>Photo</h2>
+      <div class="sphoto">{% if drv.photo %}<img src="{% url 'invoices:driver_photo' drv.pk 'driver' %}?v={{ drv.photo_v }}" alt="Photo of {{ drv.name }}">{% else %}<span class="ava c-burgundy" aria-hidden="true">{{ drv.initials }}</span>{% endif %}</div>
+      {% if can.deliveries_edit %}<form method="post" action="{% url 'invoices:driver_photo_change' drv.pk 'driver' %}" enctype="multipart/form-data" class="photo-actions">{% csrf_token %}
+        <label class="btn small primary pick" style="cursor:pointer">{% if drv.photo %}Change photo{% else %}Add photo{% endif %}<input type="file" name="photo" accept="image/*" class="visually-hidden"></label>
+        <button class="btn small cam-start" type="button">Take photo</button><button class="btn small primary cam-snap" type="button" hidden>Snap</button><button class="btn small quiet cam-stop" type="button" hidden>Cancel</button>
+        {% if drv.photo %}<button class="btn small quiet remove" type="submit" name="remove" value="1" onclick="return confirm('Remove this photo?')">Remove</button>{% endif %}</form>
+      <p class="small muted photo-msg" style="margin:0;text-align:center">Take his photo with the laptop camera when he comes in, or use one from a phone.</p>
+      <p class="small muted photo-busy" style="margin:0;text-align:center" hidden>Saving the photo …</p>{% endif %}
+    </section>
+    <section class="card stack photo-widget" id="car" data-shape="landscape"><h2>The car</h2>
+      <div class="sphoto land">{% if drv.car_photo %}<img src="{% url 'invoices:driver_photo' drv.pk 'car' %}?v={{ drv.photo_v }}" alt="Photo of the car {{ drv.car_reg }}">{% else %}<span class="small muted">No photo of the car yet</span>{% endif %}</div>
+      {% if can.deliveries_edit %}<form method="post" action="{% url 'invoices:driver_photo_change' drv.pk 'car' %}" enctype="multipart/form-data" class="photo-actions">{% csrf_token %}
+        <label class="btn small primary pick" style="cursor:pointer">{% if drv.car_photo %}Change photo{% else %}Add photo{% endif %}<input type="file" name="photo" accept="image/*" class="visually-hidden"></label>
+        <button class="btn small cam-start" type="button">Take photo</button><button class="btn small primary cam-snap" type="button" hidden>Snap</button><button class="btn small quiet cam-stop" type="button" hidden>Cancel</button>
+        {% if drv.car_photo %}<button class="btn small quiet remove" type="submit" name="remove" value="1" onclick="return confirm('Remove this photo?')">Remove</button>{% endif %}</form>
+      <p class="small muted photo-msg" style="margin:0;text-align:center">A photo with the number plate showing – from a phone is easiest.</p>
+      <p class="small muted photo-busy" style="margin:0;text-align:center" hidden>Saving the photo …</p>{% endif %}
+    </section>
+  </aside>
+</div>
+{% endblock %}

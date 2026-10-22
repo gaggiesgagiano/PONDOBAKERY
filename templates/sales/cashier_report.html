@@ -1,0 +1,73 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Over & short per cashier · {{ label }}{% endblock %}
+{% block head %}<style>
+  .periods{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .periods input[type=date]{min-height:40px;border-radius:10px;border:2px solid var(--line2);padding:2px 8px}
+  .os-short{color:var(--low);font-weight:700}
+  .os-over{color:#b46a00;font-weight:700}
+  .os-ok{color:#218d80;font-weight:700}
+  .person{break-inside:avoid;page-break-inside:avoid}
+  .person h3{margin:0 0 6px}
+  .printhead{display:none}
+  @media print{
+    .printhead{display:block;margin-bottom:8px}
+    .printhead h1{font-size:20px;margin:0}
+    .card{box-shadow:none;border:1px solid #ccc;padding:10px 12px}
+    .head{display:none}
+    .sign{display:flex!important}
+  }
+  .sign{display:none;gap:40px;margin-top:22px;font-size:13px}
+  .sign div{flex:1;border-top:1px solid #333;padding-top:4px}
+</style>{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Sales &amp; Cash-Up</div><h1>Over &amp; short per cashier</h1>
+  <div class="small muted">{{ label }}</div></div>
+  <div class="actions"><button class="btn primary" type="button" onclick="window.print()">Print</button></div></div>
+{% include "sales/_tabs.html" %}
+
+<form class="card periods no-print" method="get">
+  <span class="chips" style="margin:0">
+    <a class="chip {% if kind == 'day' %}on{% endif %}" href="?p=day&d={{ d|date:'Y-m-d' }}">Day</a>
+    <a class="chip {% if kind == 'week' %}on{% endif %}" href="?p=week&d={{ d|date:'Y-m-d' }}">Week</a>
+    <a class="chip {% if kind == 'month' %}on{% endif %}" href="?p=month&d={{ d|date:'Y-m-d' }}">Month</a></span>
+  <input type="hidden" name="p" value="{{ kind }}">
+  <label for="d" class="small muted">Date</label><input id="d" type="date" name="d" value="{{ d|date:'Y-m-d' }}">
+  <button class="btn small" type="submit">Show</button>
+  <a class="btn quiet small" href="?p={{ kind }}&d={{ prev|date:'Y-m-d' }}">‹ Previous</a>
+  <a class="btn quiet small" href="?p={{ kind }}&d={{ nxt|date:'Y-m-d' }}">Next ›</a>
+</form>
+
+<div class="printhead"><h1>{{ company.name|default:"Pondo Bakery" }} – Over &amp; short per cashier</h1>
+  <div class="small">{{ label }} · printed {{ now|date:"d M Y H:i" }}</div></div>
+
+<section class="card stack"><h2>Summary</h2>
+  <div class="tablebox"><table class="t">
+    <thead><tr><th>Cashier</th><th class="r">Cash-ups</th><th class="r">Sales</th><th class="r">Over</th><th class="r">Short</th><th class="r">Net over / short</th><th>Not signed off</th></tr></thead>
+    <tbody>{% for p in rows %}<tr>
+      <td><b>{{ p.name }}</b></td><td class="r">{{ p.n }}</td><td class="r">{{ p.sales|money }}</td>
+      <td class="r">{% if p.over %}<span class="os-over">{{ p.over|money }}</span>{% else %}–{% endif %}</td>
+      <td class="r">{% if p.short %}<span class="os-short">{{ p.short|money }}</span>{% else %}–{% endif %}</td>
+      <td class="r">{% if p.net < 0 %}<span class="os-short">short {{ p.net|money }}</span>{% elif p.net > 0 %}<span class="os-over">over {{ p.net|money }}</span>{% else %}<span class="os-ok">balances</span>{% endif %}</td>
+      <td>{% if p.waiting %}{{ p.waiting }}{% else %}–{% endif %}</td></tr>
+    {% empty %}<tr class="emptyrow"><td colspan="7" class="muted">No cash-ups in this {{ kind }}.</td></tr>{% endfor %}
+    {% if rows %}<tr class="total"><td>All cashiers</td><td class="r">{{ tot.n }}</td><td class="r">{{ tot.sales|money }}</td><td class="r">{{ tot.over|money }}</td><td class="r">{{ tot.short|money }}</td>
+      <td class="r">{% if tot.net < 0 %}short {{ tot.net|money }}{% elif tot.net > 0 %}over {{ tot.net|money }}{% else %}balances{% endif %}</td><td>{% if tot.waiting %}{{ tot.waiting }}{% else %}–{% endif %}</td></tr>{% endif %}</tbody>
+  </table></div>
+  {% if tills|length > 1 %}<p class="small muted" style="margin:0">Per till: {% for t in tills %}<b>{{ t.till }}</b> {{ t.n }} cash-up{{ t.n|pluralize }}, sales {{ t.sales|money }}, {% if t.net < 0 %}short {{ t.net|money }}{% elif t.net > 0 %}over {{ t.net|money }}{% else %}balances{% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}</p>{% endif %}
+</section>
+
+{% for p in rows %}<section class="card stack person"><h3>{{ p.name }}</h3>
+  <div class="tablebox"><table class="t">
+    <thead><tr><th>Date</th><th>Till</th><th>No.</th><th class="r">Sales</th><th class="r">Over / short</th><th>Signed off by</th></tr></thead>
+    <tbody>{% for c in p.cus %}<tr class="link" data-href="{% url 'sales:cashup' c.pk %}">
+      <td><a class="rowlink" href="{% url 'sales:cashup' c.pk %}">{{ c.date|date:"D d M Y" }}</a></td><td>{{ c.till }}</td><td class="small muted">{{ c.number }}</td>
+      <td class="r">{{ c.total_sales|money }}</td>
+      <td class="r">{% if c.total_variance < 0 %}<span class="os-short">short {{ c.total_variance|money }}</span>{% elif c.total_variance > 0 %}<span class="os-over">over {{ c.total_variance|money }}</span>{% else %}<span class="os-ok">balances</span>{% endif %}</td>
+      <td class="small">{% if c.signed_off_by %}{{ c.signed_off_by }}{% else %}<span class="muted">not yet</span>{% endif %}</td></tr>{% endfor %}
+      <tr class="total"><td colspan="3">{{ p.n }} cash-up{{ p.n|pluralize }}</td><td class="r">{{ p.sales|money }}</td>
+        <td class="r">{% if p.net < 0 %}short {{ p.net|money }}{% elif p.net > 0 %}over {{ p.net|money }}{% else %}balances{% endif %}</td><td></td></tr></tbody>
+  </table></div>
+  <div class="sign"><div>Cashier signature</div><div>Supervisor / manager</div><div>Date</div></div>
+</section>{% endfor %}
+<p class="small muted no-print">Over = more money than the till says. Short = less. Biggest shortages are at the top. Click a line to open that cash-up.</p>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}{{ plan }}{% endblock %}
+{% block content %}
+<div class="head">
+  <div class="title"><div class="crumbs"><a href="{% url 'production:plans' %}">Production</a> › {{ plan.number }}</div>
+    <h1>{{ plan.get_shift_display }} · {{ plan.date|date:"D d M Y" }}</h1>
+    <div class="chips"><span class="chip">{{ plan.get_status_display }}</span>{% if plan.supervisor %}<span class="chip">Supervisor: {{ plan.supervisor }}</span>{% endif %}<span class="chip">Planned by {{ plan.planned_by|default:"–" }}</span></div></div>
+  <div class="actions">
+    <a class="btn" href="{% url 'production:plan_print' plan.pk 'sheet' %}" target="_blank">Print plan</a>
+    <a class="btn" href="{% url 'production:plan_print' plan.pk 'pull' %}" target="_blank">Print ingredient list</a>
+    <a class="btn" href="{% url 'production:plan_print' plan.pk 'cards' %}" target="_blank">Print recipe cards</a>
+    {% if can.production_edit %}{% if plan.status != "done" %}<form method="post" action="{% url 'production:plan_status' plan.pk %}">{% csrf_token %}<button class="btn" name="status" value="done" title="Takes the ingredients off the stock">Mark as done</button></form>{% endif %}
+    <a class="btn primary" href="{% url 'production:plan_edit' plan.pk %}">Edit plan</a>{% endif %}
+  </div>
+</div>
+{% for p in res.problems %}<div class="banner">{{ p }}</div>{% endfor %}
+<div class="stats">
+  <div class="card stat"><div class="lbl">Products</div><div class="val">{{ res.products|length }}</div></div>
+  <div class="card stat"><div class="lbl">Units to make</div><div class="val">{{ res.total_units }}</div></div>
+  <div class="card stat"><div class="lbl">Mother recipes to prepare</div><div class="val">{{ res.prepare_rows|length }}</div></div>
+  <div class="card stat"><div class="lbl">Ingredients to take out</div><div class="val">{{ res.ingredients|length }}</div></div>
+  {% if can.costs %}<div class="card stat dark"><div class="lbl">Cost of this shift</div><div class="val">{{ res.total_cost|money }}</div><div class="sub">ingredients + packaging</div></div>{% endif %}
+</div>
+
+<section class="card stack"><h2>Products</h2>
+  <div class="tablebox"><table class="t">
+    <thead><tr><th>Product</th><th class="r">Model stock</th><th class="r">On hand</th><th class="r">Expired</th><th class="r">Units to make</th><th class="r">Batch yield</th><th class="r">Batches</th></tr></thead>
+    <tbody>{% for p in res.products %}<tr><td>{% if can.recipes_view %}<a href="{% url 'costing:recipe' p.line.recipe.pk %}">{{ p.line.recipe.name }}</a>{% else %}{{ p.line.recipe.name }}{% endif %}</td>
+      <td class="r">{{ p.line.model_stock }}</td><td class="r">{{ p.line.on_hand }}</td><td class="r">{{ p.line.expired }}</td>
+      <td class="r"><b>{{ p.units }}</b>{% if p.line.actual is not None %} <span class="tag">set by hand</span>{% endif %}</td><td class="r">{{ p.yield|num:0 }}</td><td class="r"><b>{{ p.batches|num:2 }}</b></td></tr>
+    {% empty %}<tr class="emptyrow"><td colspan="7" class="muted">No products yet. {% if can.production_edit %}<a href="{% url 'production:plan_edit' plan.pk %}">Add them</a>.{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+
+<div class="cols">
+  <section class="card main stack"><h2>Ingredients to take from the store</h2>
+    <div class="tablebox"><table class="t">
+      <thead><tr><th>Ingredient</th><th>Supplier / group</th><th class="r">Quantity</th><th>Unit</th>{% if can.costs %}<th class="r">Cost</th>{% endif %}</tr></thead>
+      <tbody>{% for d in res.ingredient_rows %}<tr><td>{{ d.ingredient.name }}{% if d.ingredient.kind == 'packaging' %} <span class="tag">packaging</span>{% endif %}</td><td class="small">{{ d.ingredient.supplier|default:"" }}</td>
+        <td class="r"><b>{{ d.qty|num:3 }}</b></td><td>{{ d.ingredient.unit }}</td>{% if can.costs %}<td class="r">{{ d.cost|money }}</td>{% endif %}</tr>
+      {% empty %}<tr class="emptyrow"><td colspan="5" class="muted">Nothing yet.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+  <aside class="aside">
+    <section class="card peach stack"><h2>Prepare first</h2>
+      {% for d in res.prepare_rows %}<div><b>{{ d.recipe.name }}</b><br><span class="small">{{ d.qty|num:3 }} {{ d.ingredient.unit }}{% if d.batches %} · {{ d.batches|num:2 }} batch{{ d.batches|pluralize:"es" }}{% endif %}</span></div>
+      {% empty %}<p class="small" style="margin:0">No mother recipes needed for this plan.</p>{% endfor %}
+    </section>
+    {% if plan.notes %}<section class="card stack"><h2>Notes for the bakers</h2><p style="white-space:pre-line;margin:0">{{ plan.notes }}</p></section>{% endif %}
+    {% if can.production_edit %}<form method="post" action="{% url 'production:plan_delete' plan.pk %}" onsubmit="return confirm('Delete this plan?');">{% csrf_token %}<button class="btn quiet small danger" type="submit">Delete this plan</button></form>{% endif %}
+  </aside>
+</div>
+{% endblock %}

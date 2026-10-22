@@ -1,0 +1,98 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Month-end {{ m.month|date:"F Y" }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Reports</div><h1>{{ m.month|date:"F Y" }} – month-end</h1>
+  <div class="small muted">All amounts excl. VAT. {% if closed %}<b>Locked in the archive on {{ closed.locked_at|date:"d M Y" }}</b> – figures below are live.{% endif %}</div></div>
+  <div class="actions"><a class="btn quiet" href="?month={{ prev|date:'Y-m' }}">← {{ prev|date:"M" }}</a>{% if next %}<a class="btn quiet" href="?month={{ next|date:'Y-m' }}">{{ next|date:"M" }} →</a>{% endif %}
+    <a class="btn" href="{% url 'reports:month_end_print' %}?month={{ m.month|date:'Y-m' }}" target="_blank">Print (1 page)</a><a class="btn primary" href="{% url 'reports:accountant' %}?month={{ m.month|date:'Y-m' }}" target="_blank">Accountant report</a><a class="btn" href="{% url 'core:email' 'accountant' m.month|date:'Y-m' %}">✉ E-mail to accountant</a>
+    {% if can.owner %}<form method="post" action="{% url 'reports:lock' %}" onsubmit="return confirm('Lock the figures of {{ m.month|date:"F Y" }} in the Month archive?')">{% csrf_token %}<input type="hidden" name="month" value="{{ m.month|date:'Y-m-d' }}"><button class="btn primary" type="submit">{% if closed %}Lock again{% else %}Lock this month{% endif %}</button></form>{% endif %}</div></div>
+{% include "reports/_tabs.html" %}
+<div class="stats">
+  <div class="card stat"><div class="lbl">Sales</div><div class="val">{{ m.sales|money:0 }}</div><div class="sub">{{ m.trading_days }} trading day{{ m.trading_days|pluralize }}{% if m.avg_day %} · {{ m.avg_day|money:0 }} a day{% endif %}</div></div>
+  <div class="card stat"><div class="lbl">Gross profit</div><div class="val">{{ m.gross|money:0 }}</div><div class="sub">{{ m.gross_pct|pct }} of sales</div></div>
+  <div class="card stat dark"><div class="lbl">Net profit / (loss)</div><div class="val">{{ m.net|money:0 }}</div><div class="sub">{% if m.vs_target >= 0 %}{{ m.vs_target|money:0 }} above{% else %}{{ m.vs_target|money:0 }} short of{% endif %} your {{ m.target|money:0 }} target</div></div>
+  <div class="card stat"><div class="lbl">Waste at cost</div><div class="val">{{ m.waste|money:0 }}</div><div class="sub">{{ m.waste_pct|pct }} of sales</div></div>
+</div>
+{% if not m.sales %}<div class="banner">No daily sales typed for this month yet – the report fills in as you type them under Sales &amp; Cash-Up → Daily sales.</div>{% endif %}
+<div class="cols">
+  <div class="main">
+    <section class="card stack"><h2>1 · Profit &amp; loss</h2>
+      <div class="tablebox"><table class="t dash"><thead><tr><th></th><th class="r">$</th><th class="r">% of sales</th></tr></thead><tbody>
+        <tr><td><b>Sales (excl. VAT)</b></td><td class="r"><b>{{ m.sales|money }}</b></td><td class="r">{% if m.sales %}100%{% endif %}</td></tr>
+        {% if m.cos_from == 'stock' %}
+        <tr><td>Opening stock <span class="small muted">(stock take {{ m.opening.date|date:"d M" }})</span></td><td class="r">{{ m.opening.total_value|money }}</td><td></td></tr>
+        <tr><td>+ Purchases (ingredients &amp; packaging)</td><td class="r">{{ m.purchases|money }}</td><td></td></tr>
+        <tr><td>− Closing stock <span class="small muted">(stock take {{ m.closing.date|date:"d M" }})</span></td><td class="r">{{ m.closing.total_value|money }}</td><td></td></tr>
+        {% endif %}
+        <tr><td>Cost of sales{% if m.cos_from == 'recipes' %} <span class="pill gp-mid">from recipes – no stock takes</span>{% endif %}</td><td class="r">{{ m.cos|money }}</td><td class="r">{{ m.pcts.cos|pct }}</td></tr>
+        <tr class="total"><td>GROSS PROFIT</td><td class="r">{{ m.gross|money }}</td><td class="r">{{ m.gross_pct|pct }}</td></tr>
+        <tr><td>Wages{% if m.wages_from == 'payroll' %} <span class="small muted">(payroll incl. NSSA &amp; ZIMDEF)</span>{% else %} <span class="pill gp-mid">from Staff – no final pay run</span>{% endif %}</td><td class="r">{{ m.wages|money }}</td><td class="r">{{ m.pcts.wages|pct }}</td></tr>
+        <tr><td>Casual wages &amp; overtime <span class="small muted">(Expenses)</span></td><td class="r">{{ m.casual|money }}</td><td class="r">{{ m.pcts.casual|pct }}</td></tr>
+        <tr><td>Running expenses{% if m.running_from == 'budget' %} <span class="pill gp-mid">budget – no expenses typed</span>{% endif %}</td><td class="r">{{ m.running|money }}</td><td class="r">{{ m.pcts.running|pct }}</td></tr>
+        <tr><td>Equipment depreciation</td><td class="r">{% if m.dep is None %}<span class="small muted">–</span>{% else %}{{ m.dep|money }}{% endif %}</td><td class="r">{% if m.dep is not None %}{{ m.pcts.dep|pct }}{% endif %}</td></tr>
+        <tr><td><b>Total expenses</b></td><td class="r"><b>{{ m.expenses|money }}</b></td><td class="r">{{ m.pcts.expenses|pct }}</td></tr>
+        <tr class="total"><td>NET PROFIT / (LOSS)</td><td class="r {{ m.net|sign }}">{{ m.net|money }}</td><td class="r">{{ m.pcts.net|pct }}</td></tr>
+        <tr><td>Profit I want</td><td class="r">{{ m.target|money }}</td><td></td></tr>
+        <tr><td><b>Over / (short) of profit target</b></td><td class="r {{ m.vs_target|sign }}"><b>{{ m.vs_target|money }}</b></td><td></td></tr>
+        <tr><td class="small muted">Net profit before depreciation</td><td class="r small">{{ m.net_before_dep|money }}</td><td></td></tr>
+      </tbody></table></div>
+      {% if m.cos_from == 'recipes' %}<p class="small muted" style="margin:0">For the real cost of sales, do a stock take at the end of each month (or week). Until then it is worked out from your recipe costs, which leaves out waste and losses.</p>{% endif %}
+    </section>
+
+    <section class="card stack"><h2>2 · Expenses by type</h2>
+      <div class="tablebox"><table class="t dash"><thead><tr><th>Type</th><th class="r">$ excl. VAT</th><th class="r">% of sales</th></tr></thead><tbody>
+      {% for name, v in m.by_cat %}<tr><td>{{ name }}</td><td class="r">{{ v|money }}</td><td class="r">{% if m.sales %}{% widthratio v m.sales 100 %}%{% endif %}</td></tr>{% empty %}<tr class="emptyrow"><td colspan="3" class="muted small">No expenses typed this month.</td></tr>{% endfor %}
+      {% if m.by_cat %}<tr class="total"><td>Total</td><td class="r">{{ m.exp_total|money }}</td><td></td></tr>{% endif %}
+      <tr><td>Budget (overheads in Costs &amp; targets)</td><td class="r">{{ m.budget|money }}</td><td></td></tr>
+      {% if m.running_from == 'actual' %}<tr><td>Running expenses vs budget <span class="small muted">(+ = under budget)</span></td><td class="r {{ m.running_vs_budget|sign }}">{{ m.running_vs_budget|money }}</td><td></td></tr>{% endif %}
+      </tbody></table></div>
+    </section>
+  </div>
+  <aside class="aside">
+    <section class="card stack"><h2>3 · Cash &amp; bank</h2>
+      <div class="tablebox"><table class="t dash"><tbody>
+        <tr><td><b>Total taken</b> <span class="small muted">incl. VAT</span></td><td class="r"><b>{{ m.taken|money }}</b></td></tr>
+        {% for x in m.methods %}<tr><td class="small">{{ x.method__name }}</td><td class="r small">{{ x.t|money }}</td></tr>{% endfor %}
+        <tr><td>Till over / (short)</td><td class="r {{ m.till_variance|sign }}">{{ m.till_variance|money }}</td></tr>
+        <tr><td>Paid out of the till</td><td class="r">{{ m.payouts|money }}</td></tr>
+        <tr><td>Banked</td><td class="r">{{ m.banked|money }}</td></tr>
+        <tr><td>Days cashed up</td><td class="r">{{ m.cash_days }} of {{ m.days_in_month }}</td></tr>
+      </tbody></table></div>
+    </section>
+    <section class="card stack"><h2>4 · VAT <span class="small muted">for the accountant</span></h2>
+      <div class="tablebox"><table class="t dash"><tbody>
+        <tr><td>VAT in till takings <span class="small muted">(takings − sales excl. VAT, {{ m.vat_days }} day{{ m.vat_days|pluralize }} with both)</span>{% if m.vat_sales is not None and m.vat_sales < 0 %}<div class="small" style="color:var(--low)">The till took less than the sales typed – check the cash-ups and daily sales.</div>{% endif %}</td><td class="r">{{ m.vat_sales|money }}</td></tr>
+        <tr><td>VAT on goods received (GRVs)</td><td class="r">{{ m.purchases_vat|money }}</td></tr>
+        <tr><td>VAT on expenses (claimable)</td><td class="r">{{ m.vat_expenses|money }}</td></tr>
+      </tbody></table></div>
+    </section>
+    <section class="card stack"><h2>5 · Sales &amp; stock</h2>
+      <div class="tablebox"><table class="t dash"><tbody>
+        <tr><td>Trading days with sales</td><td class="r">{{ m.trading_days }}</td></tr>
+        <tr><td>Average sales a day</td><td class="r">{{ m.avg_day|money }}</td></tr>
+        <tr><td>Best day</td><td class="r">{% if m.best %}{{ m.best.total|money }} <span class="small muted">{{ m.best.date|date:"D d" }}</span>{% else %}–{% endif %}</td></tr>
+        <tr><td>GP from the recipes</td><td class="r">{{ m.gp_recipes_pct|pct }}</td></tr>
+        <tr><td>Waste at cost</td><td class="r">{{ m.waste|money }}</td></tr>
+        <tr><td>Staff meals &amp; tasting</td><td class="r">{{ m.meals|money }}</td></tr>
+        <tr><td>Stock increase / (decrease)</td><td class="r">{% if m.stock_change is not None %}{{ m.stock_change|money }}{% else %}–{% endif %}</td></tr>
+      </tbody></table></div>
+    </section>
+    {% if m.equip %}<section class="card stack"><h2>7 · Equipment</h2>
+      <div class="tablebox"><table class="t dash"><tbody>
+        <tr><td>Items that should be on site</td><td class="r">{{ m.equip.should }}</td></tr>
+        <tr><td>Items counted{% if not m.equip.count %} <span class="pill gp-mid">no count this month</span>{% endif %}</td><td class="r">{{ m.equip.counted }}</td></tr>
+        <tr><td>Pieces missing</td><td class="r {% if m.equip.missing_pieces %}neg{% endif %}">{{ m.equip.missing_pieces }}</td></tr>
+        <tr><td>Value missing (at cost)</td><td class="r">{{ m.equip.missing_value|money }}</td></tr>
+        <tr><td>Written off this month</td><td class="r">{{ m.equip.written_off_cost|money }}</td></tr>
+        <tr><td>Depreciation this month</td><td class="r">{{ m.dep|money }}</td></tr>
+        <tr><td>Equipment book value</td><td class="r">{{ m.equip_book|money }}</td></tr>
+      </tbody></table></div>
+      <a class="small" href="{% url 'equipment:count' %}?month={{ m.month|date:'Y-m' }}">Equipment count →</a>
+    </section>{% endif %}
+    <section class="card stack"><h2>6 · Purchases by supplier</h2>
+      {% for name, v in m.by_supplier %}<div class="row" style="justify-content:space-between"><span class="small">{{ name }}</span><b class="small">{{ v|money }}</b></div>{% empty %}<p class="small muted" style="margin:0">No deliveries.</p>{% endfor %}
+      {% if m.by_supplier %}<div class="row" style="justify-content:space-between;border-top:2px solid var(--maroon);padding-top:6px"><b>Total</b><b>{{ m.purchases|money }}</b></div>{% endif %}
+    </section>
+  </aside>
+</div>
+{% endblock %}

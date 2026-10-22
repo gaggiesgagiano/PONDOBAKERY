@@ -1,0 +1,58 @@
+{% extends "forms/_base.html" %}
+{% block subtitle %}<div class="sub">Hand in before the leave starts.<br>Sick leave: hand in on your first day back.</div>{% endblock %}
+{% block content %}
+<div class="sec"><div class="sh"><span class="n">1</span><h2>Employee details</h2></div>
+  <div class="g g2">
+    <div class="f span2"><span>Full name</span><i></i></div>
+    <div class="f"><span>Job title</span><i></i></div>
+    <div class="f"><span>Department / section</span><i></i></div>
+    <div class="f"><span>Staff no.</span><i></i></div>
+    <div class="f"><span>Date of application</span><i></i></div>
+  </div></div>
+
+<div class="sec"><div class="sh"><span class="n">2</span><h2>Type of leave</h2><span class="hint">tick one</span></div>
+  <div class="ticks g3">
+    <span class="tk">Annual leave</span><span class="tk">Sick leave</span><span class="tk">Compassionate leave</span>
+    <span class="tk">Maternity leave</span><span class="tk">Paternity leave</span><span class="tk">Other (write below)</span>
+  </div>
+  <div class="f"><span>If other, what kind</span><i></i></div></div>
+
+<div class="sec"><div class="sh"><span class="n">3</span><h2>Leave period</h2></div>
+  <div class="g g2">
+    <div class="f"><span>First day of leave</span><i></i></div>
+    <div class="f"><span>Last day of leave</span><i></i></div>
+    <div class="f"><span>Number of working days</span><i></i></div>
+    <div class="f"><span>Back at work on</span><i></i></div>
+  </div></div>
+
+<div class="sec"><div class="sh"><span class="n">4</span><h2>Reason for leave</h2></div>
+  <p class="note">Short details. Sick leave of more than 2 working days in a row needs a medical certificate.</p>
+  <div class="lines"><i></i><i></i><i></i></div>
+  <span class="tk">Medical certificate attached (where needed)</span></div>
+
+<div class="sec"><div class="sh"><span class="n">5</span><h2>Contact details during leave</h2></div>
+  <div class="g g2">
+    <div class="f"><span>Contact number</span><i></i></div>
+    <div class="f"><span>Alternative number</span><i></i></div>
+    <div class="f span2"><span>Address while on leave <small>(if different)</small></span><i></i></div>
+  </div></div>
+
+<div class="sec"><div class="sh"><span class="n">6</span><h2>Employee declaration</h2></div>
+  <p class="decl">I confirm that the information above is true and correct, and I ask that the leave be granted in terms of my Contract of Employment and the Labour Act [Chapter 28:01].</p>
+  <div class="sig"><div class="f"><span>Employee signature</span><i></i></div><div class="f"><span>Date</span><i></i></div></div></div>
+
+<div class="office stack" style="gap:1.6mm">
+  <div class="sh" style="margin:0"><span class="n" style="background:#7a1315">7</span><h2>Office use – approval</h2></div>
+  <div class="ticks g3"><span class="tk">Approved</span><span class="tk">Declined</span><span class="tk">Approved with changes</span></div>
+  <div class="f"><span>Comments</span><i></i></div>
+  <div class="g g3"><div class="f"><span>Approved by</span><i></i></div><div class="f"><span>Signature</span><i></i></div><div class="f"><span>Date</span><i></i></div></div>
+  <div class="sh" style="margin-top:1.5mm"><span class="n" style="background:#7a1315">8</span><h2>Leave balance</h2><span class="hint">filled in by the office</span></div>
+  <div class="g g4">
+    <div class="f"><span>Brought forward</span><i></i></div>
+    <div class="f"><span>Earned to date</span><i></i></div>
+    <div class="f"><span>This form</span><i></i></div>
+    <div class="f"><span>Balance left</span><i></i></div>
+  </div>
+  <div class="f"><span>Typed into the program (Staff › Leave) by</span><i></i></div>
+</div>
+{% endblock %}

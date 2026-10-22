@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Month archive{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Reports</div><h1>Month archive</h1>
+  <div class="small muted">The final figures of each month, locked so later changes don't move them. Lock a month from its Month-end report.</div></div>
+  <div class="actions"><button class="btn" type="button" onclick="window.print()">Print</button></div></div>
+{% include "reports/_tabs.html" %}
+<section class="card"><div class="tablebox"><table class="t dash" style="min-width:1100px">
+  <thead><tr><th>Month</th><th class="r">Sales</th><th class="r">Cost of sales</th><th class="r">Gross profit</th><th class="r">GP %</th><th class="r">Wages</th><th class="r">Running exp.</th><th class="r">Depreciation</th><th class="r">Net profit</th><th class="r">Purchases</th><th class="r">Closing stock</th><th class="r">Waste</th><th class="r">Taken</th><th class="r">Banked</th><th class="r">Till +/−</th><th>Locked</th><th>Sent to accountant</th></tr></thead>
+  <tbody>{% for mc in rows %}{% with f=mc.figures %}<tr>
+    <td><a href="{% url 'reports:month_end' %}?month={{ mc.month|date:'Y-m' }}"><b>{{ mc.month|date:"M Y" }}</b></a></td>
+    <td class="r">{{ f.sales|money:0 }}</td><td class="r">{{ f.cos|money:0 }}{% if f.cos_from == 'recipes' %}*{% endif %}</td><td class="r">{{ f.gross|money:0 }}</td><td class="r">{{ f.gross_pct|pct }}</td>
+    <td class="r">{{ f.wages|money:0 }}</td><td class="r">{{ f.running|money:0 }}</td><td class="r">{{ f.dep|money:0 }}</td><td class="r {{ f.net|sign }}"><b>{{ f.net|money:0 }}</b></td>
+    <td class="r">{{ f.purchases|money:0 }}</td><td class="r">{{ f.closing_stock|money:0 }}</td><td class="r">{{ f.waste|money:0 }}</td><td class="r">{{ f.taken|money:0 }}</td><td class="r">{{ f.banked|money:0 }}</td><td class="r">{{ f.till_variance|money:0 }}</td>
+    <td class="small">{{ mc.locked_at|date:"d M Y" }}<br><span class="muted">{{ mc.locked_by|default:"" }}</span></td>
+    <td>{% if can.owner %}<form method="post" action="{% url 'reports:archive_edit' mc.pk %}" class="row" style="gap:6px;flex-wrap:nowrap">{% csrf_token %}<input class="text" style="min-height:36px;width:150px" name="sent_to_accountant" value="{{ mc.sent_to_accountant }}" placeholder="date / initials" aria-label="Sent to accountant"><button class="btn small quiet" type="submit">Save</button></form>{% else %}{{ mc.sent_to_accountant }}{% endif %}</td></tr>{% endwith %}
+  {% empty %}<tr class="emptyrow"><td colspan="17" class="muted">No months locked yet. Open the Month-end report of a finished month and press "Lock this month".</td></tr>{% endfor %}</tbody>
+</table></div></section>
+<p class="small muted">* cost of sales worked out from the recipes, because there were no stock takes that month.</p>
+{% endblock %}

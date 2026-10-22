@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ c.method }}{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'fiscal:journal' %}">Engine journal</a></div><h1>{{ c.method }}</h1>
+  <div class="small muted">{{ c.at|date:"d M Y H:i:s" }} · {{ c.seconds }} s{% if c.user %} · {{ c.user }}{% endif %}{% if c.sale %} · slip <a href="{% url 'till:receipt' c.sale.pk %}">{{ c.sale.number }}</a>{% endif %}</div></div></div>
+<section class="card stack">
+  <div><b>{% if c.ok %}OK{% else %}Not OK{% endif %}</b> – {{ c.message|linebreaksbr }}</div>
+  {% if pretty.Data %}<pre style="white-space:pre-wrap;overflow:auto;background:#fff;border-radius:10px;padding:10px;font-size:12px">{{ pretty.Data }}</pre>{% endif %}
+</section>
+{% endblock %}

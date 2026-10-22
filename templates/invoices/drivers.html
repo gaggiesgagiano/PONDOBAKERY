@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Drivers{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Invoices &amp; Quotes</div><h1>Drivers</h1>
+  <div class="small muted">Every driver who delivers for us – with photo, ID and car. Print an ID card for each one.</div></div>
+  <div class="actions">{% if can.deliveries_edit %}<button class="btn" type="button" data-pick title="Choose a driver to change">Edit</button>{% endif %}<a class="btn" href="{% url 'invoices:driver_cards' %}" target="_blank">Print ID cards</a>{% if can.deliveries_edit %}<a class="btn primary" href="{% url 'invoices:driver_new' %}">+ New driver</a>{% endif %}</div></div>
+{% include "invoices/_tabs.html" %}
+{% if no_photo %}<div class="banner"><span>{{ no_photo }} driver{{ no_photo|pluralize:" has,s have" }} no photo yet. Open the driver and take a photo before printing the ID card.</span></div>{% endif %}
+<form class="filters" method="get" role="search">
+  <label class="visually-hidden" for="q">Find</label><input type="search" id="q" name="q" value="{{ q }}" placeholder="Name, cell, car reg or ID no.">
+  <label class="visually-hidden" for="show">Show</label>
+  <select id="show" name="show" onchange="this.form.submit()"><option value="active" {% if show == 'active' %}selected{% endif %}>May deliver</option><option value="stopped" {% if show == 'stopped' %}selected{% endif %}>Stopped</option><option value="all" {% if show == 'all' %}selected{% endif %}>All</option></select>
+  <button class="btn" type="submit">Find</button>
+</form>
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>No.</th><th>Driver</th><th>Cell</th><th>ID no.</th><th>Car</th><th class="r">Deliveries</th><th>Last</th><th class="r">Money short / over</th></tr></thead>
+  <tbody>{% for d in rows %}<tr class="link" data-href="{% url 'invoices:driver' d.pk %}"{% if can.deliveries_edit %} data-edit="{% url 'invoices:driver_edit' d.pk %}"{% endif %}>
+    <td class="small">{{ d.number }}</td>
+    <td><div class="who-cell">{% include "invoices/_drv_ava.html" %}<span><a class="rowlink" href="{% url 'invoices:driver' d.pk %}">{{ d.name }}</a>{% if not d.active %} <span class="pill gp-none">stopped</span>{% endif %}</span></div></td>
+    <td class="small">{{ d.phone }}</td><td class="small">{{ d.id_number|default:"–" }}</td>
+    <td>{% if d.car_reg %}<span class="plate sm">{{ d.car_reg }}</span>{% endif %} <span class="small muted">{{ d.car }}</span></td>
+    <td class="r">{{ d.n }}</td><td class="small">{{ d.last|date:"d M Y"|default:"–" }}</td>
+    <td class="r">{% if d.short %}<span class="pill {% if d.short < 0 %}gp-low{% else %}gp-mid{% endif %}">{% if d.short < 0 %}short{% else %}over{% endif %} {{ d.short|money|cut:"-" }}</span>{% elif d.n %}<span class="pill gp-ok">always right</span>{% endif %}</td></tr>
+  {% empty %}<tr class="emptyrow"><td colspan="8" class="muted">No drivers yet. They are added by themselves when you send a delivery{% if can.deliveries_edit %} – or <a href="{% url 'invoices:driver_new' %}">add one now</a>{% endif %}.</td></tr>{% endfor %}</tbody>
+</table></div></section>
+{% endblock %}

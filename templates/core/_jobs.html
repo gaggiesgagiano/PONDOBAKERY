@@ -1,0 +1,63 @@
+{% load static %}<section class="stack" aria-label="Short Cuts">
+<div class="row" style="justify-content:space-between;align-items:center"><h2>{% if is_today or simple %}Short Cuts{% else %}Short Cuts for {{ d|date:"D d M" }}{% endif %}</h2>
+  <div class="row no-print" style="gap:10px;align-items:center">{% if jobs|length > 1 %}<span class="small muted jdrag-tip">Drag the tiles to change the order</span>{% endif %}<a class="btn small quiet" href="{% url 'core:jobs' %}">Choose short cuts</a></div></div>
+{% if jobs %}<div class="jobs">{% for j in jobs %}
+  {% if j.my %}<div data-key="{{ j.key }}" class="job my c-{{ j.colour }}{% if j.done %} done{% endif %}" style="--jart:url({% static 'brand/art/' %}{{ j.art }}_{% if j.done %}{{ j.colour }}{% else %}{{ j.ink }}{% endif %}.svg)">
+    {% if j.url %}<a class="stretch" href="{{ j.url }}" aria-label="Open {{ j.title }}"></a>{% endif %}
+    <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{ j.icon|safe }}</svg></span>
+    <b>{{ j.title }}</b><small>{{ j.sub }}</small>
+    <form method="post" action="{% url 'core:my_job_tick' j.my.pk %}" class="tickf">{% csrf_token %}<input type="hidden" name="date" value="{% if d %}{{ d|date:'Y-m-d' }}{% endif %}"><input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <button class="st tickbtn" type="submit" title="{% if j.done %}Click to undo{% else %}Click when it is done{% endif %}">{% if j.done %}✓ Done{% else %}Tick done{% endif %}</button></form>
+    <span class="jgrip no-print" title="Drag to move" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></span>
+  </div>
+  {% else %}<a data-key="{{ j.key }}" class="job c-{{ j.colour }}{% if j.done %} done{% endif %}" href="{{ j.url }}" style="--jart:url({% static 'brand/art/' %}{{ j.art }}_{% if j.done %}{{ j.colour }}{% else %}{{ j.ink }}{% endif %}.svg)">
+    <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{ j.icon|safe }}</svg></span>
+    <b>{{ j.title }}</b><small>{{ j.sub }}</small>{% if j.label %}<span class="st">{{ j.label }}</span>{% endif %}<span class="jgrip no-print" title="Drag to move" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></span></a>{% endif %}
+{% endfor %}</div>
+{% if jobs|length > 1 %}<form id="jorder" class="no-print" method="post" action="{% url 'core:jobs_order' %}" hidden>{% csrf_token %}</form>
+<div id="jsaved" class="jsaved" role="status" aria-live="polite"></div>
+<script>
+(function(){
+  var box = document.querySelector('.jobs'), form = document.getElementById('jorder'), say = document.getElementById('jsaved');
+  if (!box || !form || box.dataset.dnd) return; box.dataset.dnd = '1';
+  var drag = null, startX = 0, startY = 0, moved = false, before = '', blockClick = false, timer;
+  function keys(){ return Array.prototype.map.call(box.querySelectorAll('.job[data-key]'), function(t){ return t.dataset.key; }).join(','); }
+  function save(){
+    var fd = new FormData(form); fd.append('order', keys());
+    fetch(form.action, {method:'POST', body:fd, credentials:'same-origin', headers:{'X-Requested-With':'fetch'}})
+      .then(function(r){ show(r.ok ? 'Order saved' : 'Could not save the order – try again'); })
+      .catch(function(){ show('Could not save the order – is Pondo still running?'); });
+  }
+  function show(t){ say.textContent = t; say.classList.add('on'); clearTimeout(timer); timer = setTimeout(function(){ say.classList.remove('on'); }, 1800); }
+  box.addEventListener('pointerdown', function(e){
+    if (e.button !== 0 || e.target.closest('button, input, select, textarea')) return;
+    var t = e.target.closest('.job[data-key]'); if (!t) return;
+    // a mouse can grab anywhere on the tile; a finger or pen uses the grip, so the page still scrolls
+    if (e.pointerType !== 'mouse' && !e.target.closest('.jgrip')) return;
+    drag = t; startX = e.clientX; startY = e.clientY; moved = false; before = keys();
+  });
+  window.addEventListener('pointermove', function(e){
+    if (!drag) return;
+    if (!moved) {
+      if (Math.abs(e.clientX - startX) + Math.abs(e.clientY - startY) < 8) return;
+      moved = true; drag.classList.add('dragging'); document.body.classList.add('jdragging');
+    }
+    e.preventDefault();
+    var el = document.elementFromPoint(e.clientX, e.clientY), over = el && el.closest('.job[data-key]');
+    if (!over || over === drag || over.parentNode !== box) return;
+    var list = Array.prototype.slice.call(box.children), di = list.indexOf(drag), oi = list.indexOf(over);
+    box.insertBefore(drag, oi > di ? over.nextSibling : over);
+  }, {passive:false});
+  function end(){
+    if (!drag) return;
+    drag.classList.remove('dragging'); document.body.classList.remove('jdragging');
+    if (moved) { blockClick = true; setTimeout(function(){ blockClick = false; }, 50); if (keys() !== before) save(); }
+    drag = null;
+  }
+  window.addEventListener('pointerup', end); window.addEventListener('pointercancel', end);
+  box.addEventListener('click', function(e){ if (blockClick) { e.preventDefault(); e.stopPropagation(); } }, true);
+  box.addEventListener('dragstart', function(e){ if (e.target.closest && e.target.closest('.job')) e.preventDefault(); });
+})();
+</script>{% endif %}
+{% else %}<p class="muted small" style="margin:0">No short cuts chosen. <a href="{% url 'core:jobs' %}">Choose which ones you want here.</a></p>{% endif %}
+</section>

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Backup needed{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Daily backup</div><h1>Make the backup first</h1>
+  <div class="small muted">The cash-ups of <b>{{ day|date:"l d F Y" }}</b> were not backed up to the flash drive. Pondo stays locked until the backup is made.</div></div></div>
+<section class="card stack" style="max-width:720px">
+  {% if can_backup %}
+    <ol class="steps" style="margin:0;padding-left:20px;line-height:1.7">
+      <li>Plug in the <b>flash drive</b> and wait a few seconds.</li>
+      <li>Press <b>Back up now</b> and choose the flash drive.</li>
+      <li>When it says “Backup saved”, Pondo opens again for everybody.</li>
+    </ol>
+    <div><a class="btn primary" href="{% url 'core:backup' %}?start=1">Back up now</a></div>
+  {% else %}
+    <p style="margin:0;font-size:17px"><b>Call the Supervisor or Manager.</b> Only they can make the backup. As soon as it is made, Pondo opens again – just refresh this page.</p>
+    <div><a class="btn" href="">Refresh</a></div>
+  {% endif %}
+  <p class="small muted" style="margin:0">Why? The flash drive is the only copy if the laptop breaks or is stolen. The SOP says the backup is made every day, after the last cash-up.</p>
+</section>
+{% if is_owner %}<section class="card stack" style="max-width:720px"><h2>Flash drive lost or broken?</h2>
+  <p class="small muted" style="margin:0">Only the Manager can open Pondo for today without the backup. Write the reason – it is kept in the change history.</p>
+  <form method="post" action="{% url 'core:backup_waive' %}" class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end">{% csrf_token %}
+    <div class="field" style="flex:1;min-width:240px"><label for="rs">Reason</label><input id="rs" name="reason" required minlength="5" placeholder="e.g. flash drive broken – new one bought tomorrow"></div>
+    <button class="btn quiet" type="submit">Open Pondo for today</button></form>
+</section>{% endif %}
+{% endblock %}

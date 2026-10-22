@@ -1,0 +1,14 @@
+{% extends "costing/print_base.html" %}{% load pondo %}
+{% block title %}Payroll summary {{ run.period|date:"F Y" }}{% endblock %}
+{% block kind %}Payroll {{ run.number }}{% endblock %}
+{% block body %}
+<style>@page{size:A4 landscape} .sheet{max-width:275mm} table.t td,table.t th{font-size:11.5px;padding:4px 6px}</style>
+<h1>Payroll summary · {{ run.period|date:"F Y" }}{% if run.status == 'draft' %} (DRAFT){% endif %}</h1>
+<div class="facts"><div>Net to pay<b>{{ t.net|money }}</b></div><div>PAYE + AIDS (ZIMRA)<b>{{ t.tax|money }}</b></div><div>NSSA (both parts)<b>{{ t.nssa_total|money }}</b></div><div>Cost to business<b>{{ t.cost|money }}</b></div></div>
+<table class="t"><thead><tr><th>Name</th><th>NSSA no.</th><th>Tax no.</th><th class="r">Basic</th><th class="r">Overtime</th><th class="r">Allow.</th><th class="r">Bonus/other</th><th class="r">Gross</th><th class="r">NSSA</th><th class="r">Taxable</th><th class="r">PAYE</th><th class="r">AIDS</th><th class="r">Adv./other</th><th class="r">Net</th><th class="r">NSSA employer</th></tr></thead><tbody>
+{% for ln in lines %}<tr><td>{{ ln.employee.name }}</td><td>{{ ln.employee.nssa_no }}</td><td>{{ ln.employee.tax_no }}</td><td class="r">{{ ln.basic|money }}</td><td class="r">{{ ln.overtime_pay|money }}</td><td class="r">{{ ln.allowances|money }}</td><td class="r">{{ ln.bonus|money }}{% if ln.other_earnings %}+{{ ln.other_earnings|money }}{% endif %}</td><td class="r">{{ ln.gross|money }}</td><td class="r">{{ ln.nssa|money }}</td><td class="r">{{ ln.taxable|money }}</td><td class="r">{{ ln.paye|money }}</td><td class="r">{{ ln.aids_levy|money }}</td><td class="r">{{ ln.advances|money }}{% if ln.other_deductions %}+{{ ln.other_deductions|money }}{% endif %}</td><td class="r"><b>{{ ln.net|money }}</b></td><td class="r">{{ ln.nssa_employer|money }}</td></tr>{% endfor %}
+<tr class="total"><td colspan="3">Total ({{ t.n }})</td><td class="r">{{ t.basic|money }}</td><td class="r">{{ t.overtime_pay|money }}</td><td class="r">{{ t.allowances|money }}</td><td class="r">{{ t.bonus|money }}</td><td class="r">{{ t.gross|money }}</td><td class="r">{{ t.nssa|money }}</td><td></td><td class="r">{{ t.paye|money }}</td><td class="r">{{ t.aids_levy|money }}</td><td class="r">{{ t.advances|money }}</td><td class="r">{{ t.net|money }}</td><td class="r">{{ t.nssa_employer|money }}</td></tr>
+</tbody></table>
+<p class="small">ZIMDEF ({{ s.zimdef_rate|pct:1 }} of gross): <b>{{ t.zimdef|money }}</b> · Tax table: {{ s.tax_table_note }} · NSSA ceiling {{ s.nssa_ceiling|money }}</p>
+<div class="sign"><div>Prepared by</div><div>Approved by</div></div>
+{% endblock %}

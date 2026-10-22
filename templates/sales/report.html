@@ -1,0 +1,35 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Sales report{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs"><a href="{% url 'sales:daily' %}">Sales &amp; Cash-Up</a> › Month summary</div>
+  <h1>Sales – {{ month|date:"F Y" }}</h1><div class="small muted">For profit and loss see <a href="{% url 'reports:month_end' %}?month={{ month|date:'Y-m' }}">Reports → Month-end</a>.</div></div>
+  <div class="actions"><a class="btn quiet" href="?month={{ prev|date:'Y-m' }}">← {{ prev|date:"M" }}</a>{% if next_ok %}<a class="btn quiet" href="?month={{ next|date:'Y-m' }}">{{ next|date:"M" }} →</a>{% endif %}<button class="btn" type="button" onclick="window.print()">Print</button></div></div>
+{% include "sales/_tabs.html" %}
+<div class="stats">
+  <div class="card stat dark"><div class="lbl">Sales (excl. VAT)</div><div class="val">{{ total|money }}</div><div class="sub">{{ trading_days }} trading day{{ trading_days|pluralize }}{% if avg_day %} · {{ avg_day|money }} a day{% endif %}</div></div>
+  <div class="card stat"><div class="lbl">Till over / short</div><div class="val" style="color:{% if variance < 0 %}var(--low){% elif variance > 0 %}var(--mid){% else %}var(--ok){% endif %}">{{ variance|money }}</div><div class="sub">{{ n_cashups }} cash-up{{ n_cashups|pluralize }}</div></div>
+  <div class="card stat"><div class="lbl">Waste at cost</div><div class="val">{{ waste|money }}</div><div class="sub">{% if waste_pct is not None %}{{ waste_pct|pct }} of sales{% endif %}</div></div>
+  <div class="card stat"><div class="lbl">Till takings (incl. VAT)</div><div class="val">{{ taken|money }}</div><div class="sub">from the cash-ups</div></div>
+</div>
+<div class="cols">
+  <section class="card main stack">
+    <h2>Day by day</h2>
+    {% for d, v in days %}<div class="row small" style="gap:8px"><span style="width:70px">{{ d|date:"D d" }}</span><div class="bar" style="width:{% widthratio v biggest 300 %}px;{% if not v %}background:var(--line2);width:4px{% endif %}"></div><span>{% if v %}{{ v|money }}{% endif %}</span></div>{% endfor %}
+  </section>
+  <aside class="aside">
+    <section class="card stack"><h2>How customers paid</h2>
+      {% for m in methods %}<div class="row" style="justify-content:space-between"><span>{{ m.method__name }}</span><b>{{ m.t|money }}</b></div>{% empty %}<p class="muted small" style="margin:0">No cash-ups yet.</p>{% endfor %}</section>
+    <section class="card stack"><h2>Expenses</h2>
+      {% for c in expenses_by_cat %}<div class="row" style="justify-content:space-between"><span>{{ c.category__name }}</span><b>{{ c.t|money }}</b></div>{% empty %}<p class="muted small" style="margin:0">None.</p>{% endfor %}
+      {% if expenses_by_cat %}<div class="row" style="justify-content:space-between;border-top:2px solid var(--maroon);padding-top:6px"><b>Total</b><b>{{ expenses|money }}</b></div>{% endif %}</section>
+  </aside>
+</div>
+<section class="card stack"><h2>Best sellers</h2>
+  {% if products %}
+  <div class="tablebox"><table class="t"><thead><tr><th>Product</th><th class="r">Qty</th><th class="r">Value</th><th class="r">Cost</th><th class="r">GP</th></tr></thead><tbody>
+  {% for r, p in products %}<tr><td><b>{{ r.name }}</b></td><td class="r">{{ p.qty|num:0 }}</td><td class="r">{{ p.value|money }}</td><td class="r">{{ p.cost|money }}</td><td class="r"><span class="pill {{ p.gp|gpclass:company }}">{{ p.gp|pct }}</span></td></tr>{% endfor %}
+  <tr class="total"><td colspan="3">All {{ n_products }} products sold</td><td class="r">{{ prod_cost|money }}</td><td class="r">{{ prod_gp|pct }}</td></tr>
+  </tbody></table></div>
+  {% else %}<p class="muted small" style="margin:0">Type product sales (from the till's product report) to see best sellers and real gross profit.</p>{% endif %}
+</section>
+{% endblock %}

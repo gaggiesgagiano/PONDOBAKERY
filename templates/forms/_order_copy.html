@@ -1,0 +1,24 @@
+{% load static %}<div class="copy">
+  {% include "forms/_letterhead.html" %}
+  <div class="ttl"><h1>Customer order</h1><span class="who">{{ who }}</span></div>
+  <div class="sec"><div class="sh"><span class="n">1</span><h2>Customer</h2></div>
+    <div class="g g2"><div class="f"><span>Name</span><i></i></div><div class="f"><span>Surname</span><i></i></div>
+      <div class="f"><span>Cell</span><i></i></div><div class="f"><span>Other no.</span><i></i></div></div></div>
+  <div class="sec"><div class="sh"><span class="n">2</span><h2>Order</h2></div>
+    <div class="g g2"><div class="f"><span>Order no.</span><i></i></div><div class="f"><span>Date ordered</span><i></i></div>
+      <div class="f"><span>Pick-up date</span><i></i></div><div class="f"><span>Pick-up time</span><i></i></div></div></div>
+  <div class="sec"><div class="sh"><span class="n">3</span><h2>Cake</h2><span class="hint">tick one or more</span></div>
+    <div class="ticks g3"><span class="tk">Vanilla</span><span class="tk">Chocolate</span><span class="tk">Death by chocolate</span>
+      <span class="tk">Carrot</span><span class="tk">Red velvet</span><span class="tk">Other: ________</span></div>
+    <div class="f"><span>Description <small>(size, shape, colours, writing)</small></span><i></i></div>
+    <div class="lines"><i></i></div></div>
+  <div class="sec"><div class="sh"><span class="n">4</span><h2>Order summary</h2></div>
+    <table class="ft"><thead><tr><th>Flavour / item</th><th style="width:18%">Size</th><th style="width:11%">Qty</th><th style="width:20%">Price</th></tr></thead>
+    <tbody><tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr>
+    <tr class="tot"><td colspan="3">TOTAL (incl. VAT)</td><td></td></tr></tbody></table></div>
+  <div class="sec"><div class="sh"><span class="n">5</span><h2>Payment &amp; notes</h2></div>
+    <div class="ticks g3" style="align-items:center"><span class="tk">Paid in full</span><span class="tk">Deposit: $______</span><span class="tk">Balance: $______</span></div>
+    <div class="g g2"><div class="f"><span>Order taken by</span><i></i></div><div class="f"><span>Customer sign</span><i></i></div></div>
+    <div class="f"><span>Special notes</span><i></i></div></div>
+  <div class="thanks"><img src="{% static 'brand/logo/mark_cream.svg' %}" alt="">Thank you for choosing Pondo! We can't wait to bake something sweet for you.</div>
+</div>

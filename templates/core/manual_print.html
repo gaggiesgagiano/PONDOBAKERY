@@ -1,0 +1,79 @@
+{% load static %}<!doctype html>
+<html lang="en" data-font="{{ look.biz_font }}"><head><meta charset="utf-8">
+<title>Pondo Bakery – {% if role == "owner" %}owner's manual{% else %}staff manual{% endif %}{% if one %} – {{ chapters.0.title }}{% endif %}</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=29"><link rel="stylesheet" href="{% static 'css/manual.css' %}?v=1">{% include "_brand_font.html" %}
+<style>
+  @page{size:A4 portrait;margin:13mm 14mm 16mm;
+    @bottom-left{content:"Pondo Bakery · staff manual";font:8pt Nunito,Arial,sans-serif;color:#9a7a6a}
+    @bottom-right{content:"page " counter(page);font:8pt Nunito,Arial,sans-serif;color:#9a7a6a}}
+  @page cover{margin:0}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  html,body{background:#ddd;font-size:11.5pt}
+  .bar{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:9}
+  .sheet{width:182mm;margin:10mm auto;background:#fff;padding:0;box-shadow:0 4px 18px rgba(0,0,0,.15)}
+  .cover{page:cover;width:210mm;height:297mm;margin:10mm auto;position:relative;overflow:hidden;isolation:isolate;background:#e56026;color:#fff3d7;
+    display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:22mm 18mm 18mm;text-align:center;break-after:page}
+  .cover::before{content:"";position:absolute;inset:0;background:url({% static 'brand/art/pattern_cream.svg' %}) 0 0/62mm;opacity:.12;z-index:-1;
+    -webkit-mask-image:radial-gradient(ellipse 62% 48% at 50% 42%,transparent 0 70%,#000 86%);mask-image:radial-gradient(ellipse 62% 48% at 50% 42%,transparent 0 70%,#000 86%)}
+  .cover .top{font-weight:600;letter-spacing:.12em;font-size:10pt;color:#ffe3c4}
+  .cover img{width:118mm}
+  .cover h1{font-family:var(--head);text-transform:var(--head-case);font-weight:var(--head-weight);font-size:44pt;line-height:.95;color:#fff3d7}
+  .cover .for{font-weight:600;font-size:14pt;margin-top:3mm}
+  .cover .meta{font-size:10pt;color:#ffe3c4}
+  .low .cover{background:#fff;color:#7a1315}
+  .low .cover::before{display:none}
+  .low .cover h1{color:#e56026} .low .cover .top,.low .cover .meta{color:#9a4a2c}
+  .contents{break-after:page;padding:2mm 0}
+  .contents h2{font-family:var(--head);color:#7a1315;font-size:24pt;margin:0 0 5mm}
+  .contents ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2mm}
+  .contents li{display:flex;align-items:center;gap:4mm;font-size:12pt;font-weight:600}
+  .contents .n{width:8.5mm;height:8.5mm;border-radius:2.5mm;display:flex;align-items:center;justify-content:center;background:var(--cc);color:var(--ci);font-family:var(--head);font-size:13pt;font-weight:400}
+  .contents .who{margin-left:auto;font-size:9.5pt;font-weight:400;color:#7c5a4a}
+  .contents .note{margin-top:8mm;font-size:10pt;color:#7c5a4a;display:flex;gap:5mm;align-items:center}
+  .contents .note img{width:24mm}
+  .ch{box-shadow:none;border-radius:4mm;break-before:page;margin:0}
+  .one .ch{break-before:auto}
+  .ch + .ch{margin-top:0}
+  .chb{padding:4mm 2mm 2mm;font-size:10.5pt;line-height:1.45;gap:2.4mm}
+  .chb .lead{font-size:11.5pt}
+  .chb h3{font-size:13pt;margin-top:2mm}
+  .steps{gap:1.8mm} .dots{gap:1.2mm}
+  .tip,.warn{padding:2.2mm 3.5mm}
+  .gloss{font-size:10pt;gap:1.2mm 5mm;line-height:1.35}
+  .swatches span{padding:2mm 3mm;min-width:30mm;font-size:9pt}
+  .dos,.donts{gap:1.2mm} .dos li,.donts li{padding:1mm 2mm 1mm 8mm} .dos li::before,.donts li::before{left:3mm}
+  .vals{gap:1mm 5mm}
+  .chb h3{break-after:avoid}
+  .steps li,.dots li,.tip,.warn,.gloss dt,.gloss dd{break-inside:avoid}
+  .low .chh{background:#fff;color:var(--ctx);border:1mm solid var(--cc)}
+  .low .chh h2{color:var(--ctx)!important} .low .chh .who{color:#7c5a4a}
+  .low .chh .num{background:var(--cc);color:var(--ci)}
+  .low .chh::after{opacity:.12}
+  .endnote{margin-top:6mm;display:flex;align-items:center;gap:4mm;font-size:9.5pt;color:#7c5a4a;border-top:1px solid #ebd3b2;padding-top:3mm}
+  .endnote img{width:16mm}
+  @media screen{.ch{margin:10mm auto;width:182mm}.contents{width:182mm;margin:10mm auto;background:#fff;padding:12mm}.chb{padding:6mm 10mm 8mm}}
+  @media print{html,body{background:#fff}.bar{display:none}.cover{margin:0}.contents{width:auto;margin:0;padding:0}}
+</style></head>
+<body class="{% if low_ink %}low{% endif %}{% if one %} one{% endif %}">
+<div class="bar"><button class="btn primary" onclick="window.print()">Print / save as PDF</button><button class="btn quiet" onclick="window.close()">Close</button></div>
+{% if not one %}
+<div class="cover">
+  <div class="top">PONDO BAKERY · FRESH SINCE ’26</div>
+  <img src="{% static 'brand/logo/' %}{% if low_ink %}secondary_orange{% else %}secondary_cream{% endif %}.svg" alt="Pondo Bakery – Estd 2026 – Easy to enjoy">
+  <div>{% if role == "owner" %}<h1>Owner's<br>manual</h1><div class="for">The whole program · ProBa</div>{% else %}<h1>Staff<br>manual</h1><div class="for">{{ role_label }}</div>{% endif %}</div>
+  <div class="meta">{{ current_shop.name|default:"Pondo Bakery" }}{% if current_shop.address_line1 %} · {{ current_shop.address_line1 }}{% endif %} · printed {{ today|date:"j F Y" }}</div>
+</div>
+<div class="contents"><h2>What's inside</h2>
+  <ol>{% for ch in chapters %}<li class="c-{{ ch.colour }}"><span class="n">{{ ch.n }}</span>{{ ch.title }}<span class="who">{{ ch.who }}</span></li>{% endfor %}</ol>
+  <div class="note"><img src="{% static 'brand/logo/submark_orange.svg' %}" alt="">Read your chapters, then try them in the program with your manager. The round “? Help” button on every page opens the right chapter.</div>
+</div>
+{% endif %}
+{% for ch in chapters %}
+<section class="ch c-{{ ch.colour }}">
+  <div class="chh" style="--art:url({% static 'brand/art/' %}{{ ch.art }}_{% if low_ink %}{{ ch.colour }}{% else %}{{ ch.ink }}{% endif %}.svg)"><span class="num">{{ ch.n }}</span>
+    <div><h2>{{ ch.title }}</h2><div class="who">Who: {{ ch.who }}</div></div></div>
+  <div class="chb">{% include "core/manual/"|add:ch.key|add:".html" %}</div>
+  {% if forloop.last and not one %}<div class="endnote"><img src="{% static 'brand/logo/mark_orange.svg' %}" alt="">Pondo Bakery staff manual · {{ company.tagline|default:"Easy to enjoy" }}<span style="margin-left:auto;font-size:8pt">ProBa – Professional Bakery Assistant · developed by Gaggies Gagiano · +263 78 048 9777 · jurie@pondobakery.co.zw</span></div>{% endif %}
+</section>
+{% endfor %}
+</body></html>

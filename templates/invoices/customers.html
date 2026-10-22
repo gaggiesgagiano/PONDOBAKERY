@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% load pondo %}
+{% block title %}Customers{% endblock %}
+{% block content %}
+<div class="head"><div class="title"><div class="crumbs">Invoices &amp; Quotes</div><h1>Customers</h1></div>
+  {% if can.invoices_edit %}<div class="actions"><a class="btn xl" href="{% url 'core:excel_file' 'customers' %}" title="Download this list as an Excel file">Excel</a><a class="btn primary" href="{% url 'invoices:customer_new' %}">+ New customer</a></div>{% endif %}</div>
+{% include "invoices/_tabs.html" %}
+<section class="card"><div class="tablebox"><table class="t">
+  <thead><tr><th>Name</th><th>Company</th><th>Phone</th><th>Email</th><th class="r">Not paid yet</th><th></th></tr></thead>
+  <tbody>{% for c, owing in rows %}<tr class="link" data-href="{% url 'invoices:customer_edit' c.pk %}"><td><a class="rowlink" href="{% url 'invoices:customer_edit' c.pk %}">{{ c.name }}</a>{% if not c.active %} <span class="pill gp-none">not used</span>{% endif %}</td><td>{{ c.company }}</td><td class="small">{{ c.phone }}</td><td class="small">{{ c.email }}</td><td class="r">{% if owing %}<b>{{ owing|money }}</b>{% endif %}</td>
+    <td>{% if can.invoices_edit %}<a class="small" href="{% url 'invoices:new' %}?customer={{ c.pk }}">New invoice</a>{% endif %}</td></tr>
+  {% empty %}<tr class="emptyrow"><td colspan="6" class="muted">No customers yet. They are added when you make an invoice, or with "New customer".</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}
